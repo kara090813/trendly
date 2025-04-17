@@ -632,27 +632,13 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
         children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => context.pop(),
-              borderRadius: BorderRadius.circular(8.r),
-              child: Padding(
-                padding: EdgeInsets.all(4.w),
-                child: Icon(
-                  Icons.arrow_back_ios_new,
-                  size: 22.sp,
-                  color: const Color(0xFF19B3F6),
-                ),
-              ),
-            ),
-          ),
+          SizedBox(width: 30.w,),
           Expanded(
             child: Center(
               child: AutoSizeText(
                 '토론방',
                 style: TextStyle(
-                  fontSize: 18.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
@@ -905,9 +891,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 child: InkWell(
                   onTap: () {
                     // 토론방 입장
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('토론방 상세 페이지 준비 중입니다.')),
-                    );
+                   context.push('/discussion/123');
                     // 실제 구현 시:
                     // context.push('/discussion/${room.id}');
                   },

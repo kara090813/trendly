@@ -304,23 +304,26 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 실검 요약 타이틀
-              Row(
-                children: [
-                  Text(
-                    '실검 요약',
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.bold,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                child: Row(
+                  children: [
+                    Text(
+                      '실검 요약',
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Spacer(),
-                  DetailSummaryToggleWidget(
-                    currentType: _selectedSummaryType,
-                    onChanged: _onSummaryTypeChanged,
-                  ),
-                ],
+                    Spacer(),
+                    DetailSummaryToggleWidget(
+                      currentType: _selectedSummaryType,
+                      onChanged: _onSummaryTypeChanged,
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: 5.h),
               Divider(
                 color: Color(0xFFE2E2E2),
                 thickness: 1,
@@ -363,7 +366,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       child: Text(
                         content,
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: 18.sp,
                           height: 1.5,
                         ),
                       ),
@@ -378,7 +381,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         return Text(
           _keyword!.type2,
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 18.sp,
             height: 1.5,
           ),
         );
@@ -386,7 +389,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         return Text(
           _keyword!.type3,
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 18.sp,
             height: 1.5,
           ),
         );

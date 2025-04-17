@@ -20,6 +20,15 @@ class AppRouter {
           return KeywordDetailScreen(keywordId: keywordId);
         },
       ),
+      // 토론방 라우트 추가
+      GoRoute(
+        path: '/discussion/:id',
+        name: 'discussionRoom',
+        builder: (context, state) {
+          final int discussionRoomId = int.parse(state.pathParameters['id']!);
+          return DiscussionRoomScreen(discussionRoomId: discussionRoomId);
+        },
+      ),
     ],
     debugLogDiagnostics: true,
   );
