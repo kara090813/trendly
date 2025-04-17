@@ -1,0 +1,1 @@
+export 'freezed/_freezeds.dart';
