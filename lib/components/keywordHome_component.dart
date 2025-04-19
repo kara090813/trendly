@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'dart:math'; // 랜덤 함수 사용을 위해 추가
 import '../services/api_service.dart';
 import '../models/_models.dart';
 import '../widgets/_widgets.dart';
@@ -16,10 +18,17 @@ class KeywordHomeComponent extends StatefulWidget {
 class _KeywordHomeComponentState extends State<KeywordHomeComponent> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<Keyword> _keywords = [];
+  List<Keyword> _previousKeywords = []; // 이전 키워드 목록 저장용
 
   // 리스트만 로딩하기 위한 별도 상태 변수
   bool _isInitialLoading = true;
   bool _isRefreshing = false;
+  bool _showKeywordAnimation = false;
+  bool _showShimmerEffect = false;
+
+  // 랜덤 애니메이션 선택을 위한 변수
+  int _currentAnimationIndex = 0;
+  final Random _random = Random();
 
   String? _error;
   Keyword? _selectedKeyword;
@@ -50,6 +59,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
       curve: Curves.easeInOut,
     ));
 
+    // 초기 애니메이션 선택
+    _selectRandomAnimation();
+
     _loadKeywords(isInitial: true);
   }
 
@@ -60,6 +72,13 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
     super.dispose();
   }
 
+  // 랜덤 애니메이션 선택 함수
+  void _selectRandomAnimation() {
+    setState(() {
+      _currentAnimationIndex = _random.nextInt(10); // 0-9 사이의 랜덤 인덱스
+    });
+  }
+
   Future<void> _loadKeywords({bool isInitial = false}) async {
     try {
       // isInitial이 true면 초기 로딩 상태, 그렇지 않으면 리프레싱 상태로 설정
@@ -67,7 +86,15 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
         if (isInitial) {
           _isInitialLoading = true;
         } else {
+          // 이전 키워드 저장 (UI 높이 유지를 위해)
+          _previousKeywords = List.from(_keywords);
           _isRefreshing = true;
+          _showKeywordAnimation = false;
+          _showShimmerEffect = false;
+
+          // 랜덤 애니메이션 선택
+          _selectRandomAnimation();
+
           // 리프레시 애니메이션 시작
           _refreshAnimationController.reset();
           _refreshAnimationController.forward();
@@ -77,24 +104,40 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
 
       final keywords = await _apiService.getCurrentKeywords();
 
+      // 약간의 딜레이 추가 (로딩 애니메이션이 보이도록)
+      if (!isInitial) {
+        await Future.delayed(Duration(milliseconds: 1500));
+      }
+
       if (mounted) {
         setState(() {
           _keywords = keywords;
           _isInitialLoading = false;
-          _isRefreshing = false;
 
-          if (_selectedKeyword != null) {
-            final selectedId = _selectedKeyword!.id;
-
-            _selectedKeyword = _keywords.isNotEmpty
-                ? _keywords.firstWhere(
-                  (k) => k.id == selectedId,
-              orElse: () => _keywords.first,
-            )
-                : null;
-          }
-          else if (_keywords.isNotEmpty) {
+          // 새로운 실검 리스트가 로딩되면 1위 키워드를 자동 선택
+          if (_keywords.isNotEmpty) {
             _selectedKeyword = _keywords.first;
+          }
+
+          if (!isInitial) {
+            _isRefreshing = false;
+            _previousKeywords = [];
+
+            // 로딩 완료 후 Shimmer 효과 활성화
+            _showShimmerEffect = true;
+
+            // Shimmer 효과가 잠시 표시된 후 키워드 애니메이션 활성화
+            Future.delayed(Duration(milliseconds: 800), () {
+              if (mounted) {
+                setState(() {
+                  _showKeywordAnimation = true;
+                  _showShimmerEffect = false; // Shimmer 효과 비활성화
+                });
+              }
+            });
+          } else {
+            _isRefreshing = false;
+            _showKeywordAnimation = true;
           }
         });
       }
@@ -113,6 +156,85 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
     setState(() {
       _selectedKeyword = keyword;
     });
+  }
+
+  // 랜덤 로딩 애니메이션 위젯 생성
+  Widget _buildRandomLoadingAnimation() {
+    switch (_currentAnimationIndex) {
+      case 0:
+        return SpinKitFadingGrid(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+          shape: BoxShape.circle,
+        );
+      case 1:
+        return SpinKitPouringHourGlass(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+        );
+      case 2:
+        return SpinKitSpinningLines(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+        );
+      case 3:
+        return SpinKitDancingSquare(
+          color: Color(0xFF19B3F6),
+          size: 70.w,
+        );
+      case 4:
+        return SpinKitWaveSpinner(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+          waveColor: Color(0xFF19B3F6).withOpacity(0.7),
+          trackColor: Color(0xFF19B3F6).withOpacity(0.3),
+        );
+      case 5:
+        return SpinKitPianoWave(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+          itemCount: 5,
+        );
+      case 6:
+        return SpinKitFoldingCube(
+          color: Color(0xFF19B3F6),
+          size: 60.w,
+        );
+      case 7:
+        return SpinKitRipple(
+          color: Color(0xFF19B3F6),
+          size: 100.w,
+          borderWidth: 6.0,
+        );
+      case 8:
+        return SpinKitPulse(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+        );
+      case 9:
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SpinKitRing(
+              color: Color(0xFF19B3F6),
+              size: 60.w,
+              lineWidth: 4.0,
+            ),
+            SizedBox(height: 10.h),
+            Icon(
+              Icons.trending_up,
+              color: Color(0xFF19B3F6),
+              size: 32.w,
+            ),
+          ],
+        );
+      default:
+        return SpinKitFadingGrid(
+          color: Color(0xFF19B3F6),
+          size: 80.w,
+          shape: BoxShape.circle,
+        );
+    }
   }
 
   Widget _buildElevatedIcon(String imagePath, {Color? color}) {
@@ -163,9 +285,12 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
       return _buildErrorWidget();
     }
 
-    if (_keywords.isEmpty) {
+    if (_keywords.isEmpty && _previousKeywords.isEmpty) {
       return const Center(child: Text('표시할 키워드가 없습니다.'));
     }
+
+    // 표시할 키워드 목록 (로딩 중에는 이전 키워드 목록 사용)
+    final displayKeywords = _isRefreshing && _previousKeywords.isNotEmpty ? _previousKeywords : _keywords;
 
     return Scaffold(
       backgroundColor: Color(0xFFF7F7F7),
@@ -313,33 +438,60 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
             ),
           ),
 
-          // 키워드 목록 리스트 (퍼포먼스 최적화) - 로딩 중일 때 쉬머 효과 또는 애니메이션 적용
-          _isRefreshing
-              ? _buildShimmerList()
-              : AnimationLimiter(
-            child: SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-              sliver: SliverList.builder(
-                itemCount: _keywords.length,
-                itemBuilder: (context, index) {
-                  return AnimationConfiguration.staggeredList(
-                    position: index,
-                    duration: const Duration(milliseconds: 375),
-                    child: SlideAnimation(
-                      verticalOffset: 50.0,
-                      child: FadeInAnimation(
-                        child: RepaintBoundary(
-                          child: KeywordBoxWidget(
-                            keyword: _keywords[index],
-                            rank: index + 1,
-                            isSelected: _selectedKeyword?.id == _keywords[index].id,
-                            onTap: () => _selectKeyword(_keywords[index]),
+          // 키워드 목록 리스트 영역 (Stack 구조로 로딩 애니메이션 오버레이)
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+            sliver: SliverToBoxAdapter(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 기본 키워드 리스트 (이전 키워드 또는 현재 키워드)
+                  Opacity(
+                    opacity: _isRefreshing ? 0.3 : 1.0, // 로딩 중에는 흐리게 표시
+                    child: _showShimmerEffect
+                        ? _buildShimmerKeywordList(displayKeywords) // Shimmer 효과 적용된 리스트
+                        : _buildKeywordList(displayKeywords), // 일반 리스트
+                  ),
+
+                  // 로딩 애니메이션 (중앙에 표시)
+                  if (_isRefreshing)
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 랜덤 로딩 애니메이션
+                          Container(
+                            width: 160.w,
+                            height: 160.w,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(20.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 15,
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: _buildRandomLoadingAnimation(),
+                            ),
                           ),
-                        ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            "최신 트렌드로 새로고침 중...",
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF19B3F6),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                ],
               ),
             ),
           ),
@@ -356,81 +508,71 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
     );
   }
 
-  // 로딩 중일 때 표시할 쉬머 효과의 리스트
-  Widget _buildShimmerList() {
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-      sliver: SliverList.builder(
-        itemCount: 10, // 기본 10개 아이템 표시
-        itemBuilder: (context, index) {
+  // Shimmer 효과가 적용된 키워드 리스트
+  Widget _buildShimmerKeywordList(List<Keyword> keywords) {
+    if (keywords.isEmpty) return SizedBox();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        keywords.length,
+            (index) {
           return Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
-            child: Container(
-              margin: EdgeInsets.only(bottom: 1),
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: index == 9 ? null : Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  // 순위
-                  Container(
-                    width: 24.w,
-                    height: 24.w,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-
-                  // 키워드
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 14.w, right: 6.w),
-                      child: Container(
-                        height: 20.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // 변화 수치
-                  Column(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 14.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Container(
-                        width: 60,
-                        height: 12.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            baseColor: Colors.white,
+            highlightColor: Color(0xFF19B3F6).withOpacity(0.3),
+            child: RepaintBoundary(
+              child: KeywordBoxWidget(
+                keyword: keywords[index],
+                rank: index + 1,
+                isSelected: _selectedKeyword?.id == keywords[index].id,
+                onTap: () => _selectKeyword(keywords[index]),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  // 키워드 리스트 생성 함수 (별도로 분리)
+  Widget _buildKeywordList(List<Keyword> keywords) {
+    if (keywords.isEmpty) return SizedBox();
+
+    // 애니메이션 사용 여부
+    final bool useAnimation = _showKeywordAnimation && !_isRefreshing;
+
+    return AnimationLimiter(
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // 필요한 높이만 사용
+        children: List.generate(
+          keywords.length,
+              (index) {
+            final Widget keywordWidget = RepaintBoundary(
+              child: KeywordBoxWidget(
+                keyword: keywords[index],
+                rank: index + 1,
+                isSelected: _selectedKeyword?.id == keywords[index].id,
+                onTap: () => _selectKeyword(keywords[index]),
+              ),
+            );
+
+            // 애니메이션 적용 여부에 따라 다른 위젯 반환
+            if (useAnimation) {
+              return AnimationConfiguration.staggeredList(
+                position: index,
+                duration: const Duration(milliseconds: 375),
+                child: SlideAnimation(
+                  verticalOffset: 50.0,
+                  child: FadeInAnimation(
+                    child: keywordWidget,
+                  ),
+                ),
+              );
+            } else {
+              return keywordWidget;
+            }
+          },
+        ),
       ),
     );
   }
