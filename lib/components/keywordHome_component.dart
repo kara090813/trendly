@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
 import '../widgets/_widgets.dart';
@@ -11,13 +13,21 @@ class KeywordHomeComponent extends StatefulWidget {
   State<KeywordHomeComponent> createState() => _KeywordHomeComponentState();
 }
 
-class _KeywordHomeComponentState extends State<KeywordHomeComponent> with AutomaticKeepAliveClientMixin {
+class _KeywordHomeComponentState extends State<KeywordHomeComponent> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<Keyword> _keywords = [];
-  bool _isLoading = true;
+
+  // 리스트만 로딩하기 위한 별도 상태 변수
+  bool _isInitialLoading = true;
+  bool _isRefreshing = false;
+
   String? _error;
   Keyword? _selectedKeyword;
   final ScrollController _scrollController = ScrollController();
+
+  // 리프레시 애니메이션을 위한 컨트롤러
+  late AnimationController _refreshAnimationController;
+  late Animation<double> _refreshAnimation;
 
   @override
   bool get wantKeepAlive => true;
@@ -25,19 +35,43 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
   @override
   void initState() {
     super.initState();
-    _loadKeywords();
+
+    // 리프레시 애니메이션 컨트롤러 초기화
+    _refreshAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+
+    _refreshAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _refreshAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _loadKeywords(isInitial: true);
   }
 
   @override
   void dispose() {
+    _refreshAnimationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadKeywords() async {
+  Future<void> _loadKeywords({bool isInitial = false}) async {
     try {
+      // isInitial이 true면 초기 로딩 상태, 그렇지 않으면 리프레싱 상태로 설정
       setState(() {
-        _isLoading = true;
+        if (isInitial) {
+          _isInitialLoading = true;
+        } else {
+          _isRefreshing = true;
+          // 리프레시 애니메이션 시작
+          _refreshAnimationController.reset();
+          _refreshAnimationController.forward();
+        }
         _error = null;
       });
 
@@ -46,7 +80,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
       if (mounted) {
         setState(() {
           _keywords = keywords;
-          _isLoading = false;
+          _isInitialLoading = false;
+          _isRefreshing = false;
 
           if (_selectedKeyword != null) {
             final selectedId = _selectedKeyword!.id;
@@ -67,7 +102,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
       if (mounted) {
         setState(() {
           _error = '키워드를 불러오는 중 오류가 발생했습니다: $e';
-          _isLoading = false;
+          _isInitialLoading = false;
+          _isRefreshing = false;
         });
       }
     }
@@ -119,11 +155,11 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (_isLoading) {
+    if (_isInitialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_error != null) {
+    if (_error != null && _keywords.isEmpty) {
       return _buildErrorWidget();
     }
 
@@ -228,7 +264,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                         ),
                         const Spacer(),
                         InkWell(
-                          onTap: () => _loadKeywords(),
+                          onTap: _isRefreshing ? null : () => _loadKeywords(),
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             padding: EdgeInsets.all(8.w),
@@ -252,7 +288,13 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.refresh, size: 18.sp, color: Color(0xFF4A4A4A)),
+                                // 로딩 중에는 회전하는 새로고침 아이콘 표시
+                                _isRefreshing
+                                    ? RotationTransition(
+                                  turns: _refreshAnimation,
+                                  child: Icon(Icons.refresh, size: 18.sp, color: Color(0xFF19B3F6)),
+                                )
+                                    : Icon(Icons.refresh, size: 18.sp, color: Color(0xFF4A4A4A)),
                                 SizedBox(width: 4.w),
                                 Text(
                                   _getFormattedTime(),
@@ -271,21 +313,34 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
             ),
           ),
 
-          // 키워드 목록 리스트 (퍼포먼스 최적화)
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w,vertical: 6.h),
-            sliver: SliverList.builder(
-              itemCount: _keywords.length,
-              itemBuilder: (context, index) {
-                return RepaintBoundary(
-                  child: KeywordBoxWidget(
-                    keyword: _keywords[index],
-                    rank: index + 1,
-                    isSelected: _selectedKeyword?.id == _keywords[index].id,
-                    onTap: () => _selectKeyword(_keywords[index]),
-                  ),
-                );
-              },
+          // 키워드 목록 리스트 (퍼포먼스 최적화) - 로딩 중일 때 쉬머 효과 또는 애니메이션 적용
+          _isRefreshing
+              ? _buildShimmerList()
+              : AnimationLimiter(
+            child: SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+              sliver: SliverList.builder(
+                itemCount: _keywords.length,
+                itemBuilder: (context, index) {
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: SlideAnimation(
+                      verticalOffset: 50.0,
+                      child: FadeInAnimation(
+                        child: RepaintBoundary(
+                          child: KeywordBoxWidget(
+                            keyword: _keywords[index],
+                            rank: index + 1,
+                            isSelected: _selectedKeyword?.id == _keywords[index].id,
+                            onTap: () => _selectKeyword(_keywords[index]),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
 
@@ -296,8 +351,86 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                 child: SummaryBoxWidget(keyword: _selectedKeyword!),
               ),
             ),
-
         ],
+      ),
+    );
+  }
+
+  // 로딩 중일 때 표시할 쉬머 효과의 리스트
+  Widget _buildShimmerList() {
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+      sliver: SliverList.builder(
+        itemCount: 10, // 기본 10개 아이템 표시
+        itemBuilder: (context, index) {
+          return Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              margin: EdgeInsets.only(bottom: 1),
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: index == 9 ? null : Border(
+                  bottom: BorderSide(
+                    color: Colors.grey.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // 순위
+                  Container(
+                    width: 24.w,
+                    height: 24.w,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+
+                  // 키워드
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 14.w, right: 6.w),
+                      child: Container(
+                        height: 20.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 변화 수치
+                  Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 14.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Container(
+                        width: 60,
+                        height: 12.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -310,7 +443,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
           Text(_error!, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _loadKeywords,
+            onPressed: () => _loadKeywords(isInitial: true),
             child: const Text('다시 시도'),
           ),
         ],
