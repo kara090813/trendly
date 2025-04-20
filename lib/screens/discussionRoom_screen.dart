@@ -41,7 +41,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                     _buildSummaryToggle(),
                     // 타인에 대한 비방글 경고 메시지 (배경에 직접 배치)
                     Container(
-                      margin: EdgeInsets.symmetric(horizontal: 16.w), // 좌우 마진 추가
+                      margin: EdgeInsets.symmetric(horizontal: 16.w),
+                      // 좌우 마진 추가
                       padding: EdgeInsets.symmetric(vertical: 8.h),
                       child: Row(
                         children: [
@@ -189,7 +190,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 정보 섹션 (토론방 OPEN, 남은시간)
+  // 정보 섹션 (토론방 OPEN, 남은시간) 개선
   Widget _buildInfoSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -210,7 +211,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
             // 토론방 OPEN 부분
             Expanded(
               child: Container(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h), // 상단 패딩 감소
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
@@ -229,32 +230,33 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    SizedBox(height: 12.h), // 타이틀과 시간 사이 간격 약간 증가
+                    SizedBox(height: 12.h),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.center, // 세로 중앙 정렬
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.access_time_outlined, // 아웃라인 스타일 시계 아이콘
+                          Icons.access_time_outlined,
                           color: Color(0xFF19B3F6),
                           size: 38.sp,
                         ),
                         SizedBox(width: 10.w),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center, // 중앙 정렬
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               "25년 4월 3일",
                               style: TextStyle(
-                                fontSize: 15.sp, // 텍스트 크기 증가
+                                fontSize: 15.sp,
                                 color: Colors.grey[600],
                               ),
                             ),
-                            SizedBox(height: 1.h), // 줄간격 줄이기
+                            // 1. 줄간격 제거 - SizedBox 높이를 0으로 설정
+                            SizedBox(height: 0),
                             Text(
                               "오후 12시 56분",
                               style: TextStyle(
-                                fontSize: 18.sp, // 텍스트 크기 증가
+                                fontSize: 18.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -267,12 +269,12 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
               ),
             ),
 
-            // 남은시간 부분 (약간 더 진한 배경)
+            // 남은시간 부분
             Expanded(
               child: Container(
-                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h), // 상단 패딩 감소
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF9F9F9), // 약간 더 진한 배경
+                  color: Color(0xFFF9F9F9),
                   borderRadius: BorderRadius.only(
                     topRight: Radius.circular(16.r),
                     bottomRight: Radius.circular(16.r),
@@ -284,33 +286,33 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                     Text(
                       "남은시간",
                       style: TextStyle(
-                        fontSize: 15.sp, // 크기 증가
-                        color: Colors.black, // 색상 변경
-                        fontWeight: FontWeight.w500, // 약간 두껍게
+                        fontSize: 15.sp,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: 12.h), // 타이틀과 시간 사이 간격 약간 증가
+                    SizedBox(height: 10.h),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildTimeBlock("08"),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4.w),
+                          padding: EdgeInsets.symmetric(horizontal: 2.w),
                           child: Text(
                             ":",
                             style: TextStyle(
-                              fontSize: 22.sp, // 크기 증가
+                              fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         _buildTimeBlock("18"),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4.w),
+                          padding: EdgeInsets.symmetric(horizontal: 2.w),
                           child: Text(
                             ":",
                             style: TextStyle(
-                              fontSize: 22.sp, // 크기 증가
+                              fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -328,20 +330,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 시간 블록 위젯
+  // 2. 타이머 블록 크기 증가
   Widget _buildTimeBlock(String time) {
     return Container(
-      width: 42.w, // 크기 증가
-      height: 42.h, // 크기 증가
+      // 크기를 더 키움 (42 -> 48)
+      width: 48.w,
+      height: 48.h,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(10.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2), // 그림자 강화
-            blurRadius: 4, // 그림자 강화
-            spreadRadius: 1, // 그림자 강화
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 5,
+            spreadRadius: 1,
             offset: Offset(0, 2),
           ),
         ],
@@ -349,7 +352,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       child: Text(
         time,
         style: TextStyle(
-          fontSize: 22.sp, // 숫자 크기 증가
+          fontSize: 24.sp, // 숫자 크기도 증가 (22 -> 24)
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -511,41 +514,86 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             child: Column(
               children: [
-                // 댓글 아이템들
                 _buildCommentItem(
-                  nickname: "나는 첫gpt",
-                  time: "20분전",
-                  content: "크레스티드 게코는 머리 위에 눈썹 모양의 돌기를 가지고 있어요. 이 돌기 덕분에 더욱 개성 넘치는 외모를 자랑하죠 몸 색깔과 무늬도 다양해서 보는 재미가 있답니다.",
-                  likes: 546,
-                  dislikes: 32,
-                  comments: 12,
+                  nickname: "게코알못",
+                  time: "5분전",
+                  content: "이 친구들 털 없어서 알러지 걱정 없다고 하던데 진짜임?",
+                  likes: 87,
+                  dislikes: 2,
+                  comments: 4,
                 ),
-
                 _buildCommentItem(
-                  nickname: "게코매니아",
-                  time: "35분전",
-                  content: "크레스티드 게코는 애완용으로 인기가 많아서 자연에서 잘 볼 수 없게 되었다고 해요. 애완동물로 키울때 주의사항이 있을까요?",
-                  likes: 324,
-                  dislikes: 12,
-                  comments: 8,
+                  nickname: "눈썹미남게코",
+                  time: "12분전",
+                  content: "크레스티드 게코는 야행성이라 낮엔 거의 안 움직여요! 처음엔 고장난 줄 알았음ㅋㅋ",
+                  likes: 134,
+                  dislikes: 3,
+                  comments: 7,
                 ),
-
                 _buildCommentItem(
-                  nickname: "파충류전문가",
+                  nickname: "동물농장매니아",
+                  time: "22분전",
+                  content:
+                      "예전에 TV에서 크레 나왔던 거 봤는데, 진짜 얌전하고 귀엽더라구요. 사료 같은 것도 따로 있나요?",
+                  likes: 76,
+                  dislikes: 1,
+                  comments: 2,
+                ),
+                _buildCommentItem(
+                  nickname: "도마뱀아빠",
+                  time: "30분전",
+                  content: "우리집 크레는 이름이 '콩이'인데, 손 위에 올려놓으면 가만히 있어서 심장 녹음ㅠㅠ",
+                  likes: 243,
+                  dislikes: 4,
+                  comments: 15,
+                ),
+                _buildCommentItem(
+                  nickname: "한밤의게코",
+                  time: "42분전",
+                  content: "야행성이라 밤마다 나랑 같이 생활하는 중... 나보다 더 규칙적인 듯;;",
+                  likes: 118,
+                  dislikes: 3,
+                  comments: 6,
+                ),
+                _buildCommentItem(
+                  nickname: "초보파충류러",
                   time: "1시간전",
-                  content: "크레스티드 게코는 에오블레파리스(레오파드 게코)와 함께 초보자도 키우기 쉬운 파충류로 알려져 있어요. 온도와 습도 관리만 잘 해주시면 됩니다.",
-                  likes: 215,
-                  dislikes: 5,
-                  comments: 23,
+                  content: "습도는 어느 정도로 유지해야 하나요? 자꾸 피막 벗기기 실패해서 걱정입니다ㅠ",
+                  likes: 97,
+                  dislikes: 6,
+                  comments: 9,
                 ),
-
                 _buildCommentItem(
-                  nickname: "짱구는 내꺼 철수",
-                  time: "2시간전",
-                  content: "크레를 너무 명정해서 자연에서 못살 것 같음 ㅠㅠㄹ;;; 안전하게 우리집에서 오래오래 살아라",
-                  likes: 146,
-                  dislikes: 8,
+                  nickname: "사랑해크레야",
+                  time: "1시간 20분전",
+                  content: "크레 눈에 속눈썹 같은 거 있어서 너무 예뻐요. 눈 안 닦아줘도 되나 궁금하네요.",
+                  likes: 64,
+                  dislikes: 2,
                   comments: 3,
+                ),
+                _buildCommentItem(
+                  nickname: "야생의마음",
+                  time: "2시간전",
+                  content: "사육보다 자연이 좋다고 생각하지만... 요즘 자연에서 보기 힘들어진 게 안타깝네요.",
+                  likes: 102,
+                  dislikes: 17,
+                  comments: 11,
+                ),
+                _buildCommentItem(
+                  nickname: "도마도마",
+                  time: "2시간 30분전",
+                  content: "크레는 수직 사육장 좋아한다던데 높이 어느 정도로 맞춰야 해요?",
+                  likes: 55,
+                  dislikes: 0,
+                  comments: 5,
+                ),
+                _buildCommentItem(
+                  nickname: "파충류수집가",
+                  time: "3시간전",
+                  content: "크레는 점프력이 꽤 좋아요. 뚜껑 안 닫으면 탈출합니다 진짜임...",
+                  likes: 149,
+                  dislikes: 9,
+                  comments: 13,
                 ),
               ],
             ),
@@ -697,59 +745,60 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 하단 입력 섹션 - 이미지 참고하여 개선
+  // 하단 입력 섹션 - 수정된 버전
   Widget _buildInputSection() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.r),
+          topRight: Radius.circular(24.r),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: Offset(0, -2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: Offset(0, -3),
           ),
         ],
       ),
       child: Column(
         children: [
-          // 아이디/비밀번호 입력
+          // 1. 아이디/비밀번호 입력 - 수직 정렬 수정
           Row(
             children: [
-              // 아이디 입력 필드
+              // 아이디 입력 필드 - 정렬 수정
               Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF0F0F0),
-                    borderRadius: BorderRadius.circular(16.r),
+                child: Neumorphic(
+                  style: NeumorphicStyle(
+                    depth: -3,
+                    intensity: 0.7,
+                    shape: NeumorphicShape.flat,
+                    lightSource: LightSource.topLeft,
+                    color: Color(0xFFF5F5F5),
+                    boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16.r)),
                   ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    // 명시적으로 세로 가운데 정렬 설정
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        height: 20.h,
-                        child: Center(
-                          child: Icon(
-                            Icons.person_outline,
-                            size: 18.sp,
-                            color: Color(0xFF19B3F6),
-                          ),
-                        ),
+                      // 아이콘 정렬을 위한 Container 제거
+                      Icon(
+                        Icons.person_outline,
+                        size: 20.sp,
+                        color: Color(0xFF19B3F6),
                       ),
-                      SizedBox(width: 8.w),
-                      Container(
-                        height: 20.h,
-                        child: Center(
-                          child: Text(
-                            "아이디",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey[600],
-                            ),
-                          ),
+                      SizedBox(width: 10.w),
+                      // 텍스트도 Container 없이 직접 배치
+                      Text(
+                        "아이디",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],
@@ -757,38 +806,34 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                 ),
               ),
               SizedBox(width: 8.w),
-              // 비밀번호 입력 필드
+              // 비밀번호 입력 필드 - 정렬 수정
               Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF0F0F0),
-                    borderRadius: BorderRadius.circular(16.r),
+                child: Neumorphic(
+                  style: NeumorphicStyle(
+                    depth: -3,
+                    intensity: 0.7,
+                    shape: NeumorphicShape.flat,
+                    lightSource: LightSource.topLeft,
+                    color: Color(0xFFF5F5F5),
+                    boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16.r)),
                   ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    // 명시적으로 세로 가운데 정렬
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        height: 20.h,
-                        child: Center(
-                          child: Icon(
-                            Icons.lock_outline,
-                            size: 18.sp,
-                            color: Color(0xFF19B3F6),
-                          ),
-                        ),
+                      Icon(
+                        Icons.lock_outline,
+                        size: 20.sp,
+                        color: Color(0xFF19B3F6),
                       ),
-                      SizedBox(width: 8.w),
-                      Container(
-                        height: 20.h,
-                        child: Center(
-                          child: Text(
-                            "비밀번호",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey[600],
-                            ),
-                          ),
+                      SizedBox(width: 10.w),
+                      Text(
+                        "비밀번호",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],
@@ -798,54 +843,77 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
             ],
           ),
 
-          SizedBox(height: 8.h),
+          SizedBox(height: 10.h),
 
-          // 댓글 입력 필드 - 여러 줄 입력을 위해 높이 증가
+          // 2. 댓글 입력 필드 - 더 넓은 입력창과 간소화된 디자인
           Container(
-            padding: EdgeInsets.fromLTRB(16.w, 4.h, 4.w, 4.h),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
-                color: Colors.grey[200]!,
-                width: 1,
+                color: Color(0xFFE0E0E0),
+                width: 1.5,
               ),
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end, // 하단 정렬
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // 입력 영역 - TextField로 변경하여 실제 입력 가능하게
                 Expanded(
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minHeight: 40.h,
-                      maxHeight: 100.h, // 최대 높이 설정
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft, // 텍스트 왼쪽 정렬
-                      child: Text(
-                        "생각을 공유해주세요 :)",
-                        style: TextStyle(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 8.h, 8.w, 8.h),
+                    child: TextField(
+                      minLines: 1,
+                      maxLines: 3,  // 최대 3줄까지 입력 가능
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: InputDecoration(
+                        hintText: "생각을 공유해주세요 :)",
+                        hintStyle: TextStyle(
                           fontSize: 15.sp,
-                          color: Colors.grey[500],
+                          color: Colors.grey[400],
                         ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 8.h),
+                        isDense: true,
+                      ),
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        color: Colors.black87,
+                        height: 1.3,
                       ),
                     ),
                   ),
                 ),
-                // 전송 버튼
+
+                // 전송 버튼만 유지하고 디자인 개선
                 Container(
-                  margin: EdgeInsets.only(left: 8.w),
+                  margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
                     color: Color(0xFF19B3F6),
-                    borderRadius: BorderRadius.circular(20.r),
+                    borderRadius: BorderRadius.circular(18.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFF19B3F6).withOpacity(0.2),
+                        blurRadius: 4,
+                        spreadRadius: 0,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
                   ),
-                  child: SizedBox(
-                    width: 40.w,
-                    height: 40.w,
-                    child: Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                      size: 28.sp,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18.r),
+                      onTap: () {},
+                      child: Container(
+                        width: 44.w,
+                        height: 44.w,
+                        child: Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                          size: 22.sp,
+                        ),
+                      ),
                     ),
                   ),
                 ),
