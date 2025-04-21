@@ -17,6 +17,8 @@ class DiscussionRoomScreen extends StatefulWidget {
 
 class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
   bool _isRealTimeSummaryEnabled = false;
+  String? _selectedSentiment; // null, 'positive', 'neutral', 'negative'
+  bool _isAnimating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,24 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                     _buildInfoSection(),
                     SizedBox(height: 12.h),
                     _buildSummaryToggle(),
+                    SizedBox(height: 12.h),
+                    // 새로 추가한 감정 버튼 위젯
+                    AnimatedSwitcher(
+                      duration: Duration(milliseconds: 300),
+                      transitionBuilder: (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: Offset(0.0, 0.05),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _buildSentimentButtons(),
+                    ),
                     // 타인에 대한 비방글 경고 메시지 (배경에 직접 배치)
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -78,7 +98,223 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       ),
     );
   }
+  // 2. _buildSummaryToggle() 메서드 아래에 감정 반응 버튼 위젯 추가
+  Widget _buildSentimentButtons() {
+    // 감정이 선택되지 않은 경우: 3개의 버튼 표시
+    if (_selectedSentiment == null) {
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "당신의 의견을 알려주세요",
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                _buildSentimentButton(
+                  label: "긍정",
+                  color: Color(0xFF19B3F6),
+                  onTap: () => _selectSentiment('positive'),
+                ),
+                SizedBox(width: 10.w),
+                _buildSentimentButton(
+                  label: "중립",
+                  color: Colors.grey,
+                  onTap: () => _selectSentiment('neutral'),
+                ),
+                SizedBox(width: 10.w),
+                _buildSentimentButton(
+                  label: "부정",
+                  color: Color(0xFFE74C3C),
+                  onTap: () => _selectSentiment('negative'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+    // 감정이 선택된 경우: 선택된 버튼과 재선택 버튼 표시
+    else {
+      String label;
+      Color color;
 
+      switch (_selectedSentiment) {
+        case 'positive':
+          label = "긍정";
+          color = Color(0xFF19B3F6);
+          break;
+        case 'neutral':
+          label = "중립";
+          color = Colors.grey;
+          break;
+        case 'negative':
+          label = "부정";
+          color = Color(0xFFE74C3C);
+          break;
+        default:
+          label = "";
+          color = Colors.grey;
+      }
+
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "당신의 의견",
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSentimentButton(
+                    label: label,
+                    color: color,
+                    onTap: () {}, // 이미 선택됨
+                    isSelected: true,
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                TextButton(
+                  onPressed: _resetSentiment,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.grey[200],
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                  child: Text(
+                    "재선택",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+  }
+  Widget _buildSentimentButton({
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    bool isSelected = false,
+  }) {
+    return Expanded(
+      child: Material(
+        color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8.r),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: color,
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isSelected ? Icons.check_circle : Icons.circle_outlined,
+                  color: color,
+                  size: 20.sp,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+// 4. 감정 선택 처리 메서드
+  void _selectSentiment(String sentiment) {
+    setState(() {
+      _isAnimating = true;
+      _selectedSentiment = sentiment;
+    });
+
+    // 애니메이션 효과를 위한 지연
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _isAnimating = false;
+        });
+      }
+    });
+  }
+
+// 5. 감정 재선택 메서드
+  void _resetSentiment() {
+    setState(() {
+      _isAnimating = true;
+      _selectedSentiment = null;
+    });
+
+    // 애니메이션 효과를 위한 지연
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _isAnimating = false;
+        });
+      }
+    });
+  }
   // 헤더 부분 (제목, 뒤로가기, 새로고침, 공유 버튼)
   Widget _buildHeader(BuildContext context) {
     return Container(
