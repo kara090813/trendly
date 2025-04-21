@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
+import 'dart:math' as math;
 
 class DiscussionRoomScreen extends StatefulWidget {
   final int discussionRoomId;
@@ -15,10 +16,41 @@ class DiscussionRoomScreen extends StatefulWidget {
   State<DiscussionRoomScreen> createState() => _DiscussionRoomScreenState();
 }
 
-class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
+class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with SingleTickerProviderStateMixin {
   bool _isRealTimeSummaryEnabled = false;
   String? _selectedSentiment; // null, 'positive', 'neutral', 'negative'
   bool _isAnimating = false;
+
+  // 애니메이션 컨트롤러
+  late AnimationController _animController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 펄스 애니메이션 컨트롤러 설정
+    _animController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 400),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeInOutBack)
+    );
+
+    _animController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _animController.reverse();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +59,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 고정된 헤더
-            _buildHeader(context),
+            // 헤더 영역
+            _buildHeaderSection(context),
 
             // 스크롤 가능한 본문
             Expanded(
@@ -40,49 +72,31 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                     SizedBox(height: 12.h),
                     _buildInfoSection(),
                     SizedBox(height: 12.h),
-                    _buildSummaryToggle(),
+                    _buildSummaryToggleSection(),
                     SizedBox(height: 12.h),
-                    // 새로 추가한 감정 버튼 위젯
+                    // 감정 버튼 영역 (애니메이션 전환)
                     AnimatedSwitcher(
-                      duration: Duration(milliseconds: 300),
+                      duration: Duration(milliseconds: 500),
                       transitionBuilder: (Widget child, Animation<double> animation) {
                         return FadeTransition(
                           opacity: animation,
                           child: SlideTransition(
                             position: Tween<Offset>(
-                              begin: Offset(0.0, 0.05),
+                              begin: Offset(0.0, 0.1),
                               end: Offset.zero,
-                            ).animate(animation),
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            )),
                             child: child,
                           ),
                         );
                       },
-                      child: _buildSentimentButtons(),
+                      child: _buildEmotionButtonsSection(),
                     ),
-                    // 타인에 대한 비방글 경고 메시지 (배경에 직접 배치)
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 16.w),
-                      // 좌우 마진 추가
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 16.sp,
-                            color: Colors.grey[600],
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            "타인에 대한 비방글은 삭제될 수 있습니다",
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
+                    // 경고 메시지
+                    _buildWarningMessage(),
                     SizedBox(height: 4.h),
                     _buildCommentSection(),
                     SizedBox(height: 12.h),
@@ -91,18 +105,46 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
               ),
             ),
 
-            // 고정된 입력 섹션
+            // 입력 영역
             _buildInputSection(),
           ],
         ),
       ),
     );
   }
-  // 2. _buildSummaryToggle() 메서드 아래에 감정 반응 버튼 위젯 추가
-  Widget _buildSentimentButtons() {
-    // 감정이 선택되지 않은 경우: 3개의 버튼 표시
+
+  // 경고 메시지 위젯
+  Widget _buildWarningMessage() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 16.sp,
+            color: Colors.grey[600],
+          ),
+          SizedBox(width: 6.w),
+          Text(
+            "타인에 대한 비방글은 삭제될 수 있습니다",
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 감정 선택 버튼 섹션
+  Widget _buildEmotionButtonsSection() {
+    // 감정이 선택되지 않은 경우
     if (_selectedSentiment == null) {
       return Container(
+        key: ValueKey('emotion_selection'),
         margin: EdgeInsets.symmetric(horizontal: 16.w),
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         decoration: BoxDecoration(
@@ -111,71 +153,78 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: Offset(0, 1),
+              blurRadius: 8,
+              offset: Offset(0, 2),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "당신의 의견을 알려주세요",
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 16.h),
             Row(
               children: [
-                _buildSentimentButton(
-                  label: "긍정",
+                Icon(
+                  Icons.how_to_vote_rounded,
                   color: Color(0xFF19B3F6),
-                  onTap: () => _selectSentiment('positive'),
+                  size: 24.sp,
                 ),
-                SizedBox(width: 10.w),
-                _buildSentimentButton(
-                  label: "중립",
-                  color: Colors.grey,
-                  onTap: () => _selectSentiment('neutral'),
-                ),
-                SizedBox(width: 10.w),
-                _buildSentimentButton(
-                  label: "부정",
-                  color: Color(0xFFE74C3C),
-                  onTap: () => _selectSentiment('negative'),
+                SizedBox(width: 8.w),
+                Text(
+                  "당신의 의견을 알려주세요",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
+            ),
+            SizedBox(height: 20.h),
+            // 애니메이션된 버튼 행
+            TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: Duration(milliseconds: 800),
+              curve: Curves.elasticOut,
+              builder: (context, double value, child) {
+                return Transform.scale(
+                  scale: value,
+                  child: child,
+                );
+              },
+              child: Row(
+                children: [
+                  _buildEmotionButton(
+                    label: "긍정",
+                    icon: Icons.thumb_up_rounded,
+                    color: Color(0xFF19B3F6),
+                    onTap: () => _handleEmotionSelection('positive'),
+                  ),
+                  SizedBox(width: 10.w),
+                  _buildEmotionButton(
+                    label: "중립",
+                    icon: Icons.thumbs_up_down_rounded,
+                    color: Colors.grey,
+                    onTap: () => _handleEmotionSelection('neutral'),
+                  ),
+                  SizedBox(width: 10.w),
+                  _buildEmotionButton(
+                    label: "부정",
+                    icon: Icons.thumb_down_rounded,
+                    color: Color(0xFFE74C3C),
+                    onTap: () => _handleEmotionSelection('negative'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       );
     }
-    // 감정이 선택된 경우: 선택된 버튼과 재선택 버튼 표시
+    // 감정이 선택된 경우
     else {
-      String label;
-      Color color;
-
-      switch (_selectedSentiment) {
-        case 'positive':
-          label = "긍정";
-          color = Color(0xFF19B3F6);
-          break;
-        case 'neutral':
-          label = "중립";
-          color = Colors.grey;
-          break;
-        case 'negative':
-          label = "부정";
-          color = Color(0xFFE74C3C);
-          break;
-        default:
-          label = "";
-          color = Colors.grey;
-      }
+      final EmotionData emotionData = _getEmotionData(_selectedSentiment!);
 
       return Container(
+        key: ValueKey('emotion_selected'),
         margin: EdgeInsets.symmetric(horizontal: 16.w),
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         decoration: BoxDecoration(
@@ -183,9 +232,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: Offset(0, 1),
+              color: emotionData.color.withOpacity(0.2),
+              blurRadius: 8,
+              spreadRadius: 1,
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -200,81 +250,207 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
               ),
             ),
             SizedBox(height: 16.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSentimentButton(
-                    label: label,
-                    color: color,
-                    onTap: () {}, // 이미 선택됨
-                    isSelected: true,
+            // 선택된 감정 카드 (펄스 애니메이션)
+            ScaleTransition(
+              scale: _pulseAnimation,
+              child: Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: emotionData.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: emotionData.color,
+                    width: 1.5,
                   ),
                 ),
-                SizedBox(width: 10.w),
-                TextButton(
-                  onPressed: _resetSentiment,
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.grey[200],
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeOutBack,
+                      width: 50.w,
+                      height: 50.w,
+                      decoration: BoxDecoration(
+                        color: emotionData.color,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: emotionData.color.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        emotionData.icon,
+                        color: Colors.white,
+                        size: 28.sp,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            emotionData.label,
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                              color: emotionData.color,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            emotionData.description,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            // 재선택 버튼 (페이드인 애니메이션)
+            TweenAnimationBuilder(
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: Duration(milliseconds: 400),
+              curve: Curves.easeOut,
+              builder: (context, double value, child) {
+                return Transform.translate(
+                  offset: Offset(0, 20 * (1 - value)),
+                  child: Opacity(
+                    opacity: value.clamp(0.0, 1.0), // 값을 0~1 사이로 제한
+                    child: child,
+                  ),
+                );
+              },
+              child: GestureDetector(
+                onTap: _resetEmotionSelection,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: Colors.grey[300]!,
+                      width: 1,
                     ),
                   ),
-                  child: Text(
-                    "재선택",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.black87,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.refresh_rounded,
+                        size: 18.sp,
+                        color: Colors.grey[700],
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        "의견 재선택하기",
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
       );
     }
   }
-  Widget _buildSentimentButton({
+
+  // 개별 감정 버튼 위젯 - 수정됨
+  Widget _buildEmotionButton({
     required String label,
+    required IconData icon,
     required Color color,
     required VoidCallback onTap,
-    bool isSelected = false,
   }) {
     return Expanded(
-      child: Material(
-        color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8.r),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8.r),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: color,
-                width: 1.5,
+      child: TweenAnimationBuilder(
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeOut, // easeOutBack에서 easeOut으로 변경
+        builder: (context, double value, child) {
+          // 값을 0과 1 사이로 제한
+          final safeOpacity = value.clamp(0.0, 1.0);
+          final safeScale = 0.5 + (0.5 * value.clamp(0.0, 1.0));
+
+          return Opacity(
+            opacity: safeOpacity,
+            child: Transform.translate(
+              offset: Offset(0, 30 * (1 - safeOpacity)),
+              child: Transform.scale(
+                scale: safeScale,
+                child: child,
               ),
-              borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isSelected ? Icons.check_circle : Icons.circle_outlined,
-                  color: color,
-                  size: 20.sp,
+          );
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // 터치 효과를 위한 애니메이션 실행
+              _animController.forward(from: 0.0);
+              // 실제 감정 선택 처리
+              onTap();
+            },
+            borderRadius: BorderRadius.circular(12.r),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withOpacity(0.9),
+                    color,
+                  ],
                 ),
-                SizedBox(width: 6.w),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: color,
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                    offset: Offset(0, 4),
                   ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      color: Colors.white,
+                      size: 28.sp,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -282,15 +458,52 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-// 4. 감정 선택 처리 메서드
-  void _selectSentiment(String sentiment) {
+  // 감정에 따른 데이터 구조체
+  EmotionData _getEmotionData(String sentiment) {
+    switch (sentiment) {
+      case 'positive':
+        return EmotionData(
+          label: "긍정",
+          icon: Icons.thumb_up_rounded,
+          color: Color(0xFF19B3F6),
+          description: "이 토론에 긍정적인 의견을 표현했습니다",
+        );
+      case 'neutral':
+        return EmotionData(
+          label: "중립",
+          icon: Icons.thumbs_up_down_rounded,
+          color: Colors.grey,
+          description: "이 토론에 중립적인 의견을 표현했습니다",
+        );
+      case 'negative':
+        return EmotionData(
+          label: "부정",
+          icon: Icons.thumb_down_rounded,
+          color: Color(0xFFE74C3C),
+          description: "이 토론에 부정적인 의견을 표현했습니다",
+        );
+      default:
+        return EmotionData(
+          label: "",
+          icon: Icons.circle,
+          color: Colors.grey,
+          description: "",
+        );
+    }
+  }
+
+  // 감정 선택 처리 메서드
+  void _handleEmotionSelection(String sentiment) {
     setState(() {
       _isAnimating = true;
       _selectedSentiment = sentiment;
     });
 
-    // 애니메이션 효과를 위한 지연
-    Future.delayed(Duration(milliseconds: 300), () {
+    // 애니메이션 효과 실행
+    _animController.forward(from: 0.0);
+
+    // 애니메이션 종료 후 상태 업데이트
+    Future.delayed(Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
           _isAnimating = false;
@@ -299,24 +512,31 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     });
   }
 
-// 5. 감정 재선택 메서드
-  void _resetSentiment() {
+  // 감정 재선택 메서드
+  void _resetEmotionSelection() {
     setState(() {
       _isAnimating = true;
-      _selectedSentiment = null;
     });
 
-    // 애니메이션 효과를 위한 지연
     Future.delayed(Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
-          _isAnimating = false;
+          _selectedSentiment = null;
         });
       }
+
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (mounted) {
+          setState(() {
+            _isAnimating = false;
+          });
+        }
+      });
     });
   }
-  // 헤더 부분 (제목, 뒤로가기, 새로고침, 공유 버튼)
-  Widget _buildHeader(BuildContext context) {
+
+  // 헤더 섹션
+  Widget _buildHeaderSection(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       decoration: BoxDecoration(
@@ -336,8 +556,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 뒤로가기 버튼 (둥근 백그라운드와 음영 추가)
-          _buildRoundedButton(
+          // 뒤로가기 버튼
+          _buildCircleButton(
             onTap: () => context.pop(),
             icon: Icons.chevron_left,
             color: Color(0xFF19B3F6),
@@ -346,11 +566,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
 
           SizedBox(width: 12.w),
 
-          // 키워드와 카테고리 (좌측 정렬)
+          // 키워드와 카테고리
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // 좌측 정렬
-              mainAxisAlignment: MainAxisAlignment.center, // 세로 중앙 정렬
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   "크레스티드 게코",
@@ -372,7 +592,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
           ),
 
           // 새로고침 버튼
-          _buildRoundedButton(
+          _buildCircleButton(
             onTap: () {},
             icon: Icons.refresh,
             color: Color(0xFF19B3F6),
@@ -381,8 +601,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
 
           SizedBox(width: 8.w),
 
-          // 클라우드 업로드 버튼
-          _buildRoundedButton(
+          // 공유 버튼
+          _buildCircleButton(
             onTap: () {},
             icon: Icons.cloud_upload_outlined,
             color: Colors.grey[500]!,
@@ -393,8 +613,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 라운드 버튼 위젯
-  Widget _buildRoundedButton({
+  // 원형 버튼 위젯
+  Widget _buildCircleButton({
     required VoidCallback onTap,
     required IconData icon,
     required Color color,
@@ -426,7 +646,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 정보 섹션 (토론방 OPEN, 남은시간) 개선
+  // 정보 섹션 (토론방 시작 시간, 남은 시간)
   Widget _buildInfoSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -487,7 +707,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                                 color: Colors.grey[600],
                               ),
                             ),
-                            // 1. 줄간격 제거 - SizedBox 높이를 0으로 설정
                             SizedBox(height: 0),
                             Text(
                               "오후 12시 56분",
@@ -566,10 +785,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 2. 타이머 블록 크기 증가
+  // 타이머 블록 위젯
   Widget _buildTimeBlock(String time) {
     return Container(
-      // 크기를 더 키움 (42 -> 48)
       width: 48.w,
       height: 48.h,
       alignment: Alignment.center,
@@ -588,15 +806,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       child: Text(
         time,
         style: TextStyle(
-          fontSize: 24.sp, // 숫자 크기도 증가 (22 -> 24)
+          fontSize: 24.sp,
           fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  // 실검 요약 토글
-  Widget _buildSummaryToggle() {
+  // 실검 요약 토글 섹션
+  Widget _buildSummaryToggleSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
@@ -621,8 +839,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          // 커스텀 토글 스위치 (음영 있는 디자인)
-          _buildCustomToggleSwitch(
+          // 커스텀 토글 스위치
+          _buildToggleSwitch(
             value: _isRealTimeSummaryEnabled,
             onChanged: (value) {
               setState(() {
@@ -636,7 +854,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
   }
 
   // 커스텀 토글 스위치
-  Widget _buildCustomToggleSwitch({
+  Widget _buildToggleSwitch({
     required bool value,
     required Function(bool) onChanged,
   }) {
@@ -690,12 +908,12 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 댓글 섹션 - 색상 반전 및 레이아웃 개선
+  // 댓글 섹션
   Widget _buildCommentSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white, // 배경색을 흰색으로 변경
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
@@ -745,7 +963,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
 
           SizedBox(height: 8.h),
 
-          // 각 댓글을 개별 카드로 표시
+          // 댓글 리스트 (예시 하나만 표시)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             child: Column(
@@ -758,78 +976,19 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                   dislikes: 2,
                   comments: 4,
                 ),
-                _buildCommentItem(
-                  nickname: "눈썹미남게코",
-                  time: "12분전",
-                  content: "크레스티드 게코는 야행성이라 낮엔 거의 안 움직여요! 처음엔 고장난 줄 알았음ㅋㅋ",
-                  likes: 134,
-                  dislikes: 3,
-                  comments: 7,
-                ),
-                _buildCommentItem(
-                  nickname: "동물농장매니아",
-                  time: "22분전",
-                  content:
-                      "예전에 TV에서 크레 나왔던 거 봤는데, 진짜 얌전하고 귀엽더라구요. 사료 같은 것도 따로 있나요?",
-                  likes: 76,
-                  dislikes: 1,
-                  comments: 2,
-                ),
-                _buildCommentItem(
-                  nickname: "도마뱀아빠",
-                  time: "30분전",
-                  content: "우리집 크레는 이름이 '콩이'인데, 손 위에 올려놓으면 가만히 있어서 심장 녹음ㅠㅠ",
-                  likes: 243,
-                  dislikes: 4,
-                  comments: 15,
-                ),
-                _buildCommentItem(
-                  nickname: "한밤의게코",
-                  time: "42분전",
-                  content: "야행성이라 밤마다 나랑 같이 생활하는 중... 나보다 더 규칙적인 듯;;",
-                  likes: 118,
-                  dislikes: 3,
-                  comments: 6,
-                ),
-                _buildCommentItem(
-                  nickname: "초보파충류러",
-                  time: "1시간전",
-                  content: "습도는 어느 정도로 유지해야 하나요? 자꾸 피막 벗기기 실패해서 걱정입니다ㅠ",
-                  likes: 97,
-                  dislikes: 6,
-                  comments: 9,
-                ),
-                _buildCommentItem(
-                  nickname: "사랑해크레야",
-                  time: "1시간 20분전",
-                  content: "크레 눈에 속눈썹 같은 거 있어서 너무 예뻐요. 눈 안 닦아줘도 되나 궁금하네요.",
-                  likes: 64,
-                  dislikes: 2,
-                  comments: 3,
-                ),
-                _buildCommentItem(
-                  nickname: "야생의마음",
-                  time: "2시간전",
-                  content: "사육보다 자연이 좋다고 생각하지만... 요즘 자연에서 보기 힘들어진 게 안타깝네요.",
-                  likes: 102,
-                  dislikes: 17,
-                  comments: 11,
-                ),
-                _buildCommentItem(
-                  nickname: "도마도마",
-                  time: "2시간 30분전",
-                  content: "크레는 수직 사육장 좋아한다던데 높이 어느 정도로 맞춰야 해요?",
-                  likes: 55,
-                  dislikes: 0,
-                  comments: 5,
-                ),
-                _buildCommentItem(
-                  nickname: "파충류수집가",
-                  time: "3시간전",
-                  content: "크레는 점프력이 꽤 좋아요. 뚜껑 안 닫으면 탈출합니다 진짜임...",
-                  likes: 149,
-                  dislikes: 9,
-                  comments: 13,
+                // 여기에 더 많은 댓글이 있다는 것을 표시
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "더 많은 댓글 보기 (9+)",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Color(0xFF19B3F6),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -841,7 +1000,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 댓글 아이템 - 색상 반전 및 레이아웃 개선
+  // 댓글 아이템 위젯
   Widget _buildCommentItem({
     required String nickname,
     required String time,
@@ -853,7 +1012,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Color(0xFFF5F5F5), // 카드 배경색을 어둡게 변경
+        color: Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -869,7 +1028,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 닉네임 및 시간을 하나의 행에 배치
+            // 닉네임 및 시간
             Row(
               children: [
                 Text(
@@ -981,7 +1140,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
     );
   }
 
-  // 하단 입력 섹션 - 수정된 버전
+  // 하단 입력 섹션
   Widget _buildInputSection() {
     return Container(
       width: double.infinity,
@@ -1002,10 +1161,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       ),
       child: Column(
         children: [
-          // 1. 아이디/비밀번호 입력 - 수직 정렬 수정
+          // 아이디/비밀번호 입력
           Row(
             children: [
-              // 아이디 입력 필드 - 정렬 수정
+              // 아이디 입력 필드
               Expanded(
                 child: Neumorphic(
                   style: NeumorphicStyle(
@@ -1019,17 +1178,14 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    // 명시적으로 세로 가운데 정렬 설정
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // 아이콘 정렬을 위한 Container 제거
                       Icon(
                         Icons.person_outline,
                         size: 20.sp,
                         color: Color(0xFF19B3F6),
                       ),
                       SizedBox(width: 10.w),
-                      // 텍스트도 Container 없이 직접 배치
                       Text(
                         "아이디",
                         style: TextStyle(
@@ -1042,7 +1198,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                 ),
               ),
               SizedBox(width: 8.w),
-              // 비밀번호 입력 필드 - 정렬 수정
+              // 비밀번호 입력 필드
               Expanded(
                 child: Neumorphic(
                   style: NeumorphicStyle(
@@ -1056,7 +1212,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    // 명시적으로 세로 가운데 정렬
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(
@@ -1081,7 +1236,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
 
           SizedBox(height: 10.h),
 
-          // 2. 댓글 입력 필드 - 더 넓은 입력창과 간소화된 디자인
+          // 댓글 입력 필드
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -1094,13 +1249,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // 입력 영역 - TextField로 변경하여 실제 입력 가능하게
+                // 입력 영역
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(16.w, 8.h, 8.w, 8.h),
                     child: TextField(
                       minLines: 1,
-                      maxLines: 3,  // 최대 3줄까지 입력 가능
+                      maxLines: 3,
                       textAlignVertical: TextAlignVertical.center,
                       decoration: InputDecoration(
                         hintText: "생각을 공유해주세요 :)",
@@ -1121,7 +1276,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
                   ),
                 ),
 
-                // 전송 버튼만 유지하고 디자인 개선
+                // 전송 버튼
                 Container(
                   margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
@@ -1160,4 +1315,19 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> {
       ),
     );
   }
+}
+
+// 감정 데이터 클래스
+class EmotionData {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String description;
+
+  EmotionData({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.description,
+  });
 }
