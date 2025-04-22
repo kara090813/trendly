@@ -250,7 +250,7 @@ class ApiService {
     }
   }
 
-  /// 랜덤 토론방 가져오기 - 신규
+  /// 랜덤 토론방 가져오기
   /// GET /discussion/get_random/<int:count>/
   Future<List<DiscussionRoom>> getRandomDiscussionRooms(int count) async {
     final String url = '$_baseUrl/discussion/get_random/$count/';
@@ -277,7 +277,7 @@ class ApiService {
     }
   }
 
-  /// 여러 키워드 ID로 키워드 정보 가져오기 - 신규
+  /// 여러 키워드 ID로 키워드 정보 가져오기
   /// POST /keyword/get_keyword_many/
   Future<List<Keyword>> getKeywordsByIds(List<int> idList) async {
     final String url = '$_baseUrl/keyword/get_keyword_many/';
@@ -527,7 +527,7 @@ class ApiService {
     }
   }
 
-  /// 토론방 감정 반응 설정 (미구현)
+  /// 토론방 감정 반응 설정
   /// POST /discussion/<int:discussion_room_id>/sentiment/
   Future<bool> setDiscussionSentiment(int roomId, int positive, int neutral, int negative) async {
     final String url = '$_baseUrl/discussion/$roomId/sentiment/';
@@ -537,18 +537,19 @@ class ApiService {
       'negative': negative.toString(),
     };
     try {
-      // API 미구현으로 인한 임시 처리
-      // final response = await _client.post(
-      //   Uri.parse(url),
-      //   headers: _headers,
-      //   body: json.encode(requestData),
-      // );
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestData),
+      );
 
-      print('미구현 API 호출 시뮬레이션: $url');
-      print('요청 데이터: $requestData');
+      if (response.statusCode != 200) {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        print('요청 데이터: $requestData');
+      }
 
-      // 항상 성공으로 가정
-      return true;
+      return response.statusCode == 200;
     } catch (e) {
       print('감정 반응 설정 오류: $e');
       print('요청 URL: $url');
@@ -557,48 +558,62 @@ class ApiService {
     }
   }
 
-  /// 댓글 추천 +1 (미구현)
+  /// 댓글 추천 +1
   /// POST /comment/<int:comment_id>/like/
-  Future<bool> likeComment(int commentId) async {
+  Future<bool> likeComment(int commentId, {bool isCancel = false}) async {
     final String url = '$_baseUrl/comment/$commentId/like/';
+    final Map<String, dynamic> requestData = {
+      'is_cancel': isCancel,
+    };
+
     try {
-      // API 미구현으로 인한 임시 처리
-      // final response = await _client.post(
-      //   Uri.parse(url),
-      //   headers: _headers,
-      // );
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestData),
+      );
 
-      print('미구현 API 호출 시뮬레이션: $url');
+      if (response.statusCode != 200) {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        print('요청 데이터: $requestData');
+      }
 
-      // 항상 성공으로 가정
-      return true;
+      return response.statusCode == 200;
     } catch (e) {
       print('댓글 추천 오류: $e');
       print('요청 URL: $url');
-      print('요청 파라미터: commentId=$commentId');
+      print('요청 파라미터: commentId=$commentId, isCancel=$isCancel');
       rethrow;
     }
   }
 
-  /// 댓글 비추천 +1 (미구현)
+  /// 댓글 비추천 +1
   /// POST /comment/<int:comment_id>/dislike/
-  Future<bool> dislikeComment(int commentId) async {
+  Future<bool> dislikeComment(int commentId, {bool isCancel = false}) async {
     final String url = '$_baseUrl/comment/$commentId/dislike/';
+    final Map<String, dynamic> requestData = {
+      'is_cancel': isCancel,
+    };
+
     try {
-      // API 미구현으로 인한 임시 처리
-      // final response = await _client.post(
-      //   Uri.parse(url),
-      //   headers: _headers,
-      // );
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestData),
+      );
 
-      print('미구현 API 호출 시뮬레이션: $url');
+      if (response.statusCode != 200) {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        print('요청 데이터: $requestData');
+      }
 
-      // 항상 성공으로 가정
-      return true;
+      return response.statusCode == 200;
     } catch (e) {
       print('댓글 비추천 오류: $e');
       print('요청 URL: $url');
-      print('요청 파라미터: commentId=$commentId');
+      print('요청 파라미터: commentId=$commentId, isCancel=$isCancel');
       rethrow;
     }
   }
