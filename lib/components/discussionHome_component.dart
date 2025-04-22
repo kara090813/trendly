@@ -890,10 +890,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 color: Color(0xFFFFFFFF),
                 child: InkWell(
                   onTap: () {
-                    // 토론방 입장
-                   context.push('/discussion/123');
-                    // 실제 구현 시:
-                    // context.push('/discussion/${room.id}');
+                    context.push('/discussion/${room.id}');
                   },
                   child: Center(
                     child: Column(
