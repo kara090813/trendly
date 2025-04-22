@@ -190,8 +190,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-  // 수정된 선택 버튼 부분
   Widget _buildSelectionButtons() {
+    // 애니메이션 타이밍 중앙 관리를 위한 변수들
+    final motionDuration = 550.ms;
+    final fadeDuration = 450.ms;  // 이동 애니메이션보다 짧게 설정
+    final animCurve = Curves.easeOutCirc;
+    final fadeCurve = Curves.easeIn;
+
     return Row(
       children: [
         Expanded(
@@ -201,7 +206,24 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
             icon: Icons.thumb_up_rounded,
             color: Color(0xFF19B3F6),
             onTap: () => _handleEmotionSelection('positive'),
-          ).animate().fadeIn(duration: 400.ms),
+          ).animate()
+              .moveX(
+              begin: -100,
+              end: 0,
+              duration: motionDuration,
+              curve: animCurve
+          )
+              .scale(
+              begin: Offset(0.6, 0.6),
+              end: Offset(1.0, 1.0),
+              duration: motionDuration,
+              curve: animCurve
+          )
+              .fadeIn(
+              begin: 0.0,
+              duration: fadeDuration,
+              curve: fadeCurve
+          ),
         ),
         SizedBox(width: 10.w),
         Expanded(
@@ -211,7 +233,24 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
             icon: Icons.thumbs_up_down_rounded,
             color: Colors.grey,
             onTap: () => _handleEmotionSelection('neutral'),
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+          ).animate()
+              .moveY(
+              begin: 100,
+              end: 0,
+              duration: motionDuration,
+              curve: animCurve
+          )
+              .scale(
+              begin: Offset(0.6, 0.6),
+              end: Offset(1.0, 1.0),
+              duration: motionDuration,
+              curve: animCurve
+          )
+              .fadeIn(
+              begin: 0.0,
+              duration: fadeDuration,
+              curve: fadeCurve
+          ),
         ),
         SizedBox(width: 10.w),
         Expanded(
@@ -221,12 +260,28 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
             icon: Icons.thumb_down_rounded,
             color: Color(0xFFE74C3C),
             onTap: () => _handleEmotionSelection('negative'),
-          ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
+          ).animate()
+              .moveX(
+              begin: 100,
+              end: 0,
+              duration: motionDuration,
+              curve: animCurve
+          )
+              .scale(
+              begin: Offset(0.6, 0.6),
+              end: Offset(1.0, 1.0),
+              duration: motionDuration,
+              curve: animCurve
+          )
+              .fadeIn(
+              begin: 0.0,
+              duration: fadeDuration,
+              curve: fadeCurve
+          ),
         ),
       ],
     );
   }
-
 // 선택 후 - 선택된 의견과 재선택 버튼
   Widget _buildSelectedOpinion() {
     final EmotionData emotionData = _getEmotionData(_selectedSentiment!);
