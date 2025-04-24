@@ -24,6 +24,7 @@ class AppBarIconWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 10.h,),
           Image.asset(
             imageUrl,
             width: iconSize,

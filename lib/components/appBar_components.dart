@@ -22,9 +22,9 @@ class AppBarComponent extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(50),
+            color: Colors.black.withAlpha(30),
             blurRadius: 5,
-            offset: const Offset(0, -1),
+            offset: const Offset(0, -3),
           ),
         ],
         borderRadius: BorderRadius.only(
@@ -34,6 +34,7 @@ class AppBarComponent extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           AppBarIconWidget(
             imageUrl: 'assets/img/items/bar_home.png',

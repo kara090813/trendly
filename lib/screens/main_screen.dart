@@ -49,10 +49,18 @@ class _MainScreenState extends State<MainScreen> {
           ),
 
           // 하단 앱바
-          AppBarComponent(
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
-          ),
+          Container(
+            color: Colors.white, // AppBar 배경색과 맞춰줘
+            child: SafeArea(
+              top: false,
+              child: AppBarComponent(
+                currentIndex: _selectedIndex,
+                onTap: _onItemTapped,
+              ),
+            ),
+          )
+
+
         ],
       ),
     );

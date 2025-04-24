@@ -5,7 +5,6 @@ import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
-import 'dart:math' as math;
 
 import '../models/_models.dart';
 import '../services/api_service.dart';
@@ -36,6 +35,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   bool _isSentimentUpdating = false;
   bool _isCommenting = false;
   String _summaryType = '3줄'; // 기본 요약 타입
+  bool _isRefreshing = false;  // 새로고침 진행 중인지 상태
 
   // 텍스트 컨트롤러
   final TextEditingController _commentController = TextEditingController();
@@ -87,23 +87,31 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     });
   }
 
-  // 토론방 정보 로드
+  // 토론방 정보 로드 함수 수정
   Future<void> _loadDiscussionRoomData() async {
+    // 새로고침 시작 시 상태 업데이트
     setState(() {
-      _isLoading = true;
+      if (_isLoading) {
+        // 초기 로딩인 경우
+        _isLoading = true;
+      } else {
+        // 새로고침인 경우
+        _isRefreshing = true;
+      }
     });
 
     try {
-      // 1. 토론방 정보 가져오기
+      // 데이터 로드 로직
       final discussionRoom =
-          await _apiService.getDiscussionRoomById(widget.discussionRoomId);
-
-      // 2. 토론방 관련 마지막 키워드 정보 가져오기
+      await _apiService.getDiscussionRoomById(widget.discussionRoomId);
       final keyword = await _apiService
           .getLatestKeywordByDiscussionRoomId(widget.discussionRoomId);
-
-      // 3. 토론방 댓글 가져오기 (인기순)
       await _loadComments(isPopular: true);
+
+      if (_isRefreshing) {
+        await Future.delayed(Duration(milliseconds: 600));
+      }
+
 
       if (mounted) {
         setState(() {
@@ -114,12 +122,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           if (discussionRoom.isClosed) {
             _expireTime = null;
           } else {
-            // 업데이트 시간 기준으로 24시간 계산
             if (discussionRoom.updatedAt != null) {
-              // 업데이트 시간이 있으면 업데이트 시간 기준
               _expireTime = discussionRoom.updatedAt!.add(Duration(hours: 24));
             } else {
-              // 업데이트 시간이 없으면 생성 시간 기준
               _expireTime = discussionRoom.createdAt.add(Duration(hours: 24));
             }
             _updateRemainingTime();
@@ -127,6 +132,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           }
 
           _isLoading = false;
+          _isRefreshing = false; // 새로고침 완료
         });
       }
     } catch (e) {
@@ -134,9 +140,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isRefreshing = false;
         });
 
-        // 에러 메시지 표시
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('토론방 정보를 불러오는 중 오류가 발생했습니다.')),
         );
@@ -209,7 +215,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   void _loadUserPreference() {
     // 오류가 발생하지 않도록 빌드 단계에서 분리하여 호출
     final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
+    Provider.of<UserPreferenceProvider>(context, listen: false);
 
     // 필요한 경우에만 기본 정보 로드 (직접 호출하지 않음)
     if (provider.nickname != null) {
@@ -224,9 +230,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 이전 선택 감정 로드
   void _loadPreviousSentiment() async {
     final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
+    Provider.of<UserPreferenceProvider>(context, listen: false);
     final sentiment =
-        await provider.checkRoomSentiment(widget.discussionRoomId);
+    await provider.checkRoomSentiment(widget.discussionRoomId);
 
     if (sentiment != null && mounted) {
       setState(() {
@@ -253,14 +259,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
             : Column(
-                children: [
-                  // 헤더 영역
-                  _buildHeaderSection(context),
+          children: [
+            // 헤더 영역 - 항상 온전히 표시 (새로고침 시에도)
+            _buildHeaderSection(context),
 
-                  // 스크롤 가능한 본문
-                  Expanded(
+            // 나머지 콘텐츠 영역 - 새로고침 효과 적용
+            Expanded(
+              child: Stack(
+                children: [
+                  // 메인 콘텐츠 부분
+                  Opacity(
+                    opacity: _isRefreshing ? 0.3 : 1.0,
                     child: SingleChildScrollView(
-                      physics: BouncingScrollPhysics(),
+                      physics: _isRefreshing
+                          ? NeverScrollableScrollPhysics()
+                          : BouncingScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -269,12 +282,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                           SizedBox(height: 12.h),
                           _buildSummaryToggleSection(),
                           SizedBox(height: 12.h),
-                          // 감정 버튼 영역 (애니메이션 전환)
                           AnimatedSwitcher(
                             duration: Duration(milliseconds: 600),
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                              // custom 전환 효과
+                            transitionBuilder: (Widget child, Animation<double> animation) {
                               return FadeTransition(
                                 opacity: animation,
                                 child: ScaleTransition(
@@ -289,8 +299,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             },
                             child: _buildEmotionButtonsSection(),
                           ),
-
-                          // 경고 메시지
                           _buildWarningMessage(),
                           SizedBox(height: 4.h),
                           _buildCommentSection(),
@@ -300,10 +308,55 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     ),
                   ),
 
-                  // 입력 영역
-                  _buildInputSection(),
+                  // 간소화된 새로고침 오버레이
+                  if (_isRefreshing)
+                    Center(
+                      child: Container(
+                        width: 120.w,
+                        height: 120.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(16.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 50.w,
+                              height: 50.w,
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF19B3F6),
+                                strokeWidth: 3.w,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            Text(
+                              "새로고침 중...",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF19B3F6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
+            ),
+
+            // 입력 영역
+            _buildInputSection(),
+          ],
+        ),
       ),
     );
   }
@@ -334,7 +387,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-  // 감정 선택 버튼 섹션 수정
+  // 감정 선택 버튼 섹션
   Widget _buildEmotionButtonsSection() {
     // 고정 크기로 컨테이너 설정
     final containerHeight = 180.h;
@@ -361,28 +414,28 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       child: isDisabled
           ? _buildDisabledEmotionSection() // 토론방 종료시 표시
           : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 헤더 - 선택 전/후에 따라 다르게 표시
-                Text(
-                  _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-
-                // 애니메이션 영역 - Expanded로 남은 공간 채우기
-                _isSentimentUpdating
-                    ? Center(child: CircularProgressIndicator())
-                    : Expanded(
-                        child: _selectedSentiment == null
-                            ? _buildSelectionButtons() // 선택 전 버튼들
-                            : _buildSelectedOpinion() // 선택 후 내용
-                        ),
-              ],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 헤더 - 선택 전/후에 따라 다르게 표시
+          Text(
+            _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
             ),
+          ),
+          SizedBox(height: 16.h),
+
+          // 애니메이션 영역 - Expanded로 남은 공간 채우기
+          _isSentimentUpdating
+              ? Center(child: CircularProgressIndicator())
+              : Expanded(
+              child: _selectedSentiment == null
+                  ? _buildSelectionButtons() // 선택 전 버튼들
+                  : _buildSelectedOpinion() // 선택 후 내용
+          ),
+        ],
+      ),
     );
   }
 
@@ -438,15 +491,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           )
               .animate()
               .moveX(
-                  begin: -100,
-                  end: 0,
-                  duration: motionDuration,
-                  curve: animCurve)
+              begin: -100,
+              end: 0,
+              duration: motionDuration,
+              curve: animCurve)
               .scale(
-                  begin: Offset(0.6, 0.6),
-                  end: Offset(1.0, 1.0),
-                  duration: motionDuration,
-                  curve: animCurve)
+              begin: Offset(0.6, 0.6),
+              end: Offset(1.0, 1.0),
+              duration: motionDuration,
+              curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
         SizedBox(width: 10.w),
@@ -460,15 +513,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           )
               .animate()
               .moveY(
-                  begin: 100,
-                  end: 0,
-                  duration: motionDuration,
-                  curve: animCurve)
+              begin: 100,
+              end: 0,
+              duration: motionDuration,
+              curve: animCurve)
               .scale(
-                  begin: Offset(0.6, 0.6),
-                  end: Offset(1.0, 1.0),
-                  duration: motionDuration,
-                  curve: animCurve)
+              begin: Offset(0.6, 0.6),
+              end: Offset(1.0, 1.0),
+              duration: motionDuration,
+              curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
         SizedBox(width: 10.w),
@@ -482,15 +535,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           )
               .animate()
               .moveX(
-                  begin: 100,
-                  end: 0,
-                  duration: motionDuration,
-                  curve: animCurve)
+              begin: 100,
+              end: 0,
+              duration: motionDuration,
+              curve: animCurve)
               .scale(
-                  begin: Offset(0.6, 0.6),
-                  end: Offset(1.0, 1.0),
-                  duration: motionDuration,
-                  curve: animCurve)
+              begin: Offset(0.6, 0.6),
+              end: Offset(1.0, 1.0),
+              duration: motionDuration,
+              curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
       ],
@@ -539,18 +592,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                   ),
                 )
                     .animate(
-                        onComplete: (controller) =>
-                            _animController.forward(from: 0.0))
+                    onComplete: (controller) =>
+                        _animController.forward(from: 0.0))
                     .moveY(
-                        begin: 20,
-                        end: 0,
-                        duration: 400.ms,
-                        curve: Curves.easeOutCubic)
+                    begin: 20,
+                    end: 0,
+                    duration: 400.ms,
+                    curve: Curves.easeOutCubic)
                     .scale(
-                        begin: Offset(0.6, 0.6),
-                        end: Offset(1.0, 1.0),
-                        duration: 600.ms,
-                        curve: Curves.elasticOut),
+                    begin: Offset(0.6, 0.6),
+                    end: Offset(1.0, 1.0),
+                    duration: 600.ms,
+                    curve: Curves.elasticOut),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
@@ -568,11 +621,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       )
                           .animate()
                           .moveX(
-                              begin: 20,
-                              end: 0,
-                              duration: 400.ms,
-                              delay: 200.ms,
-                              curve: Curves.easeOutCubic)
+                          begin: 20,
+                          end: 0,
+                          duration: 400.ms,
+                          delay: 200.ms,
+                          curve: Curves.easeOutCubic)
                           .fadeIn(duration: 300.ms, delay: 200.ms),
                       SizedBox(height: 4.h),
                       Text(
@@ -586,11 +639,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       )
                           .animate()
                           .moveX(
-                              begin: 30,
-                              end: 0,
-                              duration: 500.ms,
-                              delay: 300.ms,
-                              curve: Curves.easeOutCubic)
+                          begin: 30,
+                          end: 0,
+                          duration: 500.ms,
+                          delay: 300.ms,
+                          curve: Curves.easeOutCubic)
                           .fadeIn(duration: 400.ms, delay: 300.ms),
                     ],
                   ),
@@ -640,15 +693,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
             .animate()
             .fadeIn(duration: 400.ms, delay: 500.ms)
             .scale(
-                begin: Offset(0.5, 0.5),
-                end: Offset(1.0, 1.0),
-                duration: 500.ms,
-                curve: Curves.elasticOut)
+            begin: Offset(0.5, 0.5),
+            end: Offset(1.0, 1.0),
+            duration: 500.ms,
+            curve: Curves.elasticOut)
             .rotate(
-                begin: -0.5,
-                end: 0,
-                duration: 600.ms,
-                curve: Curves.easeOutBack),
+            begin: -0.5,
+            end: 0,
+            duration: 600.ms,
+            curve: Curves.easeOutBack),
       ],
     );
   }
@@ -781,7 +834,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 로컬에도 저장
       final provider =
-          Provider.of<UserPreferenceProvider>(context, listen: false);
+      Provider.of<UserPreferenceProvider>(context, listen: false);
       await provider.setRoomSentiment(widget.discussionRoomId, sentiment);
     } catch (e) {
       print('감정 의견 업데이트 오류: $e');
@@ -827,7 +880,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 로컬에서도 제거
       final provider =
-          Provider.of<UserPreferenceProvider>(context, listen: false);
+      Provider.of<UserPreferenceProvider>(context, listen: false);
       await provider.removeRoomSentiment(widget.discussionRoomId);
 
       if (mounted) {
@@ -923,7 +976,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           // 새로고침 버튼
           _buildCircleButton(
             onTap: () {
-              _loadDiscussionRoomData();
+              if (!_isRefreshing) {
+                _loadDiscussionRoomData();
+              }
             },
             icon: Icons.refresh,
             color: Color(0xFF19B3F6),
@@ -1172,7 +1227,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-  // 실검 요약 토글 섹션 - 3버전 토글 적용
+  // 실검 요약 토글 섹션
   Widget _buildSummaryToggleSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1191,6 +1246,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 제목과 On/Off 토글 스위치
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1201,16 +1257,32 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              // 3버전 토글 스위치
-              _buildSummaryToggle(),
+              // 커스텀 On/Off 토글 스위치
+              _buildCustomToggleSwitch(
+                value: _isRealTimeSummaryEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    _isRealTimeSummaryEnabled = value;
+                  });
+                },
+              ),
             ],
           ),
 
-          // 요약 내용 표시 (토글이 켜져있을 때만)
+          // 토글이 켜져있을 때만 요약 종류 토글 및 내용 표시
           if (_isRealTimeSummaryEnabled) ...[
             SizedBox(height: 16.h),
             Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+            SizedBox(height: 12.h),
+
+            // 요약 유형 토글 (3줄, 짧은 글, 긴 글)
+            Align(alignment: Alignment.center, child: _buildSummaryToggle()),
+            SizedBox(height: 12.h),
+            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+
             SizedBox(height: 16.h),
+
+            // 선택된 유형에 따른 요약 내용
             _buildSummaryContent(),
           ],
         ],
@@ -1218,9 +1290,64 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-  // 요약 3버전 토글 버튼
+  // 커스텀 토글 스위치 (On/Off)
+  Widget _buildCustomToggleSwitch({
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        onChanged(!value);
+      },
+      child: Container(
+        width: 52.w,
+        height: 30.h,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15.r),
+          color: value ? Color(0xFF19B3F6) : Colors.grey[300],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 2,
+              spreadRadius: 0,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+              duration: Duration(milliseconds: 200),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2.w),
+                child: Container(
+                  width: 26.w,
+                  height: 26.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 2,
+                        spreadRadius: 0,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 요약 종류 3버전 토글 버튼 (3줄, 짧은 글, 긴 글)
   Widget _buildSummaryToggle() {
-    final double totalWidth = 210.w;
+    final double totalWidth = 230.w; // 조금 더 넓게 설정
     final double buttonWidth = totalWidth / 3;
     final double buttonHeight = 31.h;
 
@@ -1290,12 +1417,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
               child: Row(
                 children: List.generate(
                   ['3줄', '짧은 글', '긴 글'].length,
-                  (index) => Expanded(
+                      (index) => Expanded(
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
                           _summaryType = ['3줄', '짧은 글', '긴 글'][index];
-                          _isRealTimeSummaryEnabled = true; // 토글 켜기
                         });
                       },
                       child: Container(
@@ -1341,16 +1467,16 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: _keyword!.type1
               .map((line) => Padding(
-                    padding: EdgeInsets.only(bottom: 10.h),
-                    child: Text(
-                      line,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        height: 1.5,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                  ))
+            padding: EdgeInsets.only(bottom: 10.h),
+            child: Text(
+              line,
+              style: TextStyle(
+                fontSize: 15.sp,
+                height: 1.5,
+                color: Colors.grey[800],
+              ),
+            ),
+          ))
               .toList(),
         );
 
@@ -1547,7 +1673,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   Widget _buildCommentItem(Comment comment) {
     // 내 댓글인지 확인
     final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
+    Provider.of<UserPreferenceProvider>(context, listen: false);
     final isMyComment = provider.isMyComment(comment.id);
 
     // 이 댓글에 좋아요/싫어요 했는지 확인 (구현되지 않았으므로 기본값 사용)
@@ -1599,13 +1725,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 // 더보기 버튼 (내 댓글일 때만 작동)
                 isMyComment
                     ? GestureDetector(
-                        onTap: () => _showCommentOptions(comment),
-                        child: Icon(
-                          Icons.more_horiz,
-                          size: 16.sp,
-                          color: Colors.grey[400],
-                        ),
-                      )
+                  onTap: () => _showCommentOptions(comment),
+                  child: Icon(
+                    Icons.more_horiz,
+                    size: 16.sp,
+                    color: Colors.grey[400],
+                  ),
+                )
                     : SizedBox.shrink(),
               ],
             ),
@@ -1643,9 +1769,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight:
-                              hasLiked ? FontWeight.w500 : FontWeight.normal,
+                          hasLiked ? FontWeight.w500 : FontWeight.normal,
                           color:
-                              hasLiked ? Color(0xFF19B3F6) : Colors.grey[600],
+                          hasLiked ? Color(0xFF19B3F6) : Colors.grey[600],
                         ),
                       ),
                     ],
@@ -1664,7 +1790,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             : Icons.thumb_down_outlined,
                         size: 16.sp,
                         color:
-                            hasDisliked ? Color(0xFFE74C3C) : Colors.grey[500],
+                        hasDisliked ? Color(0xFFE74C3C) : Colors.grey[500],
                       ),
                       SizedBox(width: 4.w),
                       Text(
@@ -1672,7 +1798,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight:
-                              hasDisliked ? FontWeight.w500 : FontWeight.normal,
+                          hasDisliked ? FontWeight.w500 : FontWeight.normal,
                           color: hasDisliked
                               ? Color(0xFFE74C3C)
                               : Colors.grey[500],
@@ -1779,7 +1905,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 댓글 삭제 처리
   Future<void> _deleteComment(int commentId) async {
     final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
+    Provider.of<UserPreferenceProvider>(context, listen: false);
     final password = provider.password;
 
     if (password == null || password.isEmpty) {
@@ -1817,7 +1943,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     try {
       // 이미 좋아요한 경우 취소, 아니면 좋아요
       final result =
-          await _apiService.likeComment(commentId, isCancel: hasLiked);
+      await _apiService.likeComment(commentId, isCancel: hasLiked);
 
       if (result) {
         // 댓글 목록 새로고침
@@ -1836,7 +1962,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     try {
       // 이미 싫어요한 경우 취소, 아니면 싫어요
       final result =
-          await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
+      await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
 
       if (result) {
         // 댓글 목록 새로고침
@@ -1886,9 +2012,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
                     color: isDisabled ? Colors.grey[200] : Color(0xFFF5F5F5),
-                    boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16.r)),
+                    boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(16.r)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -1912,7 +2040,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
-                            filled: true, // 이걸 꼭 true로!
+                            filled: true,
                             fillColor: Colors.transparent,
                           ),
                           style: TextStyle(
@@ -1936,9 +2064,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
                     color: isDisabled ? Colors.grey[200] : Color(0xFFF5F5F5),
-                    boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(16.r)),
+                    boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(16.r)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -1962,7 +2092,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             ),
                             border: InputBorder.none,
                             isDense: true,
-                            filled: true, // 이걸 꼭 true로!
+                            filled: true,
                             fillColor: Colors.transparent,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -2047,25 +2177,25 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18.r),
                       onTap:
-                          isDisabled || _isCommenting ? null : _submitComment,
+                      isDisabled || _isCommenting ? null : _submitComment,
                       child: Container(
                         width: 44.w,
                         height: 44.w,
                         child: _isCommenting
                             ? SizedBox(
-                                width: 20.w,
-                                height: 20.h,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
-                              )
+                          width: 20.w,
+                          height: 20.h,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white),
+                          ),
+                        )
                             : Icon(
-                                Icons.send_rounded,
-                                color: Colors.white,
-                                size: 22.sp,
-                              ),
+                          Icons.send_rounded,
+                          color: Colors.white,
+                          size: 22.sp,
+                        ),
                       ),
                     ),
                   ),
@@ -2110,7 +2240,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
         // Provider로 사용자 정보 저장
         final provider =
-            Provider.of<UserPreferenceProvider>(context, listen: false);
+        Provider.of<UserPreferenceProvider>(context, listen: false);
         await provider.setNickname(id);
         await provider.setPassword(password);
 
