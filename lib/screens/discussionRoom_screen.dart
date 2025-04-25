@@ -9,6 +9,7 @@ import 'dart:async';
 import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../providers/user_preference_provider.dart';
+import '../widgets/_widgets.dart';  // StylishToast 클래스를 포함
 
 class DiscussionRoomScreen extends StatefulWidget {
   final int discussionRoomId;
@@ -23,7 +24,7 @@ class DiscussionRoomScreen extends StatefulWidget {
 }
 
 class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
 
   // 상태 변수들
@@ -35,7 +36,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   bool _isSentimentUpdating = false;
   bool _isCommenting = false;
   String _summaryType = '3줄'; // 기본 요약 타입
-  bool _isRefreshing = false;  // 새로고침 진행 중인지 상태
+  bool _isRefreshing = false; // 새로고침 진행 중인지 상태
+
+  // 클래스 변수에 추가
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _commentFocusNode = FocusNode();
+  final GlobalKey _commentSectionKey = GlobalKey();
+  bool _isPopularSort = true; // true: 인기순, false: 최신순
 
   // 텍스트 컨트롤러
   final TextEditingController _commentController = TextEditingController();
@@ -112,7 +119,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         await Future.delayed(Duration(milliseconds: 600));
       }
 
-
       if (mounted) {
         setState(() {
           _discussionRoom = discussionRoom;
@@ -143,9 +149,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           _isRefreshing = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('토론방 정보를 불러오는 중 오류가 발생했습니다.')),
-        );
+        StylishToast.error(context, '토론방 정보를 불러오는 중 오류가 발생했습니다.');
       }
     }
   }
@@ -246,6 +250,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     _commentController.dispose();
     _idController.dispose();
     _passwordController.dispose();
+    _commentFocusNode.dispose();
+    _scrollController.dispose();
     _timer?.cancel();
     _animController.dispose();
     super.dispose();
@@ -271,6 +277,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                   Opacity(
                     opacity: _isRefreshing ? 0.3 : 1.0,
                     child: SingleChildScrollView(
+                      controller: _scrollController, // 스크롤 컨트롤러 추가
                       physics: _isRefreshing
                           ? NeverScrollableScrollPhysics()
                           : BouncingScrollPhysics(),
@@ -841,9 +848,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 에러 메시지 표시
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('의견을 저장하는 중 오류가 발생했습니다.')),
-        );
+        StylishToast.error(context, '의견을 저장하는 중 오류가 발생했습니다.');
       }
     } finally {
       // 상태 업데이트
@@ -893,9 +898,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 에러 메시지 표시
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('의견을 초기화하는 중 오류가 발생했습니다.')),
-        );
+        StylishToast.error(context, '의견을 초기화하는 중 오류가 발생했습니다.');
       }
     } finally {
       if (mounted) {
@@ -991,9 +994,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           _buildCircleButton(
             onTap: () {
               // 공유 기능 추가
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('공유 기능은 준비 중입니다.')),
-              );
+              StylishToast.show(context, message: '공유 기능은 준비 중입니다.');
             },
             icon: Icons.cloud_upload_outlined,
             color: Colors.grey[500]!,
@@ -1508,6 +1509,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 댓글 섹션
   Widget _buildCommentSection() {
     return Container(
+      key: _commentSectionKey,
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1546,7 +1548,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
               child: Row(
                 children: [
                   Text(
-                    "추천순",
+                    _isPopularSort ? "추천순" : "최신순",
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -1626,6 +1628,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 InkWell(
                   onTap: () {
                     Navigator.pop(context);
+                    setState(() {
+                      _isPopularSort = true;
+                    });
                     _loadComments(isPopular: true);
                   },
                   child: Container(
@@ -1637,7 +1642,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF19B3F6),
+                        color: _isPopularSort ? Color(0xFF19B3F6) : Colors.black87,
                       ),
                     ),
                   ),
@@ -1646,6 +1651,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 InkWell(
                   onTap: () {
                     Navigator.pop(context);
+                    setState(() {
+                      _isPopularSort = false;
+                    });
                     _loadComments(isPopular: false);
                   },
                   child: Container(
@@ -1657,6 +1665,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
+                        color: !_isPopularSort ? Color(0xFF19B3F6) : Colors.black87,
                       ),
                     ),
                   ),
@@ -1909,9 +1918,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     final password = provider.password;
 
     if (password == null || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('비밀번호가 설정되어 있지 않습니다.')),
-      );
+      StylishToast.error(context, '비밀번호가 설정되어 있지 않습니다.');
       return;
     }
 
@@ -1922,19 +1929,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       if (result) {
         // 댓글 목록 새로고침
         _loadComments();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('댓글이 삭제되었습니다.')),
-        );
+        StylishToast.success(context, '댓글이 삭제되었습니다.');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('댓글 삭제에 실패했습니다.')),
-        );
+        StylishToast.error(context, '댓글 삭제에 실패했습니다.');
       }
     } catch (e) {
       print('댓글 삭제 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('댓글 삭제 중 오류가 발생했습니다.')),
-      );
+      StylishToast.error(context, '댓글 삭제 중 오류가 발생했습니다.');
     }
   }
 
@@ -1951,9 +1952,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       }
     } catch (e) {
       print('좋아요 처리 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다.')),
-      );
+      StylishToast.error(context, '좋아요 처리 중 오류가 발생했습니다.');
     }
   }
 
@@ -1970,9 +1969,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       }
     } catch (e) {
       print('싫어요 처리 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('싫어요 처리 중 오류가 발생했습니다.')),
-      );
+      StylishToast.error(context, '싫어요 처리 중 오류가 발생했습니다.');
+    }
+  }
+
+  // 댓글 섹션으로 즉시 스크롤하는 메서드
+  void _scrollToComments([double? position]) {
+    // 여기서 기본값을 변경하면 됩니다
+    final scrollPosition = position ?? 380.h; // 기본 스크롤 위치 조정
+
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(scrollPosition);
     }
   }
 
@@ -2128,8 +2135,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(16.w, 8.h, 8.w, 8.h),
-                    child: TextField(
+                    child: // 댓글 입력 필드 (TextField 부분만 수정)
+                    TextField(
                       controller: _commentController,
+                      focusNode: _commentFocusNode,
                       enabled: !isDisabled && !_isCommenting,
                       minLines: 1,
                       maxLines: 3,
@@ -2216,9 +2225,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     final String comment = _commentController.text.trim();
 
     if (id.isEmpty || password.isEmpty || comment.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('아이디, 비밀번호, 댓글 내용을 모두 입력해주세요.')),
-      );
+      StylishToast.error(context, '아이디, 비밀번호, 댓글 내용을 모두 입력해주세요.');
       return;
     }
 
@@ -2247,22 +2254,27 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         // 입력 필드 초기화
         _commentController.clear();
 
-        // 댓글 목록 갱신
-        _loadComments();
+        // 키보드 숨기기 및 포커스 해제
+        FocusScope.of(context).unfocus();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('댓글이 등록되었습니다.')),
-        );
+        // 정렬을 최신순으로 변경
+        setState(() {
+          _isPopularSort = false;
+        });
+
+        // 댓글 목록 갱신 (최신순으로)
+        await _loadComments(isPopular: false);
+
+        // 즉시 댓글 섹션으로 스크롤 (조정 가능한 위치)
+        _scrollToComments();
+
+        StylishToast.success(context, '댓글이 등록되었습니다.');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('댓글 등록에 실패했습니다.')),
-        );
+        StylishToast.error(context, '댓글 등록에 실패했습니다.');
       }
     } catch (e) {
       print('댓글 작성 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('댓글 작성 중 오류가 발생했습니다.')),
-      );
+      StylishToast.error(context, '댓글 작성 중 오류가 발생했습니다.');
     } finally {
       if (mounted) {
         setState(() {

@@ -205,15 +205,18 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         ),
 
         // 여기서 SliverPadding의 vertical 패딩 제거
-        SliverList(
-          delegate: SliverChildListDelegate([
-            // 첫 번째 섹션에만 상단 여백 추가
-            _buildSummarySection(),
-            _buildRelatedNewsSection(),
-            _buildDiscussionReactionSection(),
-            _buildTopDiscussionsSection(),
-            SizedBox(height: 20.h),
-          ]),
+        // 콘텐츠에 SafeArea 적용
+        SliverSafeArea(
+          top: false, // 상단은 이미 AppBar에서 처리했으므로 제외
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              _buildSummarySection(),
+              _buildRelatedNewsSection(),
+              _buildDiscussionReactionSection(),
+              _buildTopDiscussionsSection(),
+              SizedBox(height: 20.h),
+            ]),
+          ),
         ),
       ],
     );
