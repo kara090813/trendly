@@ -91,7 +91,16 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserPreference();
       _loadPreviousSentiment();
+      _loadCommentReactions(); // 댓글 반응 데이터 로드 추가
     });
+  }
+
+// 댓글 반응 데이터 로드 메서드 추가
+  void _loadCommentReactions() {
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
+    // 비동기로 댓글 반응 데이터 로드
+    provider.loadCommentReactions();
   }
 
   // 토론방 정보 로드 함수 수정
@@ -110,7 +119,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     try {
       // 데이터 로드 로직
       final discussionRoom =
-      await _apiService.getDiscussionRoomById(widget.discussionRoomId);
+          await _apiService.getDiscussionRoomById(widget.discussionRoomId);
       final keyword = await _apiService
           .getLatestKeywordByDiscussionRoomId(widget.discussionRoomId);
       await _loadComments(isPopular: true);
@@ -219,7 +228,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   void _loadUserPreference() {
     // 오류가 발생하지 않도록 빌드 단계에서 분리하여 호출
     final provider =
-    Provider.of<UserPreferenceProvider>(context, listen: false);
+        Provider.of<UserPreferenceProvider>(context, listen: false);
 
     // 필요한 경우에만 기본 정보 로드 (직접 호출하지 않음)
     if (provider.nickname != null) {
@@ -234,9 +243,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 이전 선택 감정 로드
   void _loadPreviousSentiment() async {
     final provider =
-    Provider.of<UserPreferenceProvider>(context, listen: false);
+        Provider.of<UserPreferenceProvider>(context, listen: false);
     final sentiment =
-    await provider.checkRoomSentiment(widget.discussionRoomId);
+        await provider.checkRoomSentiment(widget.discussionRoomId);
 
     if (sentiment != null && mounted) {
       setState(() {
@@ -265,105 +274,107 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
             : Column(
-          children: [
-            // 헤더 영역 - 항상 온전히 표시 (새로고침 시에도)
-            _buildHeaderSection(context),
-
-            // 나머지 콘텐츠 영역 - 새로고침 효과 적용
-            Expanded(
-              child: Stack(
                 children: [
-                  // 메인 콘텐츠 부분
-                  Opacity(
-                    opacity: _isRefreshing ? 0.3 : 1.0,
-                    child: SingleChildScrollView(
-                      controller: _scrollController, // 스크롤 컨트롤러 추가
-                      physics: _isRefreshing
-                          ? NeverScrollableScrollPhysics()
-                          : BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 12.h),
-                          _buildInfoSection(),
-                          SizedBox(height: 12.h),
-                          _buildSummaryToggleSection(),
-                          SizedBox(height: 12.h),
-                          AnimatedSwitcher(
-                            duration: Duration(milliseconds: 600),
-                            transitionBuilder: (Widget child, Animation<double> animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: ScaleTransition(
-                                  scale: Tween<double>(begin: 0.95, end: 1.0)
-                                      .animate(CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutBack,
-                                  )),
-                                  child: child,
+                  // 헤더 영역 - 항상 온전히 표시 (새로고침 시에도)
+                  _buildHeaderSection(context),
+
+                  // 나머지 콘텐츠 영역 - 새로고침 효과 적용
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        // 메인 콘텐츠 부분
+                        Opacity(
+                          opacity: _isRefreshing ? 0.3 : 1.0,
+                          child: SingleChildScrollView(
+                            controller: _scrollController, // 스크롤 컨트롤러 추가
+                            physics: _isRefreshing
+                                ? NeverScrollableScrollPhysics()
+                                : BouncingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 12.h),
+                                _buildInfoSection(),
+                                SizedBox(height: 12.h),
+                                _buildSummaryToggleSection(),
+                                SizedBox(height: 12.h),
+                                AnimatedSwitcher(
+                                  duration: Duration(milliseconds: 600),
+                                  transitionBuilder: (Widget child,
+                                      Animation<double> animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: ScaleTransition(
+                                        scale:
+                                            Tween<double>(begin: 0.95, end: 1.0)
+                                                .animate(CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOutBack,
+                                        )),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: _buildEmotionButtonsSection(),
                                 ),
-                              );
-                            },
-                            child: _buildEmotionButtonsSection(),
+                                _buildWarningMessage(),
+                                SizedBox(height: 4.h),
+                                _buildCommentSection(),
+                                SizedBox(height: 20.h),
+                              ],
+                            ),
                           ),
-                          _buildWarningMessage(),
-                          SizedBox(height: 4.h),
-                          _buildCommentSection(),
-                          SizedBox(height: 20.h),
-                        ],
-                      ),
+                        ),
+
+                        // 간소화된 새로고침 오버레이
+                        if (_isRefreshing)
+                          Center(
+                            child: Container(
+                              width: 120.w,
+                              height: 120.w,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(16.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 50.w,
+                                    height: 50.w,
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF19B3F6),
+                                      strokeWidth: 3.w,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  Text(
+                                    "새로고침 중...",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF19B3F6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
-                  // 간소화된 새로고침 오버레이
-                  if (_isRefreshing)
-                    Center(
-                      child: Container(
-                        width: 120.w,
-                        height: 120.w,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(16.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 50.w,
-                              height: 50.w,
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF19B3F6),
-                                strokeWidth: 3.w,
-                              ),
-                            ),
-                            SizedBox(height: 12.h),
-                            Text(
-                              "새로고침 중...",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF19B3F6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // 입력 영역
+                  _buildInputSection(),
                 ],
               ),
-            ),
-
-            // 입력 영역
-            _buildInputSection(),
-          ],
-        ),
       ),
     );
   }
@@ -421,28 +432,28 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       child: isDisabled
           ? _buildDisabledEmotionSection() // 토론방 종료시 표시
           : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 헤더 - 선택 전/후에 따라 다르게 표시
-          Text(
-            _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 16.h),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 헤더 - 선택 전/후에 따라 다르게 표시
+                Text(
+                  _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 16.h),
 
-          // 애니메이션 영역 - Expanded로 남은 공간 채우기
-          _isSentimentUpdating
-              ? Center(child: CircularProgressIndicator())
-              : Expanded(
-              child: _selectedSentiment == null
-                  ? _buildSelectionButtons() // 선택 전 버튼들
-                  : _buildSelectedOpinion() // 선택 후 내용
-          ),
-        ],
-      ),
+                // 애니메이션 영역 - Expanded로 남은 공간 채우기
+                _isSentimentUpdating
+                    ? Center(child: CircularProgressIndicator())
+                    : Expanded(
+                        child: _selectedSentiment == null
+                            ? _buildSelectionButtons() // 선택 전 버튼들
+                            : _buildSelectedOpinion() // 선택 후 내용
+                        ),
+              ],
+            ),
     );
   }
 
@@ -498,15 +509,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           )
               .animate()
               .moveX(
-              begin: -100,
-              end: 0,
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: -100,
+                  end: 0,
+                  duration: motionDuration,
+                  curve: animCurve)
               .scale(
-              begin: Offset(0.6, 0.6),
-              end: Offset(1.0, 1.0),
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: Offset(0.6, 0.6),
+                  end: Offset(1.0, 1.0),
+                  duration: motionDuration,
+                  curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
         SizedBox(width: 10.w),
@@ -520,15 +531,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           )
               .animate()
               .moveY(
-              begin: 100,
-              end: 0,
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: 100,
+                  end: 0,
+                  duration: motionDuration,
+                  curve: animCurve)
               .scale(
-              begin: Offset(0.6, 0.6),
-              end: Offset(1.0, 1.0),
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: Offset(0.6, 0.6),
+                  end: Offset(1.0, 1.0),
+                  duration: motionDuration,
+                  curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
         SizedBox(width: 10.w),
@@ -542,15 +553,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           )
               .animate()
               .moveX(
-              begin: 100,
-              end: 0,
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: 100,
+                  end: 0,
+                  duration: motionDuration,
+                  curve: animCurve)
               .scale(
-              begin: Offset(0.6, 0.6),
-              end: Offset(1.0, 1.0),
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: Offset(0.6, 0.6),
+                  end: Offset(1.0, 1.0),
+                  duration: motionDuration,
+                  curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
       ],
@@ -599,18 +610,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                   ),
                 )
                     .animate(
-                    onComplete: (controller) =>
-                        _animController.forward(from: 0.0))
+                        onComplete: (controller) =>
+                            _animController.forward(from: 0.0))
                     .moveY(
-                    begin: 20,
-                    end: 0,
-                    duration: 400.ms,
-                    curve: Curves.easeOutCubic)
+                        begin: 20,
+                        end: 0,
+                        duration: 400.ms,
+                        curve: Curves.easeOutCubic)
                     .scale(
-                    begin: Offset(0.6, 0.6),
-                    end: Offset(1.0, 1.0),
-                    duration: 600.ms,
-                    curve: Curves.elasticOut),
+                        begin: Offset(0.6, 0.6),
+                        end: Offset(1.0, 1.0),
+                        duration: 600.ms,
+                        curve: Curves.elasticOut),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
@@ -628,11 +639,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       )
                           .animate()
                           .moveX(
-                          begin: 20,
-                          end: 0,
-                          duration: 400.ms,
-                          delay: 200.ms,
-                          curve: Curves.easeOutCubic)
+                              begin: 20,
+                              end: 0,
+                              duration: 400.ms,
+                              delay: 200.ms,
+                              curve: Curves.easeOutCubic)
                           .fadeIn(duration: 300.ms, delay: 200.ms),
                       SizedBox(height: 4.h),
                       Text(
@@ -646,11 +657,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       )
                           .animate()
                           .moveX(
-                          begin: 30,
-                          end: 0,
-                          duration: 500.ms,
-                          delay: 300.ms,
-                          curve: Curves.easeOutCubic)
+                              begin: 30,
+                              end: 0,
+                              duration: 500.ms,
+                              delay: 300.ms,
+                              curve: Curves.easeOutCubic)
                           .fadeIn(duration: 400.ms, delay: 300.ms),
                     ],
                   ),
@@ -700,15 +711,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
             .animate()
             .fadeIn(duration: 400.ms, delay: 500.ms)
             .scale(
-            begin: Offset(0.5, 0.5),
-            end: Offset(1.0, 1.0),
-            duration: 500.ms,
-            curve: Curves.elasticOut)
+                begin: Offset(0.5, 0.5),
+                end: Offset(1.0, 1.0),
+                duration: 500.ms,
+                curve: Curves.elasticOut)
             .rotate(
-            begin: -0.5,
-            end: 0,
-            duration: 600.ms,
-            curve: Curves.easeOutBack),
+                begin: -0.5,
+                end: 0,
+                duration: 600.ms,
+                curve: Curves.easeOutBack),
       ],
     );
   }
@@ -841,7 +852,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 로컬에도 저장
       final provider =
-      Provider.of<UserPreferenceProvider>(context, listen: false);
+          Provider.of<UserPreferenceProvider>(context, listen: false);
       await provider.setRoomSentiment(widget.discussionRoomId, sentiment);
     } catch (e) {
       print('감정 의견 업데이트 오류: $e');
@@ -885,7 +896,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 로컬에서도 제거
       final provider =
-      Provider.of<UserPreferenceProvider>(context, listen: false);
+          Provider.of<UserPreferenceProvider>(context, listen: false);
       await provider.removeRoomSentiment(widget.discussionRoomId);
 
       if (mounted) {
@@ -1418,7 +1429,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
               child: Row(
                 children: List.generate(
                   ['3줄', '짧은 글', '긴 글'].length,
-                      (index) => Expanded(
+                  (index) => Expanded(
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
@@ -1468,16 +1479,16 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: _keyword!.type1
               .map((line) => Padding(
-            padding: EdgeInsets.only(bottom: 10.h),
-            child: Text(
-              line,
-              style: TextStyle(
-                fontSize: 15.sp,
-                height: 1.5,
-                color: Colors.grey[800],
-              ),
-            ),
-          ))
+                    padding: EdgeInsets.only(bottom: 10.h),
+                    child: Text(
+                      line,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        height: 1.5,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ))
               .toList(),
         );
 
@@ -1640,7 +1651,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
-                        color: _isPopularSort ? Color(0xFF19B3F6) : Colors.black87,
+                        color:
+                            _isPopularSort ? Color(0xFF19B3F6) : Colors.black87,
                       ),
                     ),
                   ),
@@ -1663,7 +1675,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
-                        color: !_isPopularSort ? Color(0xFF19B3F6) : Colors.black87,
+                        color: !_isPopularSort
+                            ? Color(0xFF19B3F6)
+                            : Colors.black87,
                       ),
                     ),
                   ),
@@ -1676,16 +1690,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-  // 댓글 아이템 위젯
+  // 댓글 아이템 위젯 - 개선된 디자인
   Widget _buildCommentItem(Comment comment) {
     // 내 댓글인지 확인
     final provider =
-    Provider.of<UserPreferenceProvider>(context, listen: false);
+        Provider.of<UserPreferenceProvider>(context, listen: false);
     final isMyComment = provider.isMyComment(comment.id);
 
-    // 이 댓글에 좋아요/싫어요 했는지 확인 (구현되지 않았으므로 기본값 사용)
-    final bool hasLiked = false;
-    final bool hasDisliked = false;
+    // 이 댓글에 좋아요/싫어요 했는지 확인
+    final String? reaction = provider.getCommentReaction(comment.id);
+    final bool hasLiked = reaction == 'like';
+    final bool hasDisliked = reaction == 'dislike';
 
     // 시간 포맷팅
     final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.createdAt);
@@ -1732,13 +1747,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 // 더보기 버튼 (내 댓글일 때만 작동)
                 isMyComment
                     ? GestureDetector(
-                  onTap: () => _showCommentOptions(comment),
-                  child: Icon(
-                    Icons.more_horiz,
-                    size: 16.sp,
-                    color: Colors.grey[400],
-                  ),
-                )
+                        onTap: () => _showCommentOptions(comment),
+                        child: Icon(
+                          Icons.more_horiz,
+                          size: 16.sp,
+                          color: Colors.grey[400],
+                        ),
+                      )
                     : SizedBox.shrink(),
               ],
             ),
@@ -1757,86 +1772,108 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
             SizedBox(height: 12.h),
 
-            // 좋아요/싫어요/댓글 수
+            // 좋아요/싫어요/답글 수
             Row(
               children: [
-                // 좋아요
-                InkWell(
-                  onTap: () => _handleLikeComment(comment.id, hasLiked),
-                  child: Row(
-                    children: [
-                      Icon(
-                        hasLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                        size: 16.sp,
-                        color: hasLiked ? Color(0xFF19B3F6) : Colors.grey[600],
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        (comment.likeCount ?? 0).toString(),
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight:
-                          hasLiked ? FontWeight.w500 : FontWeight.normal,
-                          color:
-                          hasLiked ? Color(0xFF19B3F6) : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
+                // 좋아요 버튼
+                // 좋아요 버튼
+                _buildAnimatedReactionButton(
+                  icon: hasLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  count: comment.likeCount ?? 0,
+                  isActive: hasLiked,
+                  activeColor: Color(0xFF19B3F6),
+                  onTap: () =>
+                      _handleLikeComment(comment.id, hasLiked, hasDisliked),
                 ),
                 SizedBox(width: 16.w),
 
-                // 싫어요
+// 싫어요 버튼
+                _buildAnimatedReactionButton(
+                  icon: hasDisliked
+                      ? Icons.thumb_down
+                      : Icons.thumb_down_outlined,
+                  count: comment.dislikeCount ?? 0,
+                  isActive: hasDisliked,
+                  activeColor: Color(0xFFE74C3C),
+                  onTap: () =>
+                      _handleDislikeComment(comment.id, hasDisliked, hasLiked),
+                ),
+                Spacer(),
+
+                // 답글 버튼
                 InkWell(
-                  onTap: () => _handleDislikeComment(comment.id, hasDisliked),
+                  onTap: () {
+                    // 답글 기능 처리 (나중에 구현)
+                    StylishToast.show(context, message: '답글 기능은 준비 중입니다.');
+                  },
                   child: Row(
                     children: [
                       Icon(
-                        hasDisliked
-                            ? Icons.thumb_down
-                            : Icons.thumb_down_outlined,
+                        Icons.chat_bubble_outline,
                         size: 16.sp,
-                        color:
-                        hasDisliked ? Color(0xFFE74C3C) : Colors.grey[500],
+                        color: Colors.grey[500],
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        (comment.dislikeCount ?? 0).toString(),
+                        (comment.replies ?? 0).toString(),
                         style: TextStyle(
                           fontSize: 13.sp,
-                          fontWeight:
-                          hasDisliked ? FontWeight.w500 : FontWeight.normal,
-                          color: hasDisliked
-                              ? Color(0xFFE74C3C)
-                              : Colors.grey[500],
+                          color: Colors.grey[500],
                         ),
                       ),
                     ],
                   ),
-                ),
-                Spacer(),
-
-                // 댓글 수 (답글)
-                Row(
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_outline,
-                      size: 16.sp,
-                      color: Colors.grey[500],
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      (comment.replies ?? 0).toString(),
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+// 반응 버튼 위젯 (좋아요/싫어요)
+  Widget _buildReactionButton({
+    required IconData icon,
+    required int count,
+    required bool isActive,
+    required Color activeColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: isActive
+                ? activeColor.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20.r),
+            border: isActive
+                ? Border.all(color: activeColor.withOpacity(0.3), width: 1)
+                : null,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 18.sp,
+                color: isActive ? activeColor : Colors.grey[600],
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  color: isActive ? activeColor : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1912,7 +1949,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 댓글 삭제 처리
   Future<void> _deleteComment(int commentId) async {
     final provider =
-    Provider.of<UserPreferenceProvider>(context, listen: false);
+        Provider.of<UserPreferenceProvider>(context, listen: false);
     final password = provider.password;
 
     if (password == null || password.isEmpty) {
@@ -1937,16 +1974,34 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     }
   }
 
-  // 좋아요 처리
-  Future<void> _handleLikeComment(int commentId, bool hasLiked) async {
+  // 좋아요 처리 - 로직 수정
+  Future<void> _handleLikeComment(
+      int commentId, bool hasLiked, bool hasDisliked) async {
     try {
-      // 이미 좋아요한 경우 취소, 아니면 좋아요
+      final provider =
+          Provider.of<UserPreferenceProvider>(context, listen: false);
+
+      // 이미 싫어요 상태인 경우, 싫어요 취소 API 먼저 호출
+      if (hasDisliked) {
+        await _apiService.dislikeComment(commentId, isCancel: true);
+      }
+
+      // 좋아요 상태 변경 API 호출
       final result =
-      await _apiService.likeComment(commentId, isCancel: hasLiked);
+          await _apiService.likeComment(commentId, isCancel: hasLiked);
 
       if (result) {
+        // 로컬 상태 업데이트
+        if (hasLiked) {
+          // 이미 좋아요 상태면 취소
+          await provider.removeCommentReaction(commentId);
+        } else {
+          // 좋아요 설정 (싫어요 상태면 싫어요 제거)
+          await provider.toggleLike(commentId);
+        }
+
         // 댓글 목록 새로고침
-        _loadComments();
+        await _loadComments(isPopular: _isPopularSort);
       }
     } catch (e) {
       print('좋아요 처리 오류: $e');
@@ -1954,20 +2009,115 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     }
   }
 
-  // 싫어요 처리
-  Future<void> _handleDislikeComment(int commentId, bool hasDisliked) async {
+// 싫어요 처리 - 로직 수정
+  Future<void> _handleDislikeComment(
+      int commentId, bool hasDisliked, bool hasLiked) async {
     try {
-      // 이미 싫어요한 경우 취소, 아니면 싫어요
+      final provider =
+          Provider.of<UserPreferenceProvider>(context, listen: false);
+
+      // 이미 좋아요 상태인 경우, 좋아요 취소 API 먼저 호출
+      if (hasLiked) {
+        await _apiService.likeComment(commentId, isCancel: true);
+      }
+
+      // 싫어요 상태 변경 API 호출
       final result =
-      await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
+          await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
 
       if (result) {
+        // 로컬 상태 업데이트
+        if (hasDisliked) {
+          // 이미 싫어요 상태면 취소
+          await provider.removeCommentReaction(commentId);
+        } else {
+          // 싫어요 설정 (좋아요 상태면 좋아요 제거)
+          await provider.toggleDislike(commentId);
+        }
+
         // 댓글 목록 새로고침
-        _loadComments();
+        await _loadComments(isPopular: _isPopularSort);
       }
     } catch (e) {
       print('싫어요 처리 오류: $e');
       StylishToast.error(context, '싫어요 처리 중 오류가 발생했습니다.');
+    }
+  }
+
+  // 댓글 제출 처리 - 댓글 ID 저장 추가
+  Future<void> _submitComment() async {
+    // 입력값 검증
+    final String id = _idController.text.trim();
+    final String password = _passwordController.text.trim();
+    final String comment = _commentController.text.trim();
+
+    if (id.isEmpty || password.isEmpty || comment.isEmpty) {
+      StylishToast.error(context, '아이디, 비밀번호, 댓글 내용을 모두 입력해주세요.');
+      return;
+    }
+
+    setState(() {
+      _isCommenting = true;
+    });
+
+    try {
+      // API 호출하여 댓글 작성
+      final result = await _apiService.addComment(
+          widget.discussionRoomId,
+          id,
+          password,
+          id, // 닉네임으로 ID 사용
+          comment);
+
+      if (result) {
+        // 댓글 등록 성공
+
+        // Provider로 사용자 정보 저장
+        final provider =
+            Provider.of<UserPreferenceProvider>(context, listen: false);
+        await provider.setNickname(id);
+        await provider.setPassword(password);
+
+        // 댓글 목록 갱신 (최신순으로)
+        setState(() {
+          _isPopularSort = false;
+        });
+
+        await _loadComments(isPopular: false);
+
+        // 가장 최근 댓글 ID 찾아서 저장 (내 댓글로 표시)
+        if (_comments.isNotEmpty) {
+          // 최신순으로 가져왔기 때문에 첫 번째 댓글이 방금 작성한 댓글일 가능성이 높음
+          for (var comment in _comments) {
+            if (comment.nick == id) {
+              await provider.addCommentId(comment.id);
+              break;
+            }
+          }
+        }
+
+        // 입력 필드 초기화
+        _commentController.clear();
+
+        // 키보드 숨기기 및 포커스 해제
+        FocusScope.of(context).unfocus();
+
+        // 즉시 댓글 섹션으로 스크롤
+        _scrollToComments();
+
+        StylishToast.success(context, '댓글이 등록되었습니다.');
+      } else {
+        StylishToast.error(context, '댓글 등록에 실패했습니다.');
+      }
+    } catch (e) {
+      print('댓글 작성 오류: $e');
+      StylishToast.error(context, '댓글 작성 중 오류가 발생했습니다.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCommenting = false;
+        });
+      }
     }
   }
 
@@ -1979,6 +2129,49 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(scrollPosition);
     }
+  }
+
+// 좋아요/싫어요 버튼에 애니메이션 효과 추가
+  Widget _buildAnimatedReactionButton({
+    required IconData icon,
+    required int count,
+    required bool isActive,
+    required Color activeColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        // 클릭 시 미세한 스케일 애니메이션 효과
+        onTap();
+      },
+      child: TweenAnimationBuilder(
+        duration: Duration(milliseconds: 200),
+        tween: Tween<double>(begin: 1.0, end: isActive ? 1.0 : 1.0),
+        builder: (context, double scale, child) {
+          return Transform.scale(
+            scale: scale,
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16.sp,
+                  color: isActive ? activeColor : Colors.grey[600],
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+                    color: isActive ? activeColor : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   // 하단 입력 섹션 - 입력 필드 디자인 수정
@@ -2021,7 +2214,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         BorderRadius.circular(16.r)),
                   ),
                   padding:
-                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -2073,7 +2266,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         BorderRadius.circular(16.r)),
                   ),
                   padding:
-                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -2134,7 +2327,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(16.w, 8.h, 8.w, 8.h),
                     child: // 댓글 입력 필드 (TextField 부분만 수정)
-                    TextField(
+                        TextField(
                       controller: _commentController,
                       focusNode: _commentFocusNode,
                       enabled: !isDisabled && !_isCommenting,
@@ -2184,25 +2377,25 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18.r),
                       onTap:
-                      isDisabled || _isCommenting ? null : _submitComment,
+                          isDisabled || _isCommenting ? null : _submitComment,
                       child: Container(
                         width: 44.w,
                         height: 44.w,
                         child: _isCommenting
                             ? SizedBox(
-                          width: 20.w,
-                          height: 20.h,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white),
-                          ),
-                        )
+                                width: 20.w,
+                                height: 20.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
                             : Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                          size: 22.sp,
-                        ),
+                                Icons.send_rounded,
+                                color: Colors.white,
+                                size: 22.sp,
+                              ),
                       ),
                     ),
                   ),
@@ -2213,73 +2406,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         ],
       ),
     );
-  }
-
-  // 댓글 제출 처리
-  Future<void> _submitComment() async {
-    // 입력값 검증
-    final String id = _idController.text.trim();
-    final String password = _passwordController.text.trim();
-    final String comment = _commentController.text.trim();
-
-    if (id.isEmpty || password.isEmpty || comment.isEmpty) {
-      StylishToast.error(context, '아이디, 비밀번호, 댓글 내용을 모두 입력해주세요.');
-      return;
-    }
-
-    setState(() {
-      _isCommenting = true;
-    });
-
-    try {
-      // API 호출하여 댓글 작성
-      final result = await _apiService.addComment(
-          widget.discussionRoomId,
-          id,
-          password,
-          id, // 닉네임으로 ID 사용
-          comment);
-
-      if (result) {
-        // 댓글 등록 성공
-
-        // Provider로 사용자 정보 저장
-        final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
-        await provider.setNickname(id);
-        await provider.setPassword(password);
-
-        // 입력 필드 초기화
-        _commentController.clear();
-
-        // 키보드 숨기기 및 포커스 해제
-        FocusScope.of(context).unfocus();
-
-        // 정렬을 최신순으로 변경
-        setState(() {
-          _isPopularSort = false;
-        });
-
-        // 댓글 목록 갱신 (최신순으로)
-        await _loadComments(isPopular: false);
-
-        // 즉시 댓글 섹션으로 스크롤 (조정 가능한 위치)
-        _scrollToComments();
-
-        StylishToast.success(context, '댓글이 등록되었습니다.');
-      } else {
-        StylishToast.error(context, '댓글 등록에 실패했습니다.');
-      }
-    } catch (e) {
-      print('댓글 작성 오류: $e');
-      StylishToast.error(context, '댓글 작성 중 오류가 발생했습니다.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isCommenting = false;
-        });
-      }
-    }
   }
 
   // 시간 포맷팅 함수들

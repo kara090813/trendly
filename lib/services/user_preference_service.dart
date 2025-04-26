@@ -16,6 +16,7 @@ class UserPreferenceService {
   static const String _nicknameKey = 'discussion_nickname';
   static const String _passwordKey = 'discussion_password';
   static const String _sentimentsKey = 'room_sentiments';
+  static const String _commentReactionsKey = 'comment_reactions';
 
   // 내가 댓글을 작성한 토론방 ID 배열 저장
   Future<bool> saveCommentedRoom(int roomId) async {
@@ -197,6 +198,81 @@ class UserPreferenceService {
       return true;
     } catch (e) {
       print('토론방 의견 삭제 오류: $e');
+      return false;
+    }
+  }
+
+  // 댓글 반응 저장 (좋아요/싫어요)
+  Future<bool> saveCommentReaction(int commentId, String reaction) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? reactionsJson = prefs.getString(_commentReactionsKey);
+
+      // 기존 반응 데이터 가져오기
+      Map<String, String> reactions = {};
+      if (reactionsJson != null) {
+        reactions = Map<String, String>.from(json.decode(reactionsJson));
+      }
+
+      // 새 반응 추가 또는 업데이트
+      reactions[commentId.toString()] = reaction; // 'like' 또는 'dislike'
+
+      // JSON으로 변환하여 저장
+      await prefs.setString(_commentReactionsKey, json.encode(reactions));
+      return true;
+    } catch (e) {
+      print('댓글 반응 저장 오류: $e');
+      return false;
+    }
+  }
+
+  // 댓글 반응 가져오기
+  Future<String?> getCommentReaction(int commentId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? reactionsJson = prefs.getString(_commentReactionsKey);
+
+      if (reactionsJson == null) return null;
+
+      final Map<String, dynamic> reactions = json.decode(reactionsJson);
+      return reactions[commentId.toString()];
+    } catch (e) {
+      print('댓글 반응 가져오기 오류: $e');
+      return null;
+    }
+  }
+
+  // 모든 댓글 반응 가져오기
+  Future<Map<int, String>> getAllCommentReactions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? reactionsJson = prefs.getString(_commentReactionsKey);
+
+      if (reactionsJson == null) return {};
+
+      final Map<String, dynamic> reactions = json.decode(reactionsJson);
+      return reactions.map((key, value) => MapEntry(int.parse(key), value as String));
+    } catch (e) {
+      print('모든 댓글 반응 가져오기 오류: $e');
+      return {};
+    }
+  }
+
+  // 댓글 반응 삭제
+  Future<bool> removeCommentReaction(int commentId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? reactionsJson = prefs.getString(_commentReactionsKey);
+
+      if (reactionsJson == null) return true;
+
+      Map<String, dynamic> reactions = json.decode(reactionsJson);
+      reactions.remove(commentId.toString());
+
+      await prefs.setString(_commentReactionsKey, json.encode(reactions));
+      return true;
+    } catch (e) {
+      print('댓글 반응 삭제 오류: $e');
       return false;
     }
   }

@@ -11,22 +11,34 @@ class UserPreferenceProvider with ChangeNotifier {
   String? _nickname;
   String? _password;
   Map<int, String> _roomSentiments = {};
+  Map<int, String> _commentReactions = {};
 
   // 로딩 상태
   bool _isLoadingProfile = false;
   bool _isLoadingComments = false;
   bool _isLoadingSentiments = false;
+  bool _isLoadingReactions = false;
 
   // Getters
   List<int> get commentedRooms => _commentedRooms;
+
   List<int> get commentIds => _commentIds;
+
   String? get nickname => _nickname;
+
   String? get password => _password;
+
   Map<int, String> get roomSentiments => _roomSentiments;
 
+  Map<int, String> get commentReactions => _commentReactions;
+
   bool get isLoadingProfile => _isLoadingProfile;
+
   bool get isLoadingComments => _isLoadingComments;
+
   bool get isLoadingSentiments => _isLoadingSentiments;
+
+  bool get isLoadingReactions => _isLoadingReactions;
 
   // 앱 시작 시 기본 정보 로드 (닉네임, 비밀번호만)
   Future<void> loadBasicInfo() async {
@@ -73,6 +85,22 @@ class UserPreferenceProvider with ChangeNotifier {
       print('의견 정보 로드 오류: $e');
     } finally {
       _isLoadingSentiments = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadCommentReactions() async {
+    if (_commentReactions.isNotEmpty) return; // 이미 로드된 경우 중복 로드 방지
+
+    _isLoadingReactions = true;
+    notifyListeners();
+
+    try {
+      _commentReactions = await _prefService.getAllCommentReactions();
+    } catch (e) {
+      print('댓글 반응 정보 로드 오류: $e');
+    } finally {
+      _isLoadingReactions = false;
       notifyListeners();
     }
   }
@@ -130,6 +158,81 @@ class UserPreferenceProvider with ChangeNotifier {
       _password = password;
       notifyListeners();
     }
+  }
+
+  // 좋아요/싫어요 여부 확인
+  String? getCommentReaction(int commentId) {
+    return _commentReactions[commentId];
+  }
+
+  // 댓글 좋아요/싫어요 설정
+  Future<void> setCommentReaction(int commentId, String reaction) async {
+    // 이미 같은 반응이 있으면 제거 (토글 효과)
+    if (_commentReactions[commentId] == reaction) {
+      await removeCommentReaction(commentId);
+      return;
+    }
+
+    final success = await _prefService.saveCommentReaction(commentId, reaction);
+    if (success) {
+      _commentReactions[commentId] = reaction;
+      notifyListeners();
+    }
+  }
+
+  // 좋아요 토글
+  Future<void> toggleLike(int commentId) async {
+    // 이미 싫어요 누른 경우 싫어요 제거
+    if (_commentReactions[commentId] == 'dislike') {
+      await removeCommentReaction(commentId);
+    }
+
+    // 좋아요 토글
+    if (_commentReactions[commentId] == 'like') {
+      await removeCommentReaction(commentId);
+    } else {
+      await setCommentReaction(commentId, 'like');
+    }
+  }
+
+  // 싫어요 토글
+  Future<void> toggleDislike(int commentId) async {
+    // 이미 좋아요 누른 경우 좋아요 제거
+    if (_commentReactions[commentId] == 'like') {
+      await removeCommentReaction(commentId);
+    }
+
+    // 싫어요 토글
+    if (_commentReactions[commentId] == 'dislike') {
+      await removeCommentReaction(commentId);
+    } else {
+      await setCommentReaction(commentId, 'dislike');
+    }
+  }
+
+  // 댓글 반응 제거
+  Future<void> removeCommentReaction(int commentId) async {
+    final success = await _prefService.removeCommentReaction(commentId);
+    if (success) {
+      _commentReactions.remove(commentId);
+      notifyListeners();
+    }
+  }
+
+  // 좋아요 누른 댓글 목록 가져오기
+  List<int> getLikedComments() {
+    return _commentReactions.entries
+        .where((entry) => entry.value == 'like')
+        .map((entry) => entry.key)
+        .toList();
+  }
+
+  // 싫어요 누른 댓글 목록 가져오기
+  List<int> getDislikedComments() {
+    return _commentReactions.entries
+        .where((entry) => entry.value == 'dislike')
+        .map((entry) => entry.key)
+        .toList();
   }
 
   // 토론방 의견 설정
