@@ -9,7 +9,7 @@ import 'dart:async';
 import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../providers/user_preference_provider.dart';
-import '../widgets/_widgets.dart';  // StylishToast 클래스를 포함
+import '../widgets/_widgets.dart';
 
 class DiscussionRoomScreen extends StatefulWidget {
   final int discussionRoomId;
@@ -1524,7 +1524,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       ),
       child: Column(
         children: [
-          // 댓글 정렬 헤더
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             decoration: BoxDecoration(
@@ -1541,27 +1540,26 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 ),
               ],
             ),
-            child: InkWell(
-              onTap: () {
-                _showSortOptions(context);
-              },
-              child: Row(
-                children: [
-                  Text(
-                    _isPopularSort ? "추천순" : "최신순",
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "댓글",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
                   ),
-                  SizedBox(width: 4.w),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 18.sp,
-                    color: Color(0xFF19B3F6),
-                  ),
-                ],
-              ),
+                ),
+                SortPopupWidget(
+                  isPopularSort: _isPopularSort,
+                  onSortChanged: (isPopular) {
+                    setState(() {
+                      _isPopularSort = isPopular;
+                    });
+                    _loadComments(isPopular: isPopular);
+                  },
+                ),
+              ],
             ),
           ),
 

@@ -224,7 +224,7 @@ class ApiService {
   }
 
   /// 전체 토론방 목록 가져오기
-  /// GET /discussion/all/
+  /// GET /discussion/all?page=N
   Future<List<DiscussionRoom>> getAllDiscussionRooms({int page = 0}) async {
     final String url = '$_baseUrl/discussion/all?page=$page';
     try {
@@ -251,9 +251,13 @@ class ApiService {
   }
 
   /// 랜덤 토론방 가져오기
-  /// GET /discussion/get_random/<int:count>/
-  Future<List<DiscussionRoom>> getRandomDiscussionRooms(int count) async {
-    final String url = '$_baseUrl/discussion/get_random/$count/';
+  /// GET /discussion/get_random/<int:count>/<int:option>/
+  /// option:
+  /// No option 또는 1: Any (모든 토론방)
+  /// 2: Open only (열린 토론방만)
+  /// 3: Closed only (닫힌 토론방만)
+  Future<List<DiscussionRoom>> getRandomDiscussionRooms(int count, {int option = 1}) async {
+    final String url = '$_baseUrl/discussion/get_random/$count/$option/';
     try {
       final response = await _client.get(
         Uri.parse(url),
@@ -395,6 +399,34 @@ class ApiService {
       print('키워드 토론방 가져오기 오류: $e');
       print('요청 URL: $url');
       print('요청 데이터: $requestData');
+      rethrow;
+    }
+  }
+
+  /// 토론방의 모든 댓글 가져오기
+  /// GET /discussion/<room_id>/comment/
+  Future<List<Comment>> getAllDiscussionComments(int roomId) async {
+    final String url = '$_baseUrl/discussion/$roomId/comment/';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((item) => Comment.fromJson(item)).toList();
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('토론방 모든 댓글 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('토론방 모든 댓글 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: roomId=$roomId');
       rethrow;
     }
   }
@@ -543,13 +575,14 @@ class ApiService {
         body: json.encode(requestData),
       );
 
-      if (response.statusCode != 200) {
+      // 성공 시 202 상태 코드로 변경됨 (기존 200에서)
+      if (response.statusCode != 202) {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');
         print('요청 데이터: $requestData');
       }
 
-      return response.statusCode == 200;
+      return response.statusCode == 202;
     } catch (e) {
       print('감정 반응 설정 오류: $e');
       print('요청 URL: $url');
@@ -573,13 +606,14 @@ class ApiService {
         body: json.encode(requestData),
       );
 
-      if (response.statusCode != 200) {
+      // 성공 시 202 상태 코드로 변경됨 (기존 200에서)
+      if (response.statusCode != 202) {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');
         print('요청 데이터: $requestData');
       }
 
-      return response.statusCode == 200;
+      return response.statusCode == 202;
     } catch (e) {
       print('댓글 추천 오류: $e');
       print('요청 URL: $url');
@@ -603,13 +637,14 @@ class ApiService {
         body: json.encode(requestData),
       );
 
-      if (response.statusCode != 200) {
+      // 성공 시 202 상태 코드로 변경됨 (기존 200에서)
+      if (response.statusCode != 202) {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');
         print('요청 데이터: $requestData');
       }
 
-      return response.statusCode == 200;
+      return response.statusCode == 202;
     } catch (e) {
       print('댓글 비추천 오류: $e');
       print('요청 URL: $url');

@@ -3,3 +3,4 @@ export 'summaryBox_widget.dart';
 export 'summaryToggle_widget.dart';
 export 'detailSummaryToggle_widget.dart';
 export 'stylishToast_widget.dart';
+export 'sortingToggle_widget.dart';

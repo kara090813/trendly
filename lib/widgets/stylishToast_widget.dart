@@ -38,7 +38,7 @@ class StylishToast {
     // 오버레이 엔트리 생성
     _currentToast = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).size.height * position,
+        top: 140.h,
         width: MediaQuery.of(context).size.width,
         child: AnimatedBuilder(
           animation: animation,
