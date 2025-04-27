@@ -1779,6 +1779,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   InkWell(
                     onTap: () {
                       // 답글 기능 처리 (나중에 구현)
+                      context.push('/comment/${comment.id}');
                       StylishToast.show(context, message: '답글 기능은 준비 중입니다.');
                     },
                     child: Row(
@@ -2454,32 +2455,4 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       return '방금 전';
     }
   }
-}
-
-// 감정 데이터 클래스
-class EmotionData {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final String description;
-
-  EmotionData({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.description,
-  });
-}
-
-// 댓글 반응 상태를 저장하는 클래스
-class CommentReaction {
-  String? reactionType; // 'like' 또는 'dislike'
-  int likeCount;
-  int dislikeCount;
-
-  CommentReaction({
-    this.reactionType,
-    required this.likeCount,
-    required this.dislikeCount,
-  });
 }

@@ -29,6 +29,14 @@ class AppRouter {
           return DiscussionRoomScreen(discussionRoomId: discussionRoomId);
         },
       ),
+      GoRoute(
+        path: '/comment/:id',
+        name: 'commentRoom',
+        builder: (context, state) {
+          final int commentRoomId = int.parse(state.pathParameters['id']!);
+          return CommentRoomScreen(commentRoomId: commentRoomId);
+        },
+      ),
     ],
     debugLogDiagnostics: true,
   );
