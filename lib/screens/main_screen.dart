@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../app_theme.dart';
 import '../components/_components.dart';
 import '_screens.dart';
 
@@ -50,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
 
           // 하단 앱바
           Container(
-            color: Colors.white, // AppBar 배경색과 맞춰줘
+            color: AppTheme.getBottomBarColor(context),
             child: SafeArea(
               top: false,
               child: AppBarComponent(

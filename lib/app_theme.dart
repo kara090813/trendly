@@ -1,117 +1,122 @@
 import 'package:flutter/material.dart';
 
+/// 테마 색상만 정의하는 간소화된 AppTheme 클래스
 class AppTheme {
-  /// 기본 색상 설정
+  // 색상 상수 정의
+  // 컨테이너
+  static const Color lightContainer = Color(0xFFFFFFFF);
+  static const Color darkContainer = Color(0xFF21202C);
+
+  // 배경색
+  static const Color lightBackground = Color(0xFFF6F6F6);
+  static const Color darkBackground = Color(0xFF18181A);
+
+  // 토글버튼
+  static const Color lightToggleButton = Color(0xFFFFFFFF);
+  static const Color darkToggleButton = Color(0xFF4F4E5F);
+
+  // 카드
+  static const Color lightCard = Color(0xFFFFFFFF);
+  static const Color darkCard = Color(0xFF3C3B48);
+
+  // 버튼
+  static const Color lightButton = Color(0xFFEFEFF1);
+  static const Color darkButton = Color(0xFF424242);
+
+  // 하단앱바
+  static const Color lightBottomBar = Color(0xFFFFFFFF);
+  static const Color darkBottomBar = Color(0xFF19191D);
+
+  // 텍스트
+  static const Color lightText = Color(0xFF000000);
+  static const Color darkText = Color(0xFFFFFFFF);
+
+  // 앱 주요 색상 (변하지 않는 색상)
+  static const Color primaryBlue = Color(0xFF19B3F6);
+
+  // 기본 폰트 설정
   static const String fontFamily = 'asgm';
 
-  /// 공통 텍스트 스타일
-  static const TextTheme textTheme = TextTheme(
-    displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.bold, fontFamily: fontFamily),
-    displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.bold, fontFamily: fontFamily),
-    displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, fontFamily: fontFamily),
-    headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w600, fontFamily: fontFamily),
-    headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, fontFamily: fontFamily),
-    headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, fontFamily: fontFamily),
-    titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, fontFamily: fontFamily),
-    titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, fontFamily: fontFamily),
-    titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, fontFamily: fontFamily),
-    bodyLarge: TextStyle(fontSize: 16, fontFamily: fontFamily),
-    bodyMedium: TextStyle(fontSize: 14, fontFamily: fontFamily),
-    bodySmall: TextStyle(fontSize: 12, fontFamily: fontFamily),
-    labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, fontFamily: fontFamily),
-    labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, fontFamily: fontFamily),
-    labelSmall: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, fontFamily: fontFamily),
-  );
-
-  /// 공통 버튼 스타일
-  static ButtonStyle getButtonStyle(Color color) {
-    return ButtonStyle(
-      foregroundColor: MaterialStateProperty.all(Colors.white),
-      backgroundColor: MaterialStateProperty.all(color),
-      textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16, fontFamily: fontFamily)),
-    );
-  }
-
-  /// 공통 테마 생성 함수
-  static ThemeData _baseTheme(ColorScheme colorScheme) {
-    return ThemeData(
-      colorScheme: colorScheme,
-      brightness: colorScheme.brightness,
-      textTheme: textTheme,
-      scaffoldBackgroundColor: colorScheme.background,
-      appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: getButtonStyle(colorScheme.primary),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-          side: BorderSide(color: colorScheme.primary),
-          textStyle: const TextStyle(fontSize: 16, fontFamily: fontFamily),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-          textStyle: const TextStyle(fontSize: 16, fontFamily: fontFamily),
-        ),
-      ),
-      iconTheme: IconThemeData(color: colorScheme.onSurface),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
-        selectedItemColor: colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        labelStyle: TextStyle(color: Colors.grey, fontFamily: fontFamily),
-        hintStyle: TextStyle(color: Colors.grey, fontFamily: fontFamily),
-      ),
-    );
-  }
-
-  /// 라이트 테마
+  /// 간소화된 라이트 테마 - 색상 정의만 포함
   static ThemeData get lightTheme {
-    return _baseTheme(
-      const ColorScheme.light(
-        primary: Colors.blue,
-        secondary: Colors.blueAccent,
-        background: Colors.white,
-        surface: Colors.white,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Colors.black,
-        onBackground: Colors.black,
-        error: Colors.red,
-        onError: Colors.white,
+    return ThemeData(
+      brightness: Brightness.light,
+      primaryColor: primaryBlue,
+      scaffoldBackgroundColor: lightBackground,
+      fontFamily: fontFamily,
+      colorScheme: ColorScheme.light(
+        primary: primaryBlue,
+        background: lightBackground,
+        surface: lightContainer,
+        onBackground: lightText,
+        onSurface: lightText,
       ),
     );
   }
 
-  /// 다크 테마
+  /// 간소화된 다크 테마 - 색상 정의만 포함
   static ThemeData get darkTheme {
-    return _baseTheme(
-      ColorScheme.dark(
-        primary: Colors.blueGrey,
-        secondary: Colors.cyan,
-        background: Colors.black,
-        surface: Colors.grey[900]!,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Colors.white,
-        onBackground: Colors.white,
-        error: Colors.redAccent,
-        onError: Colors.white,
+    return ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: primaryBlue,
+      scaffoldBackgroundColor: darkBackground,
+      fontFamily: fontFamily,
+      colorScheme: ColorScheme.dark(
+        primary: primaryBlue,
+        background: darkBackground,
+        surface: darkContainer,
+        onBackground: darkText,
+        onSurface: darkText,
       ),
     );
+  }
+
+  /// 현재 테마가 다크모드인지 확인하는 간편한 메서드
+  static bool isDark(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  /// 현재 테마에 따라 적절한 색상 반환 (위젯 내에서 사용)
+  static Color getContainerColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkContainer
+        : lightContainer;
+  }
+
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBackground
+        : lightBackground;
+  }
+
+  static Color getToggleButtonColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkToggleButton
+        : lightToggleButton;
+  }
+
+  static Color getCardColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkCard
+        : lightCard;
+  }
+
+
+  static Color getButtonColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkButton
+        : lightButton;
+  }
+
+  static Color getBottomBarColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBottomBar
+        : lightBottomBar;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkText
+        : lightText;
   }
 }

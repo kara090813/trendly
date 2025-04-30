@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../app_theme.dart';
+
 class SummaryToggleWidget extends StatefulWidget {
   final String currentType;
   final Function(String) onChanged;
@@ -70,7 +72,7 @@ class _SummaryToggleWidgetState extends State<SummaryToggleWidget> {
               width: buttonWidth,
               height: buttonHeight + 4.h, // 살짝 더 큰 높이로 튀어나옴
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.getToggleButtonColor(context),
                 borderRadius: BorderRadius.circular(15.r),
                 boxShadow: [
                   // 튀어나온 효과를 주는 그림자
@@ -110,7 +112,11 @@ class _SummaryToggleWidgetState extends State<SummaryToggleWidget> {
                         color: Colors.transparent, // 투명 배경으로 탭 이벤트만 받음
                         child: Text(
                           options[index],
-                          style: TextStyle(
+                          style: AppTheme.isDark(context) ? TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.normal,
+                            color: index == selectedIndex ? Colors.white : Colors.black ,
+                          ) :  TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.normal,
                             color: index == selectedIndex ? Colors.black : Colors.white,

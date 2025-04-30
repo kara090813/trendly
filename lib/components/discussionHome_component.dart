@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
 
@@ -182,7 +183,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE9E9EC),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -214,19 +215,28 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                             ),
                             flexibleSpace: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppTheme.getContainerColor(context),
                                 borderRadius: const BorderRadius.only(
                                   bottomLeft: Radius.circular(15),
                                   bottomRight: Radius.circular(15),
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.18),
-                                    spreadRadius: 1,
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                                boxShadow: AppTheme.isDark(context)
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.white.withOpacity(0.18),
+                                          spreadRadius: 1,
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.18),
+                                          spreadRadius: 1,
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                               ),
                               child: SafeArea(child: _buildHeader()),
                             ),
@@ -237,18 +247,28 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                               Container(
                                 margin: EdgeInsets.only(bottom: 16.h),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFFFBFBFB),
+                                  color: AppTheme.getContainerColor(context),
                                   borderRadius: BorderRadius.only(
                                     bottomLeft: Radius.circular(24.r),
                                     bottomRight: Radius.circular(24.r),
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.08),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
+                                  boxShadow: AppTheme.isDark(context)
+                                      ? [
+                                          BoxShadow(
+                                            color:
+                                                Colors.white.withOpacity(0.08),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ]
+                                      : [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.08),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
                                 ),
                                 child: Column(
                                   children: [
@@ -306,23 +326,36 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                                   ],
                                 ),
                               ),
+                              SizedBox(
+                                height: 10.h,
+                              ),
 
                               // Bottom container for favorites and participated discussions
                               Container(
                                 padding: EdgeInsets.only(bottom: 20.h),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFFFBFBFB),
+                                  color: AppTheme.getContainerColor(context),
                                   borderRadius: BorderRadius.only(
                                     topLeft: Radius.circular(24.r),
                                     topRight: Radius.circular(24.r),
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.08),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
+                                  boxShadow: AppTheme.isDark(context)
+                                      ? [
+                                          BoxShadow(
+                                            color:
+                                                Colors.white.withOpacity(0.08),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, -3),
+                                          ),
+                                        ]
+                                      : [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.08),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, -3),
+                                          ),
+                                        ],
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -774,176 +807,277 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     );
   }
 
-  // 펼쳐보기/접기 버튼 UI 수정
   Widget _buildExpandButton() {
     final List<DiscussionRoom> rooms = _getSortedRooms();
     final bool hasMoreToShow = _displayCount < rooms.length;
     final bool hasShownMore = _displayCount > _initialCardCount;
 
-    // 모든 항목이 표시되었고, 초기 개수보다 더 많이 표시된 경우 접기 버튼만 표시
+    // 테마 관련 변수
+    final bool isDark = AppTheme.isDark(context);
+    final Color primaryColor = Color(0xFF19B3F6);
+    final Color bgColor = isDark ? Color(0xFF2D2D3A) : Colors.white;
+    final Color separatorColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+
+    // 접기 버튼만 표시 (모두 펼쳤을 때)
     if (!hasMoreToShow && hasShownMore) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        child: TextButton(
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: _buildButton(
+          text: '접기',
+          icon: Icons.keyboard_arrow_up_rounded,
           onPressed: () {
             setState(() {
               _displayCount = _initialCardCount;
             });
           },
-          style: TextButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.r),
-              side: BorderSide(color: Colors.grey[300]!),
-            ),
-            backgroundColor: Colors.grey[50],
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '접기',
-                style: TextStyle(
-                  color: Color(0xFF19B3F6),
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(width: 4.w),
-              Icon(
-                Icons.keyboard_arrow_up,
-                size: 18.sp,
-                color: Color(0xFF19B3F6),
-              ),
-            ],
-          ),
+          isCollapse: true,
         ),
       );
     }
-
-    // 초기 개수보다 더 많이 표시된 경우 접기/더보기 버튼 모두 표시
+    // 접기 + 더보기 버튼 모두 표시
     else if (hasShownMore) {
-      return Row(
-        children: [
-          // 접기 버튼
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
-              child: TextButton(
-                onPressed: () {
-                  setState(() {
-                    _displayCount = _initialCardCount;
-                  });
-                },
-                style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                    side: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  backgroundColor: Colors.grey[50],
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '접기',
-                      style: TextStyle(
-                        color: Color(0xFF19B3F6),
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.keyboard_arrow_up,
-                      size: 18.sp,
-                      color: Color(0xFF19B3F6),
-                    ),
-                  ],
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: 6.w),
+                child: _buildSplitButton(
+                  text: '접기',
+                  icon: Icons.keyboard_arrow_up_rounded,
+                  onPressed: () {
+                    setState(() {
+                      _displayCount = _initialCardCount;
+                    });
+                  },
+                  isLeft: true,
+                  isCollapse: true,
                 ),
               ),
             ),
-          ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: 6.w),
+                child: _buildSplitButton(
+                  text: '더보기',
+                  icon: Icons.keyboard_arrow_down_rounded,
+                  onPressed: _isLoadingMore ? null : () => _loadMoreItems(),
+                  isLoading: _isLoadingMore,
+                  isLeft: false,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    // 더보기 버튼만 표시 (초기 상태)
+    else {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: _buildButton(
+          text: '더보기',
+          icon: Icons.keyboard_arrow_down_rounded,
+          onPressed: _isLoadingMore ? null : () => _loadMoreItems(),
+          isLoading: _isLoadingMore,
+        ),
+      );
+    }
+  }
 
-          // 더보기 버튼
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
-              child: TextButton(
-                onPressed: _isLoadingMore ? null : () => _loadMoreItems(),
-                style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                    side: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  backgroundColor: Colors.grey[50],
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '더보기',
-                      style: TextStyle(
-                        color: Color(0xFF19B3F6),
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 18.sp,
-                      color: Color(0xFF19B3F6),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+  Widget _buildButton({
+    required String text,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isCollapse = false,
+  }) {
+    final bool isDark = AppTheme.isDark(context);
+    final Color primaryColor = Color(0xFF19B3F6);
+    final Color accentColor = Color(0xFFE74C3C);
+    final Color bgColor = isDark ? Color(0xFF2D2D3A) : Colors.white;
+    final Color textColor = isCollapse ? accentColor : primaryColor;
+
+    return Container(
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
           ),
         ],
-      );
-    }
-
-    // 초기 상태: 더보기 버튼만 표시
-    else {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        child: TextButton(
-          onPressed: _isLoadingMore ? null : () => _loadMoreItems(),
-          style: TextButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.r),
-              side: BorderSide(color: Colors.grey[300]!),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(12.r),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                isLoading
+                    ? SizedBox(
+                  width: 20.w,
+                  height: 20.h,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                  ),
+                )
+                    : Icon(
+                  icon,
+                  size: 20.sp,
+                  color: textColor,
+                ),
+              ],
             ),
-            backgroundColor: Colors.grey[50],
-            padding: EdgeInsets.symmetric(vertical: 12.h),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSplitButton({
+    required String text,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+    bool isLeft = true,
+    bool isCollapse = false,
+  }) {
+    final bool isDark = AppTheme.isDark(context);
+    final Color primaryColor = Color(0xFF19B3F6);
+    final Color accentColor = Color(0xFFE74C3C);
+    final Color bgColor = isDark ? Color(0xFF2D2D3A) : Colors.white;
+    final Color separatorColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+    final Color textColor = isCollapse ? accentColor : primaryColor;
+
+    BorderRadius borderRadius = isLeft
+        ? BorderRadius.only(
+      topLeft: Radius.circular(12.r),
+      bottomLeft: Radius.circular(12.r),
+      topRight: Radius.circular(4.r),
+      bottomRight: Radius.circular(4.r),
+    )
+        : BorderRadius.only(
+      topLeft: Radius.circular(4.r),
+      bottomLeft: Radius.circular(4.r),
+      topRight: Radius.circular(12.r),
+      bottomRight: Radius.circular(12.r),
+    );
+
+    return Container(
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: borderRadius,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: borderRadius,
+          child: Stack(
             children: [
-              Text(
-                '더보기',
-                style: TextStyle(
-                  color: Color(0xFF19B3F6),
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
+              // 텍스트 중앙
+              Positioned.fill(
+                child: Center(
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(width: 4.w),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 18.sp,
-                color: Color(0xFF19B3F6),
-              ),
+
+              // 왼쪽 또는 오른쪽 아이콘 + 구분선
+              if (isLeft)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Row(
+                    children: [
+                      SizedBox(width: 14.w),
+                      Icon(
+                        icon,
+                        color: textColor,
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 12.w),
+                      Container(
+                        height: 24.h,
+                        width: 1,
+                        color: separatorColor.withOpacity(0.5),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 24.h,
+                        width: 1,
+                        color: separatorColor.withOpacity(0.5),
+                      ),
+                      SizedBox(width: 12.w),
+                      isLoading
+                          ? SizedBox(
+                        width: 20.w,
+                        height: 20.h,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                        ),
+                      )
+                          : Icon(
+                        icon,
+                        color: textColor,
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 14.w),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 
   // 더보기 항목 로드 메서드 추가
@@ -985,7 +1119,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: AppTheme.getTextColor(context),
                 ),
                 maxLines: 1,
               ),
@@ -1038,66 +1172,56 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     final double buttonWidth = totalWidth / 2;
     final double buttonHeight = 32.h;
 
-    return Container(
+    return SizedBox(
       width: totalWidth,
-      height: buttonHeight,
+      height: buttonHeight + 4.h, // 튀어나온 부분 고려한 높이
       child: Stack(
-        clipBehavior: Clip.none,
+        clipBehavior: Clip.none, // 버튼이 배경보다 튀어나올 수 있도록 함
         children: [
-          // 음각 배경 (전체 토글 바)
-          Container(
-            width: totalWidth,
-            height: buttonHeight,
-            decoration: BoxDecoration(
-              color: Color(0xFF19B3F6),
-              borderRadius: BorderRadius.circular(20.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  offset: Offset(1, 1),
-                  blurRadius: 2,
-                  spreadRadius: -1,
-                ),
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.1),
-                  offset: Offset(-1, -1),
-                  blurRadius: 2,
-                  spreadRadius: -1,
-                ),
-              ],
+          // 오목한 파란색 배경
+          Positioned(
+            top: 2.h, // 튀어나온 버튼 고려해서 약간 아래로
+            child: Container(
+              width: totalWidth,
+              height: buttonHeight,
+              decoration: BoxDecoration(
+                color: Color(0xFF1CB3F8),
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: [
+                  // 오목한 효과를 주는 그림자
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 3,
+                    spreadRadius: 0,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // 양각 흰색 버튼 (선택된 부분)
+          // 애니메이션 흰색 버튼 (튀어나온 효과)
           AnimatedPositioned(
             duration: Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
             left: _selectedTab == '실시간' ? 0 : buttonWidth,
             top: 0,
+            // 상단에 위치하여 튀어나온 효과 표현
             child: Container(
               width: buttonWidth,
-              height: buttonHeight,
+              height: buttonHeight + 4.h, // 살짝 더 큰 높이로 튀어나옴
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.getToggleButtonColor(context),
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
+                  // 튀어나온 효과를 주는 그림자
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    offset: Offset(2, 2),
+                    color: Colors.black.withOpacity(0.25),
                     blurRadius: 4,
-                    spreadRadius: 0,
+                    spreadRadius: 0.5,
+                    offset: Offset(0, 2),
                   ),
                 ],
-              ),
-              child: Center(
-                child: Text(
-                  _selectedTab,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
               ),
             ),
           ),
@@ -1116,16 +1240,24 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                     child: Container(
                       color: Colors.transparent,
                       alignment: Alignment.center,
-                      child: _selectedTab != '실시간'
-                          ? Text(
-                              '실시간',
-                              style: TextStyle(
+                      child: Text(
+                        '실시간',
+                        style: AppTheme.isDark(context)
+                            ? TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white,
+                                color: _selectedTab == '실시간'
+                                    ? Colors.white
+                                    : Colors.black,
+                              )
+                            : TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: _selectedTab == '실시간'
+                                    ? Colors.black
+                                    : Colors.white,
                               ),
-                            )
-                          : null,
+                      ),
                     ),
                   ),
                 ),
@@ -1140,16 +1272,24 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                     child: Container(
                       color: Colors.transparent,
                       alignment: Alignment.center,
-                      child: _selectedTab != '히스토리'
-                          ? Text(
-                              '히스토리',
-                              style: TextStyle(
+                      child: Text(
+                        '히스토리',
+                        style: AppTheme.isDark(context)
+                            ? TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white,
+                                color: _selectedTab == '히스토리'
+                                    ? Colors.white
+                                    : Colors.black,
+                              )
+                            : TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: _selectedTab == '히스토리'
+                                    ? Colors.black
+                                    : Colors.white,
                               ),
-                            )
-                          : null,
+                      ),
                     ),
                   ),
                 ),
@@ -1168,20 +1308,28 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
         Container(
           margin: EdgeInsets.only(bottom: 20.h, right: 0.w),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFFFF),
+            color: AppTheme.getCardColor(context),
             borderRadius: BorderRadius.circular(20.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(1, 3),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, -1),
-              ),
-            ],
+            boxShadow: AppTheme.isDark(context)
+                ? [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.05),
+                      blurRadius: 1,
+                      offset: const Offset(1, 3),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(1, 3),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, -1),
+                    ),
+                  ],
           ),
           child: Padding(
             padding: EdgeInsets.only(
@@ -1192,8 +1340,10 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 // 키워드 타이틀
                 AutoSizeText(
                   room.keyword,
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20.sp,
+                      color: AppTheme.getTextColor(context)),
                   maxLines: 1,
                   minFontSize: 16,
                   overflow: TextOverflow.ellipsis,
@@ -1203,7 +1353,9 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 Text(
                   '${_getCategoryForRoom(room)} | 댓글 (${room.commentCount ?? 0})',
                   style: TextStyle(
-                      color: Colors.grey[700],
+                      color: AppTheme.isDark(context)
+                          ? Color(0xFFD8D8D8)
+                          : Colors.grey[700],
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w500),
                 ),
@@ -1241,7 +1393,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 right: Radius.circular(20.r),
               ),
               child: Material(
-                color: Color(0xFFFFFFFF),
+                color: AppTheme.getCardColor(context),
                 child: InkWell(
                   onTap: () {
                     context.push('/discussion/${room.id}');
@@ -1260,7 +1412,9 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 14.sp,
-                            color: const Color(0xFF404040),
+                            color: AppTheme.isDark(context)
+                                ? Colors.white
+                                : Color(0xFF404040),
                           ),
                         ),
                       ],
@@ -1353,13 +1507,16 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
           Icon(
             Icons.info_outline,
             size: 18.sp,
-            color: Colors.grey[500],
+            color:
+                AppTheme.isDark(context) ? Color(0xFFD8D8D8) : Colors.grey[500],
           ),
           SizedBox(width: 6.w),
           Text(
             '아직 의견이 없어요! 첫 의견을 남겨주세요!',
             style: TextStyle(
-              color: Colors.grey[500],
+              color: AppTheme.isDark(context)
+                  ? Color(0xFFD8D8D8)
+                  : Colors.grey[500],
               fontSize: 15.sp,
             ),
           ),
@@ -1444,10 +1601,13 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
           '$text $percentage',
           style: TextStyle(
             fontSize: 12.sp,
-            color: Colors.grey.shade700,
+            color:
+                AppTheme.isDark(context) ? Colors.white : Colors.grey.shade700,
           ),
         ),
       ],
     );
   }
 }
+
+enum PillDirection { left, right }

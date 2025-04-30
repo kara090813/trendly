@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:math'; // 랜덤 함수 사용을 위해 추가
+import '../app_theme.dart';
+import '../providers/_providers.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
 import '../widgets/_widgets.dart';
@@ -15,7 +19,8 @@ class KeywordHomeComponent extends StatefulWidget {
   State<KeywordHomeComponent> createState() => _KeywordHomeComponentState();
 }
 
-class _KeywordHomeComponentState extends State<KeywordHomeComponent> with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+class _KeywordHomeComponentState extends State<KeywordHomeComponent>
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<Keyword> _keywords = [];
   List<Keyword> _previousKeywords = []; // 이전 키워드 목록 저장용
@@ -238,35 +243,68 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
   }
 
   Widget _buildElevatedIcon(String imagePath, {Color? color}) {
-    return RepaintBoundary(
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: Color(0xFFFBFBFC),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                offset: Offset(2, 2),
-                blurRadius: 4,
-                spreadRadius: 0.5,
-              ),
-              BoxShadow(
-                color: Colors.white.withOpacity(0.9),
-                offset: Offset(-2, -2),
-                blurRadius: 4,
-                spreadRadius: 0.5,
-              ),
-            ],
+    final themeProvider = Provider.of<UserPreferenceProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Color(0xFFF5F5F7), // 라이트 모드에서 약간 회색빛 배경
+        shape: BoxShape.circle,
+        boxShadow: isDark
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            offset: Offset(3, 3),
+            blurRadius: 8,
+            spreadRadius: 0,
           ),
-          child: Image.asset(
-            imagePath,
-            width: 28.sp,
-            height: 28.sp,
-            color: color ?? Color(0xFF19B3F6),
+          BoxShadow(
+            color: Colors.grey[700]!.withOpacity(0.4),
+            offset: Offset(-2, -2),
+            blurRadius: 6,
+            spreadRadius: 0,
+          ),
+        ]
+            : [
+          BoxShadow(
+            color: Colors.grey[400]!.withOpacity(0.8), // 더 짙은 회색 그림자
+            offset: Offset(4, 4),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.white,
+            offset: Offset(-4, -4),
+            blurRadius: 8,
+            spreadRadius: 3,
+          ),
+          // 테두리 효과 추가
+          BoxShadow(
+            color: Colors.grey[300]!,
+            offset: Offset(0, 0),
+            blurRadius: 0,
+            spreadRadius: 0.5,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: CircleBorder(),
+        child: InkWell(
+          onTap: () {
+            themeProvider.toggleThemeMode();
+          },
+          customBorder: CircleBorder(),
+          child: Container(
+            padding: EdgeInsets.all(10.w),
+            width: 44.w, // 크기 약간 증가
+            height: 44.w,
+            child: Image.asset(
+              imagePath,
+              width: 24.sp,
+              height: 24.sp,
+              color: color ?? Color(0xFF19B3F6),
+            ),
           ),
         ),
       ),
@@ -290,10 +328,11 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
     }
 
     // 표시할 키워드 목록 (로딩 중에는 이전 키워드 목록 사용)
-    final displayKeywords = _isRefreshing && _previousKeywords.isNotEmpty ? _previousKeywords : _keywords;
+    final displayKeywords = _isRefreshing && _previousKeywords.isNotEmpty
+        ? _previousKeywords
+        : _keywords;
 
     return Scaffold(
-      backgroundColor: Color(0xFFF7F7F7),
       body: CustomScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -302,7 +341,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.getContainerColor(context),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withAlpha(30),
@@ -344,7 +383,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                                   ],
                                 ),
                                 child: Text("로고",
-                                    style: TextStyle(color: Colors.white, fontSize: 14)),
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 14)),
                               ),
                             ),
                           ),
@@ -354,7 +394,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                             alignment: Alignment.center,
                             child: Text(
                               "트렌들리",
-                              style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 22.sp, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -366,9 +407,11 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _buildElevatedIcon('assets/img/items/dark.png'),
+                                  _buildElevatedIcon(
+                                      'assets/img/items/dark.png'),
                                   SizedBox(width: 8),
-                                  _buildElevatedIcon('assets/img/items/alarm.png'),
+                                  _buildElevatedIcon(
+                                      'assets/img/items/alarm.png'),
                                 ],
                               ),
                             ),
@@ -377,7 +420,6 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                       ],
                     ),
                   ),
-
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 14.w),
                     child: Row(
@@ -385,7 +427,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                         SizedBox(width: 10.w),
                         Text(
                           '실시간 인기 검색어',
-                          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 20.sp, fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
                         InkWell(
@@ -394,36 +437,59 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                           child: Container(
                             padding: EdgeInsets.all(8.w),
                             decoration: BoxDecoration(
-                              color: Color(0xFFFAFAFF),
+                              color: AppTheme.getButtonColor(context),
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  offset: Offset(2, 2),
-                                  blurRadius: 4,
-                                  spreadRadius: 0.5,
-                                ),
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.9),
-                                  offset: Offset(-2, -2),
-                                  blurRadius: 4,
-                                  spreadRadius: 0.5,
-                                ),
-                              ],
+                              boxShadow: AppTheme.isDark(context)
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.3),
+                                        offset: Offset(1, 1),
+                                        blurRadius: 1,
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.3),
+                                        offset: Offset(-1, -1),
+                                        blurRadius: 1,
+                                      ),
+                                    ]
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.3),
+                                        offset: Offset(2, 2),
+                                        blurRadius: 4,
+                                        spreadRadius: 0.5,
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.9),
+                                        offset: Offset(-2, -2),
+                                        blurRadius: 4,
+                                        spreadRadius: 0.5,
+                                      ),
+                                    ],
                             ),
                             child: Row(
                               children: [
                                 // 로딩 중에는 회전하는 새로고침 아이콘 표시
                                 _isRefreshing
                                     ? RotationTransition(
-                                  turns: _refreshAnimation,
-                                  child: Icon(Icons.refresh, size: 18.sp, color: Color(0xFF19B3F6)),
-                                )
-                                    : Icon(Icons.refresh, size: 18.sp, color: Color(0xFF4A4A4A)),
+                                        turns: _refreshAnimation,
+                                        child: Icon(Icons.refresh,
+                                            size: 18.sp,
+                                            color: Color(0xFF19B3F6)),
+                                      )
+                                    : Icon(Icons.refresh,
+                                        size: 18.sp,
+                                        color: AppTheme.isDark(context)
+                                            ? Colors.white
+                                            : Color(0xFF4A4A4A)),
                                 SizedBox(width: 4.w),
                                 Text(
                                   _getFormattedTime(),
-                                  style: TextStyle(fontSize: 14.sp, color: Color(0xFF4A4A4A)),
+                                  style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: AppTheme.isDark(context)
+                                          ? Colors.white
+                                          : Color(0xFF4A4A4A)),
                                 ),
                               ],
                             ),
@@ -449,7 +515,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
                   Opacity(
                     opacity: _isRefreshing ? 0.3 : 1.0, // 로딩 중에는 흐리게 표시
                     child: _showShimmerEffect
-                        ? _buildShimmerKeywordList(displayKeywords) // Shimmer 효과 적용된 리스트
+                        ? _buildShimmerKeywordList(
+                            displayKeywords) // Shimmer 효과 적용된 리스트
                         : _buildKeywordList(displayKeywords), // 일반 리스트
                   ),
 
@@ -516,7 +583,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
       mainAxisSize: MainAxisSize.min,
       children: List.generate(
         keywords.length,
-            (index) {
+        (index) {
           return Shimmer.fromColors(
             baseColor: Colors.white,
             highlightColor: Color(0xFF19B3F6).withOpacity(0.3),
@@ -546,7 +613,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent> with Automa
         mainAxisSize: MainAxisSize.min, // 필요한 높이만 사용
         children: List.generate(
           keywords.length,
-              (index) {
+          (index) {
             final Widget keywordWidget = RepaintBoundary(
               child: KeywordBoxWidget(
                 keyword: keywords[index],

@@ -1,5 +1,6 @@
 // lib/providers/user_preference_provider.dart
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../services/user_preference_service.dart';
 
 class UserPreferenceProvider with ChangeNotifier {
@@ -18,6 +19,7 @@ class UserPreferenceProvider with ChangeNotifier {
   bool _isLoadingComments = false;
   bool _isLoadingSentiments = false;
   bool _isLoadingReactions = false;
+  bool _isDarkMode = false;
 
   // Getters
   List<int> get commentedRooms => _commentedRooms;
@@ -40,7 +42,10 @@ class UserPreferenceProvider with ChangeNotifier {
 
   bool get isLoadingReactions => _isLoadingReactions;
 
-  // 앱 시작 시 기본 정보 로드 (닉네임, 비밀번호만)
+  bool get isDarkMode => _isDarkMode;
+  ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
+
+  // 앱 시작 시 기본 정보 로드 (기존 메서드 수정)
   Future<void> loadBasicInfo() async {
     _isLoadingProfile = true;
     notifyListeners();
@@ -48,10 +53,32 @@ class UserPreferenceProvider with ChangeNotifier {
     try {
       _nickname = await _prefService.getDiscussionNickname();
       _password = await _prefService.getDiscussionPassword();
+
+      // 테마 모드 로드 추가
+      _isDarkMode = await _prefService.getDarkModePreference();
     } catch (e) {
       print('기본 정보 로드 오류: $e');
     } finally {
       _isLoadingProfile = false;
+      notifyListeners();
+    }
+  }
+  // 테마 모드 전환 메서드 추가
+  Future<void> toggleThemeMode() async {
+    try {
+      _isDarkMode = !_isDarkMode;
+      await _prefService.saveDarkModePreference(_isDarkMode);
+      notifyListeners();
+    } catch (e) {
+      print('테마 모드 저장 오류: $e');
+    }
+  }
+
+// 특정 테마 모드 설정 메서드 추가
+  Future<void> setDarkMode(bool value) async {
+    if (_isDarkMode != value) {
+      _isDarkMode = value;
+      await _prefService.saveDarkModePreference(_isDarkMode);
       notifyListeners();
     }
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../app_theme.dart';
 import '../widgets/appBarIcon_widget.dart';
 
 class AppBarComponent extends StatelessWidget {
@@ -17,16 +18,23 @@ class AppBarComponent extends StatelessWidget {
     return Container(
       height: 80.h,
       padding: EdgeInsets.only(bottom: 16.h),
-
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(30),
-            blurRadius: 5,
-            offset: const Offset(0, -3),
-          ),
-        ],
+        color: AppTheme.getBottomBarColor(context),
+        boxShadow: AppTheme.isDark(context)
+            ? [
+                BoxShadow(
+                  color: Colors.white.withAlpha(30),
+                  blurRadius: 5,
+                  offset: const Offset(0, -3),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withAlpha(30),
+                  blurRadius: 5,
+                  offset: const Offset(0, -3),
+                ),
+              ],
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16.r),
           topRight: Radius.circular(16.r),

@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import '../app_theme.dart';
 import '../models/_models.dart';
 import 'summaryToggle_widget.dart';
 
@@ -48,10 +49,12 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
 
     // 키워드 전체와 각 토큰을 모두 처리
     List<String> keywordTokens = [widget.keyword.keyword]; // 전체 키워드 먼저 추가
-    keywordTokens.addAll(widget.keyword.keyword.split(' ')); // 공백으로 분리된 개별 토큰 추가
+    keywordTokens
+        .addAll(widget.keyword.keyword.split(' ')); // 공백으로 분리된 개별 토큰 추가
 
     // 중복 제거 및 빈 문자열 제거
-    keywordTokens = keywordTokens.where((token) => token.isNotEmpty).toSet().toList();
+    keywordTokens =
+        keywordTokens.where((token) => token.isNotEmpty).toSet().toList();
 
     // 더 긴 키워드부터 처리하도록 정렬 (전체 키워드가 먼저 매칭되도록)
     keywordTokens.sort((a, b) => b.length.compareTo(a.length));
@@ -80,7 +83,9 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
         for (String token in keywordTokens) {
           // 대소문자 구분 없이 현재 위치부터 키워드가 있는지 확인
           if (currentPos + token.length <= paragraphLength &&
-              paragraph.substring(currentPos, currentPos + token.length).toLowerCase() ==
+              paragraph
+                      .substring(currentPos, currentPos + token.length)
+                      .toLowerCase() ==
                   token.toLowerCase()) {
             // 매치된 텍스트는 볼드체로 추가
             paragraphSpans.add(TextSpan(
@@ -104,7 +109,9 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
           int nextMatchPos = paragraphLength;
 
           for (String token in keywordTokens) {
-            int pos = paragraph.toLowerCase().indexOf(token.toLowerCase(), currentPos);
+            int pos = paragraph
+                .toLowerCase()
+                .indexOf(token.toLowerCase(), currentPos);
             if (pos != -1 && pos < nextMatchPos) {
               nextMatchPos = pos;
             }
@@ -145,7 +152,8 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
         String type1String = widget.keyword.type1.first;
 
         // JSON 형식의 문자열인지 확인 (대괄호로 시작하는지)
-        if (type1String.trim().startsWith('[') && type1String.trim().endsWith(']')) {
+        if (type1String.trim().startsWith('[') &&
+            type1String.trim().endsWith(']')) {
           // 대괄호와 작은따옴표 제거하고 쉼표로 분리
           String cleaned = type1String.replaceAll(RegExp(r"[\[\]']"), "");
           summaryLines = cleaned.split(',').map((s) => s.trim()).toList();
@@ -173,19 +181,23 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
 
   // 짧은 글 요약 (type2)
   String _getMediumSummary() {
-    return widget.keyword.type2.isNotEmpty ? widget.keyword.type2 : '오류가 발생했습니다.';
+    return widget.keyword.type2.isNotEmpty
+        ? widget.keyword.type2
+        : '오류가 발생했습니다.';
   }
 
   // 긴 글 요약 (type3)
   String _getLongSummary() {
-    return widget.keyword.type3.isNotEmpty ? widget.keyword.type3 : '오류가 발생했습니다.';
+    return widget.keyword.type3.isNotEmpty
+        ? widget.keyword.type3
+        : '오류가 발생했습니다.';
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(30),
@@ -252,24 +264,38 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
                     },
                     borderRadius: BorderRadius.circular(16.r),
                     child: Container(
-                      padding: EdgeInsets.only(top: 4.h, bottom: 4.h, left: 14.w, right: 4.w),
+                      padding: EdgeInsets.only(
+                          top: 4.h, bottom: 4.h, left: 14.w, right: 4.w),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF1F1F3),
+                        color: AppTheme.getButtonColor(context),
                         borderRadius: BorderRadius.circular(16.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            offset: Offset(3, 3),
-                            blurRadius: 5,
-                            spreadRadius: 0.5,
-                          ),
-                          BoxShadow(
-                            color: Colors.white.withOpacity(0.9),
-                            offset: Offset(-3, -3),
-                            blurRadius: 5,
-                            spreadRadius: 0.5,
-                          ),
-                        ],
+                        boxShadow: AppTheme.isDark(context)
+                            ? [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  offset: Offset(1, 1),
+                                  blurRadius: 0.1,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.1),
+                                  offset: Offset(-1, -1),
+                                  blurRadius: 0.1,
+                                )
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  offset: Offset(3, 3),
+                                  blurRadius: 5,
+                                  spreadRadius: 0.5,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.9),
+                                  offset: Offset(-3, -3),
+                                  blurRadius: 5,
+                                  spreadRadius: 0.5,
+                                ),
+                              ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,

@@ -17,6 +17,30 @@ class UserPreferenceService {
   static const String _passwordKey = 'discussion_password';
   static const String _sentimentsKey = 'room_sentiments';
   static const String _commentReactionsKey = 'comment_reactions';
+  static const String _darkModeKey = 'dark_mode_enabled';
+
+// 다크 모드 설정 저장
+  Future<bool> saveDarkModePreference(bool isDarkMode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_darkModeKey, isDarkMode);
+      return true;
+    } catch (e) {
+      print('다크 모드 설정 저장 오류: $e');
+      return false;
+    }
+  }
+
+// 다크 모드 설정 가져오기
+  Future<bool> getDarkModePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_darkModeKey) ?? false; // 기본값은 라이트 모드
+    } catch (e) {
+      print('다크 모드 설정 가져오기 오류: $e');
+      return false; // 오류 발생 시 기본값은 라이트 모드
+    }
+  }
 
   // 내가 댓글을 작성한 토론방 ID 배열 저장
   Future<bool> saveCommentedRoom(int roomId) async {
