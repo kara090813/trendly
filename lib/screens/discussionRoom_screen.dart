@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:trendly/widgets/circleButton_widget.dart';
 import 'dart:async';
 
 import '../models/_models.dart';
@@ -1043,7 +1044,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 뒤로가기 버튼
-          _buildCircleButton(
+          CircleButtonWidget(
+            context: context,
             onTap: () => context.pop(),
             icon: Icons.chevron_left,
             color: Color(0xFF19B3F6),
@@ -1083,7 +1085,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           ),
 
           // 새로고침 버튼
-          _buildCircleButton(
+          CircleButtonWidget(
             onTap: () {
               if (!_isRefreshing) {
                 _loadDiscussionRoomData();
@@ -1091,13 +1093,14 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             },
             icon: Icons.refresh,
             color: Color(0xFF19B3F6),
-            iconSize: 22.sp,
+            iconSize: 22.sp, context: context,
           ),
 
           SizedBox(width: 8.w),
 
           // 공유 버튼
-          _buildCircleButton(
+          CircleButtonWidget(
+            context: context,
             onTap: () {
               // 공유 기능 추가
               StylishToast.show(context, message: '공유 기능은 준비 중입니다.');
@@ -1109,50 +1112,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             iconSize: 22.sp,
           ),
         ],
-      ),
-    );
-  }
-
-  // 원형 버튼 위젯
-  Widget _buildCircleButton({
-    required VoidCallback onTap,
-    required IconData icon,
-    required Color color,
-    required double iconSize,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36.w,
-        height: 36.w,
-        decoration: BoxDecoration(
-          color: AppTheme.isDark(context)
-              ? Color(0xFF2A2A36)
-              : Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: AppTheme.isDark(context)
-              ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 3,
-              spreadRadius: 1,
-              offset: Offset(0, 1),
-            ),
-          ]
-              : [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 3,
-              spreadRadius: 1,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: color,
-          size: iconSize,
-        ),
       ),
     );
   }
@@ -1432,29 +1391,67 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
           // 토글이 켜져있을 때만 요약 종류 토글 및 내용 표시
           if (_isRealTimeSummaryEnabled) ...[
-            SizedBox(height: 16.h),
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
-            ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 20.h),
 
-            // 요약 유형 토글 (3줄, 짧은 글, 긴 글)
-            Align(alignment: Alignment.center, child: _buildSummaryToggle()),
-            SizedBox(height: 12.h),
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
+            // 상단 구분선 - 더 밝은 색상으로 변경
+            _buildDivider(),
+
+            // 새로운 3분할 토글 - 구분선 내에 배치
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              child: _buildSummaryToggle(),
             ),
+
+            // 하단 구분선
+            _buildDivider(),
 
             SizedBox(height: 16.h),
 
             // 선택된 유형에 따른 요약 내용
-            _buildSummaryContent(),
+            AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(0.02, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                key: ValueKey<String>(_summaryType),
+                child: _buildSummaryContent(),
+              ),
+            ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 1.5,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppTheme.isDark(context)
+              ? [
+            Colors.grey[800]!.withOpacity(0.5),
+            Colors.grey[700]!,
+            Colors.grey[800]!.withOpacity(0.5),
+          ]
+              : [
+            Colors.grey[300]!.withOpacity(0.5),
+            Colors.grey[200]!,
+            Colors.grey[300]!.withOpacity(0.5),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
       ),
     );
   }
@@ -1525,99 +1522,89 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
   // 요약 종류 3버전 토글 버튼 (3줄, 짧은 글, 긴 글)
   Widget _buildSummaryToggle() {
-    final double totalWidth = 230.w; // 조금 더 넓게 설정
-    final double buttonWidth = totalWidth / 3;
-    final double buttonHeight = 31.h;
+    final double totalWidth = 230.w; // 너비 유지
+    final double buttonHeight = 40.h; // 높이 약간 증가
 
     // 요약 타입에 따른 인덱스 계산
     final int selectedIndex = ['3줄', '짧은 글', '긴 글'].indexOf(_summaryType);
 
     return Container(
       width: totalWidth,
-      height: buttonHeight + 4.h, // 튀어나온 부분 고려한 높이
+      height: buttonHeight,
+      decoration: BoxDecoration(
+        color: AppTheme.isDark(context)
+            ? Color(0xFF2A2A36)
+            : Color(0xFFF2F2F2),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
       child: Stack(
-        clipBehavior: Clip.none, // 버튼이 배경보다 튀어나올 수 있도록 함
         children: [
-          // 오목한 파란색 배경
-          Positioned(
-            top: 2.h, // 튀어나온 버튼 고려해서 약간 아래로
+          // 선택 인디케이터 (슬라이딩 효과)
+          AnimatedPositioned(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            left: (totalWidth / 3) * selectedIndex,
+            top: 0,
+            bottom: 0,
+            width: totalWidth / 3,
             child: Container(
-              width: totalWidth,
-              height: buttonHeight,
               decoration: BoxDecoration(
-                color: Color(0xFF1CB3F8),
-                borderRadius: BorderRadius.circular(15.r),
+                color: Color(0xFF19B3F6),
+                borderRadius: BorderRadius.circular(8.r),
                 boxShadow: [
-                  // 오목한 효과를 주는 그림자
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 3,
+                    color: Color(0xFF19B3F6).withOpacity(0.3),
+                    blurRadius: 8,
                     spreadRadius: 0,
                     offset: Offset(0, 2),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          // 애니메이션 흰색 버튼 (튀어나온 효과)
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            left: selectedIndex * buttonWidth,
-            top: 0,
-            // 상단에 위치하여 튀어나온 효과 표현
-            child: Container(
-              width: buttonWidth,
-              height: buttonHeight + 4.h, // 살짝 더 큰 높이로 튀어나옴
-              decoration: BoxDecoration(
-                color: AppTheme.getToggleButtonColor(context),
-                borderRadius: BorderRadius.circular(15.r),
-                boxShadow: [
-                  // 튀어나온 효과를 주는 그림자
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    blurRadius: 4,
-                    spreadRadius: 0.5,
-                    offset: Offset(0, 2),
+              child: Center(
+                child: Text(
+                  ['3줄', '짧은 글', '긴 글'][selectedIndex],
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
+                ),
               ),
+            ).animate()
+                .scale(
+                begin: Offset(0.95, 0.95),
+                end: Offset(1.0, 1.0),
+                duration: 300.ms,
+                curve: Curves.easeOutCubic
             ),
           ),
 
-          // 터치 가능한 버튼 텍스트 (포지션 고정)
-          Positioned(
-            top: 2.h, // 파란색 배경과 같은 위치
-            child: SizedBox(
-              width: totalWidth,
-              height: buttonHeight,
-              child: Row(
-                children: List.generate(
-                  ['3줄', '짧은 글', '긴 글'].length,
-                      (index) => Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _summaryType = ['3줄', '짧은 글', '긴 글'][index];
-                        });
-                      },
-                      child: Container(
-                        height: buttonHeight,
-                        alignment: Alignment.center,
-                        color: Colors.transparent, // 투명 배경으로 탭 이벤트만 받음
+          // 터치 영역과 라벨들
+          Row(
+            children: List.generate(
+              ['3줄', '짧은 글', '긴 글'].length,
+                  (index) => Expanded(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8.r),
+                    onTap: () {
+                      setState(() {
+                        _summaryType = ['3줄', '짧은 글', '긴 글'][index];
+                      });
+                    },
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: Duration(milliseconds: 200),
+                        opacity: selectedIndex == index ? 0.0 : 1.0,
                         child: Text(
                           ['3줄', '짧은 글', '긴 글'][index],
-                          style: AppTheme.isDark(context)
-                              ? TextStyle(
+                          style: TextStyle(
                             fontSize: 14.sp,
-                            fontWeight: FontWeight.normal,
-                            color: index == selectedIndex ? Colors.white : Colors.black,
-                          )
-                              : TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.normal,
-                            color: index == selectedIndex ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.isDark(context)
+                                ? Colors.grey[400]
+                                : Colors.grey[700],
                           ),
                         ),
                       ),
@@ -1653,17 +1640,52 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: _keyword!.type1
-              .map((line) => Padding(
-            padding: EdgeInsets.only(bottom: 10.h),
-            child: Text(
-              line,
-              style: TextStyle(
-                fontSize: 15.sp,
-                height: 1.5,
-                color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
+              .asMap()
+              .entries
+              .map((entry) {
+            int index = entry.key;
+            String line = entry.value;
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: 14.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 24.w,
+                    height: 24.w,
+                    margin: EdgeInsets.only(right: 10.w, top: 2.h),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF19B3F6).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "${index + 1}",
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF19B3F6),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      line,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        height: 1.5,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[300]
+                            : Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ))
+            );
+          })
               .toList(),
         );
 
@@ -1671,7 +1693,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         return Text(
           _keyword!.type2.isNotEmpty ? _keyword!.type2 : "짧은 글 요약 정보가 없습니다.",
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 18.sp,
             height: 1.5,
             color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
           ),
@@ -1681,7 +1703,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         return Text(
           _keyword!.type3.isNotEmpty ? _keyword!.type3 : "긴 글 요약 정보가 없습니다.",
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 18.sp,
             height: 1.5,
             color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
           ),

@@ -23,8 +23,8 @@ class AppBarComponent extends StatelessWidget {
         boxShadow: AppTheme.isDark(context)
             ? [
                 BoxShadow(
-                  color: Colors.white.withAlpha(30),
-                  blurRadius: 5,
+                  color: Colors.white.withAlpha(10),
+                  blurRadius: 3,
                   offset: const Offset(0, -3),
                 ),
               ]

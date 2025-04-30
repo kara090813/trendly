@@ -165,55 +165,58 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
 
   // 랜덤 로딩 애니메이션 위젯 생성
   Widget _buildRandomLoadingAnimation() {
+    // 브랜드 색상 (테마와 상관없이 유지)
+    final Color primaryBlue = Color(0xFF19B3F6);
+
     switch (_currentAnimationIndex) {
       case 0:
         return SpinKitFadingGrid(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
           shape: BoxShape.circle,
         );
       case 1:
         return SpinKitPouringHourGlass(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
         );
       case 2:
         return SpinKitSpinningLines(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
         );
       case 3:
         return SpinKitDancingSquare(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 70.w,
         );
       case 4:
         return SpinKitWaveSpinner(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
-          waveColor: Color(0xFF19B3F6).withOpacity(0.7),
-          trackColor: Color(0xFF19B3F6).withOpacity(0.3),
+          waveColor: primaryBlue.withOpacity(0.7),
+          trackColor: primaryBlue.withOpacity(0.3),
         );
       case 5:
         return SpinKitPianoWave(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
           itemCount: 5,
         );
       case 6:
         return SpinKitFoldingCube(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 60.w,
         );
       case 7:
         return SpinKitRipple(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 100.w,
           borderWidth: 6.0,
         );
       case 8:
         return SpinKitPulse(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
         );
       case 9:
@@ -221,95 +224,27 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
           mainAxisSize: MainAxisSize.min,
           children: [
             SpinKitRing(
-              color: Color(0xFF19B3F6),
+              color: primaryBlue,
               size: 60.w,
               lineWidth: 4.0,
             ),
             SizedBox(height: 10.h),
             Icon(
               Icons.trending_up,
-              color: Color(0xFF19B3F6),
+              color: primaryBlue,
               size: 32.w,
             ),
           ],
         );
       default:
         return SpinKitFadingGrid(
-          color: Color(0xFF19B3F6),
+          color: primaryBlue,
           size: 80.w,
           shape: BoxShape.circle,
         );
     }
   }
 
-  Widget _buildElevatedIcon(String imagePath, {Color? color}) {
-    final themeProvider = Provider.of<UserPreferenceProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Color(0xFFF5F5F7), // 라이트 모드에서 약간 회색빛 배경
-        shape: BoxShape.circle,
-        boxShadow: isDark
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            offset: Offset(3, 3),
-            blurRadius: 8,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.grey[700]!.withOpacity(0.4),
-            offset: Offset(-2, -2),
-            blurRadius: 6,
-            spreadRadius: 0,
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.grey[400]!.withOpacity(0.8), // 더 짙은 회색 그림자
-            offset: Offset(4, 4),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-          BoxShadow(
-            color: Colors.white,
-            offset: Offset(-4, -4),
-            blurRadius: 8,
-            spreadRadius: 3,
-          ),
-          // 테두리 효과 추가
-          BoxShadow(
-            color: Colors.grey[300]!,
-            offset: Offset(0, 0),
-            blurRadius: 0,
-            spreadRadius: 0.5,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: CircleBorder(),
-        child: InkWell(
-          onTap: () {
-            themeProvider.toggleThemeMode();
-          },
-          customBorder: CircleBorder(),
-          child: Container(
-            padding: EdgeInsets.all(10.w),
-            width: 44.w, // 크기 약간 증가
-            height: 44.w,
-            child: Image.asset(
-              imagePath,
-              width: 24.sp,
-              height: 24.sp,
-              color: color ?? Color(0xFF19B3F6),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +266,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     final displayKeywords = _isRefreshing && _previousKeywords.isNotEmpty
         ? _previousKeywords
         : _keywords;
+
+    final themeProvider = Provider.of<UserPreferenceProvider>(context);
+    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
       body: CustomScrollView(
@@ -407,11 +345,27 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _buildElevatedIcon(
-                                      'assets/img/items/dark.png'),
-                                  SizedBox(width: 8),
-                                  _buildElevatedIcon(
-                                      'assets/img/items/alarm.png'),
+                                  CircleButtonWidget(
+                                    context: context,
+                                    onTap: () {
+                                      themeProvider.toggleThemeMode();
+                                    },
+                                    assetImagePath: 'assets/img/items/dark.png',
+                                    color: Colors.blue,
+                                    iconSize: 30.w,
+                                    containerSize: 42.w,
+                                    imagePadding: EdgeInsets.all(8.w),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  CircleButtonWidget(
+                                    context: context,
+                                    onTap: () {},
+                                    assetImagePath: 'assets/img/items/alarm.png',
+                                    color: Colors.blue,
+                                    iconSize: 30.w,
+                                    containerSize: 42.w,
+                                    imagePadding: EdgeInsets.all(8.w),
+                                  ),
                                 ],
                               ),
                             ),
@@ -531,11 +485,15 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                             width: 160.w,
                             height: 160.w,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: AppTheme.isDark(context)
+                                  ? Color(0xFF21202C).withOpacity(0.9)
+                                  : Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(20.r),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: AppTheme.isDark(context)
+                                      ? Colors.black.withOpacity(0.2)
+                                      : Colors.black.withOpacity(0.08),
                                   blurRadius: 15,
                                   spreadRadius: 0,
                                 ),
@@ -551,7 +509,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF19B3F6),
+                              color: Color(0xFF19B3F6), // 브랜드 색상 유지
                               letterSpacing: 0.5,
                             ),
                           ),

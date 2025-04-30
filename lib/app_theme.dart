@@ -17,7 +17,7 @@ class AppTheme {
 
   // 카드
   static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color darkCard = Color(0xFF3C3B48);
+  static const Color darkCard = Color(0xFF2F2E39);
 
   // 버튼
   static const Color lightButton = Color(0xFFEFEFF1);

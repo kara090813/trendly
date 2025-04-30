@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trendly/widgets/circleButton_widget.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
@@ -223,10 +224,10 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                                 boxShadow: AppTheme.isDark(context)
                                     ? [
                                         BoxShadow(
-                                          color: Colors.white.withOpacity(0.18),
-                                          spreadRadius: 1,
+                                          color: Colors.white.withOpacity(0.1),
+                                          spreadRadius: 2,
                                           blurRadius: 6,
-                                          offset: const Offset(0, 3),
+                                          offset: const Offset(0, 1),
                                         ),
                                       ]
                                     : [
@@ -402,11 +403,15 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                           width: 120.w,
                           height: 120.w,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: AppTheme.isDark(context)
+                                ? Color(0xFF21202C).withOpacity(0.9)
+                                : Colors.white.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(16.r),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: AppTheme.isDark(context)
+                                    ? Colors.white.withOpacity(0.1)
+                                    : Colors.black.withOpacity(0.1),
                                 blurRadius: 10,
                                 spreadRadius: 0,
                               ),
@@ -934,18 +939,18 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 SizedBox(width: 8.w),
                 isLoading
                     ? SizedBox(
-                  width: 20.w,
-                  height: 20.h,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(textColor),
-                  ),
-                )
+                        width: 20.w,
+                        height: 20.h,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                        ),
+                      )
                     : Icon(
-                  icon,
-                  size: 20.sp,
-                  color: textColor,
-                ),
+                        icon,
+                        size: 20.sp,
+                        color: textColor,
+                      ),
               ],
             ),
           ),
@@ -971,17 +976,17 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
 
     BorderRadius borderRadius = isLeft
         ? BorderRadius.only(
-      topLeft: Radius.circular(12.r),
-      bottomLeft: Radius.circular(12.r),
-      topRight: Radius.circular(4.r),
-      bottomRight: Radius.circular(4.r),
-    )
+            topLeft: Radius.circular(12.r),
+            bottomLeft: Radius.circular(12.r),
+            topRight: Radius.circular(4.r),
+            bottomRight: Radius.circular(4.r),
+          )
         : BorderRadius.only(
-      topLeft: Radius.circular(4.r),
-      bottomLeft: Radius.circular(4.r),
-      topRight: Radius.circular(12.r),
-      bottomRight: Radius.circular(12.r),
-    );
+            topLeft: Radius.circular(4.r),
+            bottomLeft: Radius.circular(4.r),
+            topRight: Radius.circular(12.r),
+            bottomRight: Radius.circular(12.r),
+          );
 
     return Container(
       height: 48.h,
@@ -1057,18 +1062,19 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                       SizedBox(width: 12.w),
                       isLoading
                           ? SizedBox(
-                        width: 20.w,
-                        height: 20.h,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(textColor),
-                        ),
-                      )
+                              width: 20.w,
+                              height: 20.h,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(textColor),
+                              ),
+                            )
                           : Icon(
-                        icon,
-                        color: textColor,
-                        size: 20.sp,
-                      ),
+                              icon,
+                              color: textColor,
+                              size: 20.sp,
+                            ),
                       SizedBox(width: 14.w),
                     ],
                   ),
@@ -1126,7 +1132,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             ),
           ),
           // 알림 아이콘을 리프레시 아이콘으로 변경
-          _buildCircleButton(
+          CircleButtonWidget(
             onTap: () {
               if (!_isRefreshing) {
                 _loadDiscussionRooms();
@@ -1134,35 +1140,10 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             },
             icon: Icons.refresh,
             color: Color(0xFF19B3F6),
-            size: 20.sp,
+            context: context,
+            iconSize: 20.sp,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCircleButton({
-    required VoidCallback onTap,
-    required IconData icon,
-    required Color color,
-    required double size,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(2, 2),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.all(8.w),
-        child: Icon(icon, size: size, color: color),
       ),
     );
   }
