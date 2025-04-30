@@ -10,6 +10,7 @@ import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/_widgets.dart';
+import '../app_theme.dart';
 
 class DiscussionRoomScreen extends StatefulWidget {
   final int discussionRoomId;
@@ -303,7 +304,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF2F2F2),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: SafeArea(
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
@@ -367,11 +368,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                         width: 120.w,
                         height: 120.w,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: AppTheme.isDark(context)
+                              ? Color(0xFF21202C).withOpacity(0.9)
+                              : Colors.white.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(16.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppTheme.isDark(context)
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.black.withOpacity(0.1),
                               blurRadius: 10,
                               spreadRadius: 0,
                             ),
@@ -423,14 +428,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           Icon(
             Icons.info_outline,
             size: 16.sp,
-            color: Colors.grey[600],
+            color: AppTheme.isDark(context)
+                ? Colors.grey[400]
+                : Colors.grey[600],
           ),
           SizedBox(width: 6.w),
           Text(
             "타인에 대한 비방글은 삭제될 수 있습니다",
             style: TextStyle(
               fontSize: 12.sp,
-              color: Colors.grey[600],
+              color: AppTheme.isDark(context)
+                  ? Colors.grey[400]
+                  : Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -453,9 +462,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       height: containerHeight,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.08),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
@@ -474,6 +491,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
+              color: AppTheme.getTextColor(context),
             ),
           ),
           SizedBox(height: 16.h),
@@ -500,7 +518,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         Icon(
           Icons.lock_outline,
           size: 40.sp,
-          color: Colors.grey[400],
+          color: AppTheme.isDark(context)
+              ? Colors.grey[600]
+              : Colors.grey[400],
         ),
         SizedBox(height: 16.h),
         Text(
@@ -508,7 +528,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           style: TextStyle(
             fontSize: 16.sp,
             fontWeight: FontWeight.w500,
-            color: Colors.grey[600],
+            color: AppTheme.isDark(context)
+                ? Colors.grey[400]
+                : Colors.grey[600],
           ),
         ),
         SizedBox(height: 8.h),
@@ -516,7 +538,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           "더 이상 의견을 남길 수 없습니다",
           style: TextStyle(
             fontSize: 14.sp,
-            color: Colors.grey[500],
+            color: AppTheme.isDark(context)
+                ? Colors.grey[500]
+                : Colors.grey[500],
           ),
           textAlign: TextAlign.center,
         ),
@@ -684,7 +708,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                         emotionData.description,
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: Colors.grey[700],
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[300]
+                              : Colors.grey[700],
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -718,13 +744,26 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             width: 45.w,
             height: 45.w,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppTheme.isDark(context)
+                  ? Color(0xFF2A2A36)
+                  : Colors.grey[100],
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.grey[300]!,
+                color: AppTheme.isDark(context)
+                    ? Colors.grey[700]!
+                    : Colors.grey[300]!,
                 width: 1,
               ),
-              boxShadow: [
+              boxShadow: AppTheme.isDark(context)
+                  ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 3,
+                  spreadRadius: 0,
+                  offset: Offset(0, 1),
+                ),
+              ]
+                  : [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.2),
                   blurRadius: 3,
@@ -737,7 +776,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               child: Icon(
                 Icons.refresh_rounded,
                 size: 22.sp,
-                color: Colors.grey[700],
+                color: AppTheme.isDark(context)
+                    ? Colors.grey[400]
+                    : Colors.grey[700],
               ),
             ),
           ),
@@ -783,7 +824,16 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               ],
             ),
             borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
+            boxShadow: AppTheme.isDark(context)
+                ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 8,
+                spreadRadius: 0,
+                offset: Offset(0, 4),
+              ),
+            ]
+                : [
               BoxShadow(
                 color: color.withOpacity(0.3),
                 blurRadius: 8,
@@ -968,12 +1018,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(16.r),
           bottomRight: Radius.circular(16.r),
         ),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -1005,6 +1063,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1014,7 +1073,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   _keyword?.category ?? "",
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: Colors.grey[600],
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[400]
+                        : Colors.grey[600],
                   ),
                 ),
               ],
@@ -1042,7 +1103,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               StylishToast.show(context, message: '공유 기능은 준비 중입니다.');
             },
             icon: Icons.share_outlined,
-            color: Colors.grey[500]!,
+            color: AppTheme.isDark(context)
+                ? Colors.grey[400]!
+                : Colors.grey[500]!,
             iconSize: 22.sp,
           ),
         ],
@@ -1063,9 +1126,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         width: 36.w,
         height: 36.w,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.isDark(context)
+              ? Color(0xFF2A2A36)
+              : Colors.white,
           shape: BoxShape.circle,
-          boxShadow: [
+          boxShadow: AppTheme.isDark(context)
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 3,
+              spreadRadius: 1,
+              offset: Offset(0, 1),
+            ),
+          ]
+              : [
             BoxShadow(
               color: Colors.grey.withOpacity(0.2),
               blurRadius: 3,
@@ -1108,9 +1182,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.08),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -1126,7 +1208,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               child: Container(
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.getContainerColor(context),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(16.r),
                     bottomLeft: Radius.circular(16.r),
@@ -1161,7 +1243,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                               dateStr,
                               style: TextStyle(
                                 fontSize: 15.sp,
-                                color: Colors.grey[600],
+                                color: AppTheme.isDark(context)
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
                               ),
                             ),
                             SizedBox(height: 0),
@@ -1170,6 +1254,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w600,
+                                color: AppTheme.getTextColor(context),
                               ),
                             ),
                           ],
@@ -1186,7 +1271,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               child: Container(
                 padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
                 decoration: BoxDecoration(
-                  color: isExpired ? Colors.grey[100] : Color(0xFFF9F9F9),
+                  color: AppTheme.isDark(context)
+                      ? (isExpired ? Color(0xFF1D1D26) : Color(0xFF272732))
+                      : (isExpired ? Colors.grey[100] : Color(0xFFF9F9F9)),
                   borderRadius: BorderRadius.only(
                     topRight: Radius.circular(16.r),
                     bottomRight: Radius.circular(16.r),
@@ -1199,7 +1286,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                       isExpired ? "종료됨" : "남은시간",
                       style: TextStyle(
                         fontSize: 15.sp,
-                        color: isExpired ? Colors.grey : Colors.black,
+                        color: isExpired
+                            ? (AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey)
+                            : AppTheme.getTextColor(context),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1215,7 +1304,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                             style: TextStyle(
                               fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
-                              color: isExpired ? Colors.grey : Colors.black,
+                              color: isExpired
+                                  ? (AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey)
+                                  : AppTheme.getTextColor(context),
                             ),
                           ),
                         ),
@@ -1227,7 +1318,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                             style: TextStyle(
                               fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
-                              color: isExpired ? Colors.grey : Colors.black,
+                              color: isExpired
+                                  ? (AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey)
+                                  : AppTheme.getTextColor(context),
                             ),
                           ),
                         ),
@@ -1251,9 +1344,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       height: 48.h,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: isDisabled ? Colors.grey[200] : Colors.white,
+        color: AppTheme.isDark(context)
+            ? (isDisabled ? Color(0xFF252530) : Color(0xFF2C2C38))
+            : (isDisabled ? Colors.grey[200] : Colors.white),
         borderRadius: BorderRadius.circular(10.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDisabled ? 0.25 : 0.4),
+            blurRadius: 5,
+            spreadRadius: 1,
+            offset: Offset(0, 2),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(isDisabled ? 0.1 : 0.2),
             blurRadius: 5,
@@ -1267,7 +1371,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         style: TextStyle(
           fontSize: 24.sp,
           fontWeight: FontWeight.bold,
-          color: isDisabled ? Colors.grey : Colors.black,
+          color: AppTheme.isDark(context)
+              ? (isDisabled ? Colors.grey[600] : Colors.grey[300])
+              : (isDisabled ? Colors.grey : Colors.black),
         ),
       ),
     );
@@ -1279,9 +1385,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.08),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -1301,6 +1415,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
+                  color: AppTheme.getTextColor(context),
                 ),
               ),
               // 커스텀 On/Off 토글 스위치
@@ -1318,13 +1433,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           // 토글이 켜져있을 때만 요약 종류 토글 및 내용 표시
           if (_isRealTimeSummaryEnabled) ...[
             SizedBox(height: 16.h),
-            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
+            ),
             SizedBox(height: 12.h),
 
             // 요약 유형 토글 (3줄, 짧은 글, 긴 글)
             Align(alignment: Alignment.center, child: _buildSummaryToggle()),
             SizedBox(height: 12.h),
-            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
+            ),
 
             SizedBox(height: 16.h),
 
@@ -1350,8 +1473,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         height: 30.h,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.r),
-          color: value ? Color(0xFF19B3F6) : Colors.grey[300],
-          boxShadow: [
+          color: value ? Color(0xFF19B3F6) : (AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300]),
+          boxShadow: AppTheme.isDark(context)
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 2,
+              spreadRadius: 0,
+              offset: Offset(0, 1),
+            ),
+          ]
+              : [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               blurRadius: 2,
@@ -1439,7 +1571,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               width: buttonWidth,
               height: buttonHeight + 4.h, // 살짝 더 큰 높이로 튀어나옴
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.getToggleButtonColor(context),
                 borderRadius: BorderRadius.circular(15.r),
                 boxShadow: [
                   // 튀어나온 효과를 주는 그림자
@@ -1476,12 +1608,16 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                         color: Colors.transparent, // 투명 배경으로 탭 이벤트만 받음
                         child: Text(
                           ['3줄', '짧은 글', '긴 글'][index],
-                          style: TextStyle(
+                          style: AppTheme.isDark(context)
+                              ? TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.normal,
-                            color: index == selectedIndex
-                                ? Colors.black
-                                : Colors.white,
+                            color: index == selectedIndex ? Colors.white : Colors.black,
+                          )
+                              : TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.normal,
+                            color: index == selectedIndex ? Colors.black : Colors.white,
                           ),
                         ),
                       ),
@@ -1506,7 +1642,12 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     switch (_summaryType) {
       case '3줄':
         if (_keyword!.type1.isEmpty) {
-          return Text("3줄 요약 정보가 없습니다.");
+          return Text(
+            "3줄 요약 정보가 없습니다.",
+            style: TextStyle(
+              color: AppTheme.getTextColor(context),
+            ),
+          );
         }
 
         return Column(
@@ -1519,7 +1660,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               style: TextStyle(
                 fontSize: 15.sp,
                 height: 1.5,
-                color: Colors.grey[800],
+                color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
               ),
             ),
           ))
@@ -1532,7 +1673,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           style: TextStyle(
             fontSize: 15.sp,
             height: 1.5,
-            color: Colors.grey[800],
+            color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
           ),
         );
 
@@ -1542,12 +1683,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           style: TextStyle(
             fontSize: 15.sp,
             height: 1.5,
-            color: Colors.grey[800],
+            color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
           ),
         );
 
       default:
-        return Text("요약 정보가 없습니다.");
+        return Text(
+          "요약 정보가 없습니다.",
+          style: TextStyle(
+            color: AppTheme.getTextColor(context),
+          ),
+        );
     }
   }
 
@@ -1557,9 +1703,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       key: _commentSectionKey,
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.08),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -1572,12 +1726,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.getContainerColor(context),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16.r),
                 topRight: Radius.circular(16.r),
               ),
-              boxShadow: [
+              boxShadow: AppTheme.isDark(context)
+                  ? [
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.05),
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
+              ]
+                  : [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.03),
                   blurRadius: 3,
@@ -1593,6 +1755,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
+                    color: AppTheme.getTextColor(context),
                   ),
                 ),
                 SortPopupWidget(
@@ -1623,13 +1786,16 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.forum_outlined,
-                        size: 40.sp, color: Colors.grey[400]),
+                    Icon(
+                      Icons.forum_outlined,
+                      size: 40.sp,
+                      color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[400],
+                    ),
                     SizedBox(height: 8.h),
                     Text(
                       "아직 의견이 없어요! 첫 의견을 남겨주세요!",
                       style: TextStyle(
-                        color: Colors.grey[500],
+                        color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
                         fontSize: 15.sp,
                       ),
                     ),
@@ -1686,9 +1852,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
         decoration: BoxDecoration(
-          color: Color(0xFFF5F5F5),
+          color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
+          boxShadow: AppTheme.isDark(context)
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 5,
+              spreadRadius: 0,
+              offset: Offset(0, 2),
+            ),
+          ]
+              : [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
               blurRadius: 5,
@@ -1710,7 +1885,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: isMyComment ? Color(0xFF19B3F6) : Colors.black87,
+                      color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -1718,7 +1893,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     timeAgo,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: Colors.grey[500],
+                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[500],
                     ),
                   ),
                   Spacer(),
@@ -1729,7 +1904,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     child: Icon(
                       Icons.more_horiz,
                       size: 16.sp,
-                      color: Colors.grey[400],
+                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[400],
                     ),
                   )
                       : SizedBox.shrink(),
@@ -1744,7 +1919,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                 style: TextStyle(
                   fontSize: 15.sp,
                   height: 1.4,
-                  color: Colors.black.withOpacity(0.85),
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[300]
+                      : Colors.black.withOpacity(0.85),
                 ),
               ),
 
@@ -1787,14 +1964,14 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                         Icon(
                           Icons.chat_bubble_outline,
                           size: 16.sp,
-                          color: Colors.grey[500],
+                          color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
                         ),
                         SizedBox(width: 4.w),
                         Text(
                           (comment.replies ?? 0).toString(),
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: Colors.grey[500],
+                            color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
                           ),
                         ),
                       ],
@@ -1818,6 +1995,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15.r),
           ),
+          backgroundColor: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
           child: Container(
             padding: EdgeInsets.all(12.w),
             child: Column(
@@ -1850,7 +2028,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     ),
                   ),
                 ),
-                Divider(),
+                Divider(
+                  color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
+                ),
                 InkWell(
                   onTap: () {
                     Navigator.pop(context);
@@ -1864,6 +2044,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
+                        color: AppTheme.getTextColor(context),
                       ),
                     ),
                   ),
@@ -2086,7 +2267,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   Icon(
                     icon,
                     size: 16.sp,
-                    color: isActive ? activeColor : Colors.grey[600],
+                    color: isActive
+                        ? activeColor
+                        : (AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]),
                   ),
                   SizedBox(width: 4.w),
                   Text(
@@ -2094,7 +2277,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-                      color: isActive ? activeColor : Colors.grey[600],
+                      color: isActive
+                          ? activeColor
+                          : (AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]),
                     ),
                   ),
                 ],
@@ -2191,7 +2376,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       }
     }
   }
-
+  // 하단 입력 섹션
   // 하단 입력 섹션
   Widget _buildInputSection() {
     // 토론방이 종료된 경우 입력 비활성화
@@ -2201,12 +2386,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24.r),
           topRight: Radius.circular(24.r),
         ),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, -3),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
             blurRadius: 10,
@@ -2227,12 +2420,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     intensity: 0.7,
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
-                    color: isDisabled ? Colors.grey[200] : Color(0xFFF5F5F5),
+                    color: isDisabled
+                        ? (AppTheme.isDark(context) ? Color(0xFF252530) : Colors.grey[200])
+                        : (AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5)),
                     boxShape: NeumorphicBoxShape.roundRect(
                         BorderRadius.circular(16.r)),
                   ),
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -2251,7 +2445,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                             hintText: "아이디",
                             hintStyle: TextStyle(
                               fontSize: 14.sp,
-                              color: Colors.grey[600],
+                              color: AppTheme.isDark(context)
+                                  ? Colors.grey[500]
+                                  : Colors.grey[600],
                             ),
                             border: InputBorder.none,
                             isDense: true,
@@ -2261,7 +2457,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                           ),
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: isDisabled ? Colors.grey : Colors.black87,
+                            color: isDisabled
+                                ? Colors.grey
+                                : AppTheme.getTextColor(context),
                           ),
                         ),
                       ),
@@ -2279,12 +2477,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     intensity: 0.7,
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
-                    color: isDisabled ? Colors.grey[200] : Color(0xFFF5F5F5),
+                    color: isDisabled
+                        ? (AppTheme.isDark(context) ? Color(0xFF252530) : Colors.grey[200])
+                        : (AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5)),
                     boxShape: NeumorphicBoxShape.roundRect(
                         BorderRadius.circular(16.r)),
                   ),
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -2304,7 +2503,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                             hintText: "비밀번호",
                             hintStyle: TextStyle(
                               fontSize: 14.sp,
-                              color: Colors.grey[600],
+                              color: AppTheme.isDark(context)
+                                  ? Colors.grey[500]
+                                  : Colors.grey[600],
                             ),
                             border: InputBorder.none,
                             isDense: true,
@@ -2314,7 +2515,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                           ),
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: isDisabled ? Colors.grey : Colors.black87,
+                            color: isDisabled
+                                ? Colors.grey
+                                : AppTheme.getTextColor(context),
                           ),
                         ),
                       ),
@@ -2330,12 +2533,33 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           // 댓글 입력 필드
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.isDark(context)
+                  ? Color(0xFF2A2A36)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
-                color: isDisabled ? Colors.grey[300]! : Color(0xFFE0E0E0),
+                color: isDisabled
+                    ? (AppTheme.isDark(context) ? Colors.grey[700]! : Colors.grey[300]!)
+                    : (AppTheme.isDark(context) ? Color(0xFF3C3B48) : Color(0xFFE0E0E0)),
                 width: 1.5,
               ),
+              boxShadow: AppTheme.isDark(context)
+                  ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                  offset: Offset(0, 1),
+                ),
+              ]
+                  : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                  offset: Offset(0, 1),
+                ),
+              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -2355,7 +2579,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                         hintText: isDisabled ? "종료된 토론방입니다" : "생각을 공유해주세요 :)",
                         hintStyle: TextStyle(
                           fontSize: 15.sp,
-                          color: Colors.grey[400],
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[500]
+                              : Colors.grey[400],
                         ),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 8.h),
@@ -2363,7 +2589,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                       ),
                       style: TextStyle(
                         fontSize: 15.sp,
-                        color: Colors.black87,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[300]
+                            : Colors.black87,
                         height: 1.3,
                       ),
                     ),
@@ -2375,13 +2603,13 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
                     color: isDisabled || _isCommenting
-                        ? Colors.grey[300]
+                        ? (AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300])
                         : Color(0xFF19B3F6),
                     borderRadius: BorderRadius.circular(18.r),
                     boxShadow: [
                       BoxShadow(
                         color: isDisabled || _isCommenting
-                            ? Colors.grey[300]!.withOpacity(0.2)
+                            ? Colors.black.withOpacity(0.2)
                             : Color(0xFF19B3F6).withOpacity(0.2),
                         blurRadius: 4,
                         spreadRadius: 0,
@@ -2393,8 +2621,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18.r),
-                      onTap:
-                      isDisabled || _isCommenting ? null : _submitComment,
+                      onTap: isDisabled || _isCommenting ? null : _submitComment,
                       child: Container(
                         width: 44.w,
                         height: 44.w,
