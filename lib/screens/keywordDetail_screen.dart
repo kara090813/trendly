@@ -6,15 +6,25 @@ import 'package:html_unescape/html_unescape.dart';
 import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../widgets/_widgets.dart';
+import '../app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-// 공통 스타일을 정의한 클래스
+// 공통 스타일을 정의한 클래스 - 다크모드 지원 추가
 class DetailStyles {
-  static final BoxDecoration cardDecoration = BoxDecoration(
-    color: Colors.white,
+  static BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
+    color: AppTheme.getContainerColor(context),
     borderRadius: BorderRadius.circular(20.r),
-    boxShadow: [
+    boxShadow: AppTheme.isDark(context)
+        ? [
+      BoxShadow(
+        color: Colors.white.withOpacity(0.05),
+        blurRadius: 10,
+        spreadRadius: 0,
+        offset: Offset(0, 2),
+      ),
+    ]
+        : [
       BoxShadow(
         color: Colors.black.withOpacity(0.1),
         blurRadius: 10,
@@ -24,10 +34,25 @@ class DetailStyles {
     ],
   );
 
-  static final BoxDecoration insetDecoration = BoxDecoration(
-    color: Color(0xFFFAFAFA),
+  static BoxDecoration insetDecoration(BuildContext context) => BoxDecoration(
+    color: AppTheme.isDark(context) ? Color(0xFF2D2D3A) : Color(0xFFFAFAFA),
     borderRadius: BorderRadius.circular(15.r),
-    boxShadow: [
+    boxShadow: AppTheme.isDark(context)
+        ? [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.2),
+        blurRadius: 4,
+        spreadRadius: 1,
+        offset: Offset(2, 2),
+      ),
+      BoxShadow(
+        color: Colors.white.withOpacity(0.05),
+        blurRadius: 4,
+        spreadRadius: 1,
+        offset: Offset(-2, -2),
+      ),
+    ]
+        : [
       BoxShadow(
         color: Colors.black.withOpacity(0.1),
         blurRadius: 4,
@@ -43,10 +68,19 @@ class DetailStyles {
     ],
   );
 
-  static final BoxDecoration commentDecoration = BoxDecoration(
-    color: Color(0xFFF5F5F5),
+  static BoxDecoration commentDecoration(BuildContext context) => BoxDecoration(
+    color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
     borderRadius: BorderRadius.circular(15.r),
-    boxShadow: [
+    boxShadow: AppTheme.isDark(context)
+        ? [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.2),
+        blurRadius: 4,
+        spreadRadius: 0,
+        offset: Offset(2, 2),
+      ),
+    ]
+        : [
       BoxShadow(
         color: Colors.black.withOpacity(0.1),
         blurRadius: 4,
@@ -143,13 +177,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE9E9EC),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
           : _error != null
           ? _buildErrorWidget()
           : _keyword == null
-          ? const Center(child: Text('키워드 정보가 없습니다.'))
+          ? Center(child: Text('키워드 정보가 없습니다.', style: TextStyle(color: AppTheme.getTextColor(context))))
           : _buildOptimizedDetailContent(),
     );
   }
@@ -161,13 +195,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         children: [
           Text(
             _error!,
-            style: const TextStyle(color: Colors.red),
+            style: TextStyle(color: Colors.red),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 16.h),
           ElevatedButton(
             onPressed: _loadKeywordDetails,
-            child: const Text('다시 시도'),
+            child: Text('다시 시도'),
           ),
         ],
       ),
@@ -184,11 +218,11 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         // SliverAppBar 수정 - 내부 구조 간소화
         SliverAppBar(
           pinned: true,
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.getContainerColor(context),
           elevation: 8,
           expandedHeight: 0,
           toolbarHeight: 54.h,
-          centerTitle: true, //
+          centerTitle: true,
           automaticallyImplyLeading: false, // 기본 백버튼 비활성화
           // 헤더 부분을 title 대신 flexibleSpace로 구현 (더 유연한 레이아웃)
           flexibleSpace: SafeArea(
@@ -201,7 +235,9 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               bottomRight: Radius.circular(14.r),
             ),
           ),
-          shadowColor: Colors.black.withOpacity(0.3),
+          shadowColor: AppTheme.isDark(context)
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.3),
         ),
 
         // 여기서 SliverPadding의 vertical 패딩 제거
@@ -258,7 +294,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                         style: TextStyle(
                           fontSize: 20.sp,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: AppTheme.getTextColor(context),
                         ),
                         minFontSize: 10,
                         stepGranularity: 1,
@@ -274,7 +310,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                         '('+_keyword!.category+')',
                         style: TextStyle(
                           fontSize: 20.sp,
-                          color: Colors.grey[600],
+                          color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                         ),
                         minFontSize: 8,
                         stepGranularity: 1,
@@ -300,7 +336,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     return RepaintBoundary(
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        decoration: DetailStyles.cardDecoration,
+        decoration: DetailStyles.cardDecoration(context),
         child: Padding(
           padding: EdgeInsets.all(15.w),
           child: Column(
@@ -316,6 +352,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       style: TextStyle(
                         fontSize: 22.sp,
                         fontWeight: FontWeight.bold,
+                        color: AppTheme.getTextColor(context),
                       ),
                     ),
                     Spacer(),
@@ -328,7 +365,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               ),
               SizedBox(height: 5.h),
               Divider(
-                color: Color(0xFFE2E2E2),
+                color: AppTheme.isDark(context) ? Colors.grey[700] : Color(0xFFE2E2E2),
                 thickness: 1,
                 indent: 4,
                 endIndent: 4,
@@ -348,10 +385,12 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
   // 요약 내용 생성
   Widget _buildFormattedSummaryContent() {
+    final textColor = AppTheme.isDark(context) ? Colors.grey[300] : Colors.black87;
+
     switch (_selectedSummaryType) {
       case '3줄':
         if (_keyword!.type1.isEmpty) {
-          return Text('요약 내용이 없습니다.');
+          return Text('요약 내용이 없습니다.', style: TextStyle(color: textColor));
         }
         // 반복문 대신 map과 spread 연산자 활용
         return Column(
@@ -371,6 +410,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                         style: TextStyle(
                           fontSize: 18.sp,
                           height: 1.5,
+                          color: textColor,
                         ),
                       ),
                     ),
@@ -386,6 +426,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           style: TextStyle(
             fontSize: 18.sp,
             height: 1.5,
+            color: textColor,
           ),
         );
       case '긴 글':
@@ -394,10 +435,11 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           style: TextStyle(
             fontSize: 18.sp,
             height: 1.5,
+            color: textColor,
           ),
         );
       default:
-        return Text('요약 내용이 없습니다.');
+        return Text('요약 내용이 없습니다.', style: TextStyle(color: textColor));
     }
   }
 
@@ -426,7 +468,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     return RepaintBoundary(
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        decoration: DetailStyles.cardDecoration,
+        decoration: DetailStyles.cardDecoration(context),
         child: Padding(
           padding: EdgeInsets.all(15.w),
           child: Column(
@@ -437,6 +479,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 style: TextStyle(
                   fontSize: 22.sp,
                   fontWeight: FontWeight.bold,
+                  color: AppTheme.getTextColor(context),
                 ),
               ),
               SizedBox(height: 20.h),
@@ -486,13 +529,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       Icon(
                         Icons.info_outline,
                         size: 16.sp,
-                        color: Colors.grey[500],
+                        color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
                       ),
                       SizedBox(width: 8.w),
                       Text(
                         '아직 토론방 반응이 없습니다.',
                         style: TextStyle(
-                          color: Colors.grey[500],
+                          color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
                           fontSize: 14.sp,
                         ),
                       ),
@@ -501,7 +544,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 ),
 
               Divider(
-                color: Colors.grey[300],
+                color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
                 thickness: 1,
                 height: 30.h,
               ),
@@ -511,6 +554,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w500,
+                  color: AppTheme.getTextColor(context),
                 ),
               ),
             ],
@@ -547,7 +591,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           '$text $percentage',
           style: TextStyle(
             fontSize: 12.sp,
-            color: Colors.grey.shade700,
+            color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey.shade700,
           ),
         ),
       ],
@@ -558,7 +602,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   Widget _buildTopDiscussionsSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: DetailStyles.cardDecoration,
+      decoration: DetailStyles.cardDecoration(context),
       child: Padding(
         padding: EdgeInsets.all(15.w),
         child: Column(
@@ -573,6 +617,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   style: TextStyle(
                     fontSize: 22.sp,
                     fontWeight: FontWeight.bold,
+                    color: AppTheme.getTextColor(context),
                   ),
                 ),
                 GestureDetector(
@@ -626,13 +671,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             Icon(
               Icons.info_outline,
               size: 16.sp,
-              color: Colors.grey[500],
+              color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
             ),
             SizedBox(width: 8.w),
             Text(
               '아직 의견이 없어요! 첫 의견을 남겨주세요!',
               style: TextStyle(
-                color: Colors.grey[500],
+                color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
                 fontSize: 14.sp,
               ),
             ),
@@ -660,7 +705,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     return RepaintBoundary(
       child: Container(
         margin: EdgeInsets.only(bottom: 15.h),
-        decoration: DetailStyles.commentDecoration,
+        decoration: DetailStyles.commentDecoration(context),
         child: Padding(
           padding: EdgeInsets.all(15.w),
           child: Column(
@@ -674,13 +719,14 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15.sp,
+                      color: AppTheme.getTextColor(context),
                     ),
                   ),
                   SizedBox(width: 8.w),
                   Text(
                     _formatTimeAgo(comment.createdAt.toString()),
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey,
                       fontSize: 13.sp,
                     ),
                   ),
@@ -691,7 +737,10 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               // 댓글 내용
               Text(
                 comment.comment,
-                style: TextStyle(fontSize: 15.sp),
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.black87,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -701,34 +750,43 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.thumb_up_outlined, size: 16.sp, color: Colors.grey[600]),
+                  Icon(Icons.thumb_up_outlined,
+                      size: 16.sp,
+                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]
+                  ),
                   SizedBox(width: 4.w),
                   Text(
                     (comment.likeCount ?? 0).toString(),
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 13.sp,
                     ),
                   ),
                   SizedBox(width: 12.w),
 
-                  Icon(Icons.thumb_down_outlined, size: 16.sp, color: Colors.grey[600]),
+                  Icon(Icons.thumb_down_outlined,
+                      size: 16.sp,
+                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]
+                  ),
                   SizedBox(width: 4.w),
                   Text(
                     (comment.dislikeCount ?? 0).toString(),
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 13.sp,
                     ),
                   ),
                   SizedBox(width: 12.w),
 
-                  Icon(Icons.comment_outlined, size: 16.sp, color: Colors.grey[600]),
+                  Icon(Icons.comment_outlined,
+                      size: 16.sp,
+                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]
+                  ),
                   SizedBox(width: 4.w),
                   Text(
                     (comment.replies ?? 0).toString(),
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 13.sp,
                     ),
                   ),
@@ -759,7 +817,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: DetailStyles.cardDecoration,
+      decoration: DetailStyles.cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -771,6 +829,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               style: TextStyle(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.bold,
+                color: AppTheme.getTextColor(context),
               ),
             ),
           ),
@@ -784,7 +843,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: Colors.grey[200],
+                    color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
                     indent: 16.w,
                     endIndent: 16.w,
                   ),
@@ -809,7 +868,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                             Divider(
                               height: 1,
                               thickness: 1,
-                              color: Colors.grey[200],
+                              color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
                               indent: 16.w,
                               endIndent: 16.w,
                             ),
@@ -847,7 +906,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               width: 80.w,
               height: 80.w,
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: AppTheme.isDark(context) ? Color(0xFF333340) : Colors.grey[200],
                 borderRadius: BorderRadius.circular(8.r),
                 image: ref.thumbnail != null && ref.thumbnail!.isNotEmpty
                     ? DecorationImage(
@@ -859,7 +918,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               child: ref.thumbnail == null || ref.thumbnail!.isEmpty
                   ? Icon(
                 Icons.article,
-                color: Colors.grey[500],
+                color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[500],
                 size: 30.sp,
               )
                   : null,
@@ -877,6 +936,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w500,
                       height: 1.3,
+                      color: AppTheme.getTextColor(context),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -885,7 +945,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   Text(
                     '${ref.type} · ${ref.date}',
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[600],
                       fontSize: 13.sp,
                     ),
                   ),
@@ -912,9 +972,11 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.r),
-            side: BorderSide(color: Colors.grey[300]!),
+            side: BorderSide(
+                color: AppTheme.isDark(context) ? Colors.grey[700]! : Colors.grey[300]!
+            ),
           ),
-          backgroundColor: Colors.grey[50],
+          backgroundColor: AppTheme.isDark(context) ? Color(0xFF2D2D3A) : Colors.grey[50],
           padding: EdgeInsets.symmetric(vertical: 12.h),
         ),
         child: Row(
@@ -981,114 +1043,5 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     } catch (e) {
       return '알 수 없음'; // 기본값
     }
-  }
-}
-
-// 요약 토글 위젯 최적화
-class DetailSummaryToggleWidget extends StatefulWidget {
-  final String currentType;
-  final Function(String) onChanged;
-
-  const DetailSummaryToggleWidget({
-    Key? key,
-    required this.currentType,
-    required this.onChanged,
-  }) : super(key: key);
-
-  @override
-  State<DetailSummaryToggleWidget> createState() => _DetailSummaryToggleWidgetState();
-}
-
-class _DetailSummaryToggleWidgetState extends State<DetailSummaryToggleWidget> {
-  final List<String> options = ['3줄', '짧은 글', '긴 글'];
-  late int selectedIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedIndex = options.indexOf(widget.currentType);
-    if (selectedIndex < 0) selectedIndex = 0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final double totalWidth = 200.w;
-    final double buttonWidth = totalWidth / 3;
-    final double buttonHeight = 30.h;
-
-    return SizedBox(
-      width: totalWidth,
-      height: buttonHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // 배경
-          Container(
-            width: totalWidth,
-            height: buttonHeight,
-            decoration: BoxDecoration(
-              color: Color(0xFF1CB3F8),
-              borderRadius: BorderRadius.circular(15.r),
-            ),
-          ),
-
-          // 흰색 선택 버튼
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            left: selectedIndex * buttonWidth,
-            top: 0,
-            child: Container(
-              width: buttonWidth,
-              height: buttonHeight,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 3,
-                    spreadRadius: 0.5,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 터치 가능한 버튼 텍스트
-          Row(
-            children: List.generate(
-              options.length,
-                  (index) => Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    if (index != selectedIndex) {
-                      setState(() {
-                        selectedIndex = index;
-                      });
-                      widget.onChanged(options[index]);
-                    }
-                  },
-                  child: Container(
-                    height: buttonHeight,
-                    alignment: Alignment.center,
-                    color: Colors.transparent,
-                    child: Text(
-                      options[index],
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.normal,
-                        color: index == selectedIndex ? Colors.black : Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

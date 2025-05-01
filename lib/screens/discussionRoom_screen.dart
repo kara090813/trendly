@@ -376,7 +376,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                           boxShadow: [
                             BoxShadow(
                               color: AppTheme.isDark(context)
-                                  ? Colors.white.withOpacity(0.1)
+                                  ? Colors.black.withOpacity(0.5)
                                   : Colors.black.withOpacity(0.1),
                               blurRadius: 10,
                               spreadRadius: 0,
@@ -468,7 +468,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -1027,7 +1027,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -1146,7 +1146,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -1349,7 +1349,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -1730,7 +1730,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -1756,7 +1756,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               boxShadow: AppTheme.isDark(context)
                   ? [
                 BoxShadow(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.black.withOpacity(0.2),
                   blurRadius: 3,
                   offset: Offset(0, 1),
                 ),
@@ -2416,7 +2416,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
             offset: Offset(0, -3),
           ),

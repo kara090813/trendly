@@ -272,12 +272,12 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
                         boxShadow: AppTheme.isDark(context)
                             ? [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
+                                  color: Colors.black.withOpacity(0.4),
                                   offset: Offset(1, 1),
                                   blurRadius: 0.1,
                                 ),
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: Colors.black.withOpacity(0.2),
                                   offset: Offset(-1, -1),
                                   blurRadius: 0.1,
                                 )

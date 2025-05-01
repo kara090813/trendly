@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../app_theme.dart';
 
 class SortOption {
   final String title;
@@ -78,9 +79,18 @@ class SortPopupWidget extends StatelessWidget {
       width: double.infinity,
       constraints: BoxConstraints(maxWidth: 500.w), // 최대 너비 설정
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.white.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: Offset(0, 4),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
@@ -102,7 +112,7 @@ class SortPopupWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+                    color: AppTheme.getTextColor(context),
                   ),
                 ),
                 Spacer(),
@@ -112,18 +122,26 @@ class SortPopupWidget extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                   splashRadius: 20.r,
-                  color: Colors.grey[600],
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[400]
+                      : Colors.grey[600],
                 ),
               ],
             ),
           ),
 
-          Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+          Divider(
+              height: 1,
+              thickness: 1,
+              color: AppTheme.isDark(context)
+                  ? Colors.grey[800]
+                  : Colors.grey[200]),
 
           // 옵션 목록
           ...List.generate(options.length, (index) {
             final option = options[index];
-            final bool isSelected = index == 0 ? isPopularSort : !isPopularSort;
+            final bool isSelected =
+            index == 0 ? isPopularSort : !isPopularSort;
 
             return Column(
               children: [
@@ -139,7 +157,13 @@ class SortPopupWidget extends StatelessWidget {
                   },
                 ),
                 if (index < options.length - 1)
-                  Divider(height: 1, indent: 70.w, endIndent: 20.w, color: Colors.grey[200]),
+                  Divider(
+                      height: 1,
+                      indent: 70.w,
+                      endIndent: 20.w,
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[800]
+                          : Colors.grey[200]),
               ],
             );
           }),
@@ -160,7 +184,7 @@ class SortPopupWidget extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -175,13 +199,19 @@ class SortPopupWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? accentColor.withOpacity(0.1)
+                      : AppTheme.isDark(context)
+                      ? Colors.grey[800]
                       : Colors.grey[100],
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
                   size: 20.sp,
-                  color: isSelected ? accentColor : Colors.grey[400],
+                  color: isSelected
+                      ? accentColor
+                      : AppTheme.isDark(context)
+                      ? Colors.grey[400]
+                      : Colors.grey[600],
                 ),
               ),
 
@@ -197,8 +227,11 @@ class SortPopupWidget extends StatelessWidget {
                       title,
                       style: TextStyle(
                         fontSize: 15.sp,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? accentColor : Colors.black87,
+                        fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? accentColor
+                            : AppTheme.getTextColor(context),
                       ),
                     ),
                     SizedBox(height: 2.h),
@@ -206,7 +239,9 @@ class SortPopupWidget extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 13.sp,
-                        color: Colors.grey[600],
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[400]
+                            : Colors.grey[600],
                         height: 1.2,
                       ),
                       maxLines: 2,
@@ -227,7 +262,11 @@ class SortPopupWidget extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: isSelected
                       ? null
-                      : Border.all(color: Colors.grey[300]!, width: 1.5),
+                      : Border.all(
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[600]!
+                          : Colors.grey[300]!,
+                      width: 1.5),
                 ),
                 child: isSelected
                     ? Icon(
@@ -256,13 +295,24 @@ class SortPopupWidget extends StatelessWidget {
             ? EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h)
             : padding,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.getContainerColor(context),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: Colors.grey.withOpacity(0.2),
+            color: AppTheme.isDark(context)
+                ? Colors.grey[700]!.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             width: 1,
           ),
-          boxShadow: [
+          boxShadow: AppTheme.isDark(context)
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              spreadRadius: 0,
+              offset: Offset(0, 1),
+            ),
+          ]
+              : [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 4,
@@ -285,7 +335,7 @@ class SortPopupWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[800],
+                color: AppTheme.getTextColor(context),
               ),
             ),
             SizedBox(width: 2.w),

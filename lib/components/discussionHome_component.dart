@@ -224,7 +224,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                                 boxShadow: AppTheme.isDark(context)
                                     ? [
                                         BoxShadow(
-                                          color: Colors.white.withOpacity(0.1),
+                                          color: Colors.white.withOpacity(0.02),
                                           spreadRadius: 2,
                                           blurRadius: 6,
                                           offset: const Offset(0, 1),
@@ -254,14 +254,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                                     bottomRight: Radius.circular(24.r),
                                   ),
                                   boxShadow: AppTheme.isDark(context)
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.white.withOpacity(0.08),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ]
+                                      ? []
                                       : [
                                           BoxShadow(
                                             color:
@@ -341,14 +334,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                                     topRight: Radius.circular(24.r),
                                   ),
                                   boxShadow: AppTheme.isDark(context)
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.white.withOpacity(0.08),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, -3),
-                                          ),
-                                        ]
+                                      ? []
                                       : [
                                           BoxShadow(
                                             color:
@@ -410,7 +396,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                             boxShadow: [
                               BoxShadow(
                                 color: AppTheme.isDark(context)
-                                    ? Colors.white.withOpacity(0.1)
+                                    ? Colors.black.withOpacity(0.3)
                                     : Colors.black.withOpacity(0.1),
                                 blurRadius: 10,
                                 spreadRadius: 0,
@@ -1294,9 +1280,14 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             boxShadow: AppTheme.isDark(context)
                 ? [
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.05),
-                      blurRadius: 1,
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
                       offset: const Offset(1, 3),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, -1),
                     ),
                   ]
                 : [

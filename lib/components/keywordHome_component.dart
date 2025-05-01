@@ -395,16 +395,6 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: AppTheme.isDark(context)
                                   ? [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        offset: Offset(1, 1),
-                                        blurRadius: 1,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(0.3),
-                                        offset: Offset(-1, -1),
-                                        blurRadius: 1,
-                                      ),
                                     ]
                                   : [
                                       BoxShadow(
