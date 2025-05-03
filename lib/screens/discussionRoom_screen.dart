@@ -34,6 +34,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   bool _isAnimating = false;
   bool _isLoading = true;
   bool _isCommentLoading = false;
+  // 토론방 요약 표시 여부
+  bool _isDiscussionReactionEnabled = false;
   bool _isSentimentUpdating = false;
   bool _isCommenting = false;
   String _summaryType = '3줄'; // 기본 요약 타입
@@ -334,6 +336,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                           SizedBox(height: 12.h),
                           _buildSummaryToggleSection(),
                           SizedBox(height: 12.h),
+                          _buildDiscussionReactionToggleSection(),
+                          SizedBox(height: 12.h,),
                           AnimatedSwitcher(
                             duration: Duration(milliseconds: 600),
                             transitionBuilder: (Widget child,
@@ -475,8 +479,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         ]
             : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: 0,
             offset: Offset(0, 2),
           ),
         ],
@@ -509,7 +514,83 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       ),
     );
   }
+// 토론방 요약 토글 섹션
+  Widget _buildDiscussionReactionToggleSection() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      decoration: BoxDecoration(
+        color: AppTheme.getContainerColor(context),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ]
+            : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 제목과 On/Off 토글 스위치
+          Padding(
+            padding: EdgeInsets.only(left: 20.w,right:20.w, top: 16.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "토론방 요약",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                ),
+                // 커스텀 On/Off 토글 스위치
+                _buildCustomToggleSwitch(
+                  value: _isDiscussionReactionEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _isDiscussionReactionEnabled = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+          // 토글이 켜져있을 때만 DiscussionReactionWidget 표시
+          if (_isDiscussionReactionEnabled) ...[
 
+
+            // 상단 구분선
+            _buildDivider(),
+
+            SizedBox(height: 16.h),
+
+            // DiscussionReactionWidget 표시
+            DiscussionReactionWidget(
+              discussionRoom: _discussionRoom,
+              keyword: _keyword,
+              // 토론방 내부에서는 입장 버튼 표시 안함
+              showEnterButtons: false,
+            ),
+
+            SizedBox(height: 16.h),
+          ],
+        ],
+      ),
+    );
+  }
   // 비활성화된 감정 선택 섹션
   Widget _buildDisabledEmotionSection() {
     return Column(
@@ -1153,9 +1234,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         ]
             : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -1356,9 +1438,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         ]
             : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -1402,10 +1485,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               child: _buildSummaryToggle(),
             ),
 
-            // 하단 구분선
-            _buildDivider(),
 
-            SizedBox(height: 16.h),
+            SizedBox(height: 8.h),
 
             // 선택된 유형에 따른 요약 내용
             AnimatedSwitcher(
@@ -1737,9 +1818,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         ]
             : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
           ),
         ],
       ),

@@ -26,7 +26,7 @@ class DetailStyles {
     ]
         : [
       BoxShadow(
-        color: Colors.black.withOpacity(0.1),
+        color: Colors.black.withOpacity(0.3),
         blurRadius: 10,
         spreadRadius: 0,
         offset: Offset(0, 2),
