@@ -10,6 +10,7 @@ import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/_widgets.dart';
+import '../app_theme.dart';
 
 class CommentRoomScreen extends StatefulWidget {
   final int commentRoomId;
@@ -113,8 +114,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     });
 
     try {
-      // 부모 댓글 정보 가져오기
-      // 실제 API 구현시 바꿔야 함
+      // 부모 댓글 정보 가져오기 - 실제 API 호출 적용
       final comment = await _fetchParentComment(widget.commentRoomId);
       await _loadSubComments(isPopular: _isPopularSort);
 
@@ -142,22 +142,16 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     }
   }
 
-  // 부모 댓글 가져오기 (임시 구현)
+  // 부모 댓글 가져오기 (실제 API 구현)
   Future<Comment> _fetchParentComment(int commentId) async {
-    // 실제 API 구현시 이 부분을 대체해야 함
-    // 임시로 더미 데이터 반환
-    return Comment(
-      id: commentId,
-      discussionRoomId: 1,
-      user: 'user123',
-      nick: '나는 챗gpt',
-      comment: '크레스티드 게코는 머리 위에 눈썹 모양의 돌기를 가지고 있어요. 이 돌기 덕분에 더욱 개성 넘치는 외모를 자랑하죠 몸 색깔과 무늬도 다양해서 보는 재미가 있답니다. 아무튼 관련된 내용입니다. 게코는 귀엽습니다. 진짜 한번만 만져보세요 클레이 같아요.',
-      isSubComment: false,
-      createdAt: DateTime.now().subtract(Duration(minutes: 20)),
-      likeCount: 546,
-      dislikeCount: 5216,
-      replies: 2,
-    );
+    try {
+      // 실제 API 호출을 통해 댓글 정보 가져오기
+      return await _apiService.getCommentById(commentId);
+    } catch (e) {
+      print('부모 댓글 가져오기 오류: $e');
+      // API 오류 시 예외를 상위로 전파
+      rethrow;
+    }
   }
 
   // 대댓글 로드 함수
@@ -167,7 +161,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     });
 
     try {
-      // 실제로는 API 호출이 필요하지만 임시로 더미 데이터 사용
+      // 실제 API 호출을 통해 대댓글 목록 가져오기
       final subComments = await _apiService.getSubComments(
           widget.commentRoomId, isPopular: isPopular);
 
@@ -226,7 +220,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF2F2F2),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: SafeArea(
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
@@ -273,11 +267,15 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                         width: 120.w,
                         height: 120.w,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: AppTheme.isDark(context)
+                              ? Color(0xFF21202C).withOpacity(0.9)
+                              : Colors.white.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(16.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: AppTheme.isDark(context)
+                                  ? Colors.black.withOpacity(0.5)
+                                  : Colors.black.withOpacity(0.1),
                               blurRadius: 10,
                               spreadRadius: 0,
                             ),
@@ -321,15 +319,34 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
   // 헤더 섹션
   Widget _buildHeaderSection(BuildContext context) {
+    String title = "답글";
+    String category = "카테고리";
+
+    // 부모 댓글에서 키워드 정보가 있으면 표시
+    if (_parentComment != null) {
+      // 실제로는 키워드 정보를 가져오는 로직이 필요할 수 있음
+      // 이 예시에서는 간단히 닉네임을 타이틀로 사용
+      title = "${_parentComment!.nick}님의 댓글";
+      // 카테고리는 API에서 제공하지 않으므로 기본값 사용
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(16.r),
           bottomRight: Radius.circular(16.r),
         ),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -340,8 +357,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 뒤로가기 버튼
-          _buildCircleButton(
+          // 뒤로가기 버튼 - CircleButtonWidget 사용
+          CircleButtonWidget(
+            context: context,
             onTap: () => context.pop(),
             icon: Icons.chevron_left,
             color: Color(0xFF19B3F6),
@@ -350,35 +368,39 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
           SizedBox(width: 12.w),
 
-          // 크레스티드 게코 타이틀
+          // 타이틀
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "크레스티드 게코",
+                  title,
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  "취미/반려동물",
+                  category,
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: Colors.grey[600],
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[400]
+                        : Colors.grey[600],
                   ),
                 ),
               ],
             ),
           ),
 
-          // 새로고침 버튼
-          _buildCircleButton(
+          // 새로고침 버튼 - CircleButtonWidget 사용
+          CircleButtonWidget(
+            context: context,
             onTap: () {
               if (!_isRefreshing) {
                 _loadCommentData();
@@ -391,50 +413,20 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
           SizedBox(width: 8.w),
 
-          // 공유 버튼
-          _buildCircleButton(
+          // 공유 버튼 - CircleButtonWidget 사용
+          CircleButtonWidget(
+            context: context,
             onTap: () {
               // 공유 기능 추가
               StylishToast.show(context, message: '공유 기능은 준비 중입니다.');
             },
             icon: Icons.share_outlined,
-            color: Colors.grey[500]!,
+            color: AppTheme.isDark(context)
+                ? Colors.grey[400]!
+                : Colors.grey[500]!,
             iconSize: 22.sp,
           ),
         ],
-      ),
-    );
-  }
-
-  // 원형 버튼 위젯
-  Widget _buildCircleButton({
-    required VoidCallback onTap,
-    required IconData icon,
-    required Color color,
-    required double iconSize,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36.w,
-        height: 36.w,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 3,
-              spreadRadius: 1,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: color,
-          size: iconSize,
-        ),
       ),
     );
   }
@@ -449,9 +441,17 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     return Container(
       margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -472,7 +472,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: AppTheme.getTextColor(context),
                   ),
                 ),
                 SizedBox(width: 8.w),
@@ -480,7 +480,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   timeAgo,
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: Colors.grey[500],
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[500]
+                        : Colors.grey[500],
                   ),
                 ),
                 Spacer(),
@@ -488,7 +490,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                 Icon(
                   Icons.more_horiz,
                   size: 18.sp,
-                  color: Colors.grey[400],
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[500]
+                      : Colors.grey[400],
                 ),
               ],
             ),
@@ -501,7 +505,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
               style: TextStyle(
                 fontSize: 15.sp,
                 height: 1.4,
-                color: Colors.black.withOpacity(0.85),
+                color: AppTheme.isDark(context)
+                    ? Colors.grey[300]
+                    : Colors.black.withOpacity(0.85),
               ),
             ),
 
@@ -513,13 +519,17 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                 _buildReactionButton(
                   icon: Icons.thumb_up_outlined,
                   count: _parentComment!.likeCount ?? 0,
-                  color: Colors.grey[600]!,
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[400]!
+                      : Colors.grey[600]!,
                 ),
                 SizedBox(width: 16.w),
                 _buildReactionButton(
                   icon: Icons.thumb_down_outlined,
                   count: _parentComment!.dislikeCount ?? 0,
-                  color: Colors.grey[600]!,
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[400]!
+                      : Colors.grey[600]!,
                 ),
               ],
             ),
@@ -539,14 +549,18 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           Icon(
             Icons.info_outline,
             size: 16.sp,
-            color: Colors.grey[600],
+            color: AppTheme.isDark(context)
+                ? Colors.grey[400]
+                : Colors.grey[600],
           ),
           SizedBox(width: 6.w),
           Text(
             "타인에 대한 비방글은 삭제될 수 있습니다",
             style: TextStyle(
               fontSize: 12.sp,
-              color: Colors.grey[600],
+              color: AppTheme.isDark(context)
+                  ? Colors.grey[400]
+                  : Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -560,9 +574,17 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
@@ -576,12 +598,20 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.getContainerColor(context),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16.r),
                 topRight: Radius.circular(16.r),
               ),
-              boxShadow: [
+              boxShadow: AppTheme.isDark(context)
+                  ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
+              ]
+                  : [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.03),
                   blurRadius: 3,
@@ -597,6 +627,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
+                    color: AppTheme.getTextColor(context),
                   ),
                 ),
                 SortPopupWidget(
@@ -612,8 +643,6 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
             ),
           ),
 
-          SizedBox(height: 8.h),
-
           // 대댓글 로딩 중
           if (_isCommentLoading)
             Padding(
@@ -628,12 +657,17 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                 child: Column(
                   children: [
                     Icon(Icons.forum_outlined,
-                        size: 40.sp, color: Colors.grey[400]),
+                        size: 40.sp,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[600]
+                            : Colors.grey[400]),
                     SizedBox(height: 8.h),
                     Text(
                       "아직 답글이 없어요! 첫 답글을 남겨주세요!",
                       style: TextStyle(
-                        color: Colors.grey[500],
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[400]
+                            : Colors.grey[500],
                         fontSize: 15.sp,
                       ),
                     ),
@@ -641,25 +675,29 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                 ),
               ),
             )
-          // 대댓글 리스트
+          // 대댓글 리스트 - 구분선 버전
           else
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
-                children: _subComments
-                    .map((comment) => _buildCommentItem(comment))
-                    .toList(),
+                children: [
+                  // 첫 번째 댓글 앞에는 구분선 없음
+                  _buildCommentItem(_subComments.first, isFirst: true),
+
+                  // 두 번째 댓글부터는 구분선과 함께 표시
+                  ..._subComments.skip(1).map((comment) => _buildCommentItem(comment)),
+                ],
               ),
             ),
 
-          SizedBox(height: 12.h),
+          SizedBox(height: 16.h),
         ],
       ),
     );
   }
 
-  // 댓글 아이템 위젯
-  Widget _buildCommentItem(Comment comment) {
+  // 댓글 아이템 위젯 - 구분선 스타일
+  Widget _buildCommentItem(Comment comment, {bool isFirst = false}) {
     // 내 댓글인지 확인
     final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
     final isMyComment = provider.isMyComment(comment.id);
@@ -686,23 +724,19 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     // 시간 포맷팅
     final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.createdAt);
 
-    return RepaintBoundary(
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        decoration: BoxDecoration(
-          color: Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 5,
-              spreadRadius: 0,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
+    return Column(
+      children: [
+        // 첫 번째 댓글이 아닐 경우에만 구분선 표시
+        if (!isFirst)
+          Divider(
+            color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[300],
+            thickness: 1,
+            height: 1,
+          ),
+
+        // 댓글 내용
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 14.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -714,7 +748,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: isMyComment ? Color(0xFF19B3F6) : Colors.black87,
+                      color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -722,7 +756,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     timeAgo,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: Colors.grey[500],
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[500]
+                          : Colors.grey[500],
                     ),
                   ),
                   Spacer(),
@@ -733,14 +769,16 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     child: Icon(
                       Icons.more_horiz,
                       size: 16.sp,
-                      color: Colors.grey[400],
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[500]
+                          : Colors.grey[400],
                     ),
                   )
                       : SizedBox.shrink(),
                 ],
               ),
 
-              SizedBox(height: 10.h),
+              SizedBox(height: 8.h),
 
               // 댓글 내용
               Text(
@@ -748,11 +786,13 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                 style: TextStyle(
                   fontSize: 15.sp,
                   height: 1.4,
-                  color: Colors.black.withOpacity(0.85),
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[300]
+                      : Colors.black.withOpacity(0.85),
                 ),
               ),
 
-              SizedBox(height: 12.h),
+              SizedBox(height: 10.h),
 
               // 좋아요/싫어요 버튼
               Row(
@@ -782,7 +822,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -833,7 +873,11 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   Icon(
                     icon,
                     size: 16.sp,
-                    color: isActive ? activeColor : Colors.grey[600],
+                    color: isActive
+                        ? activeColor
+                        : (AppTheme.isDark(context)
+                        ? Colors.grey[400]
+                        : Colors.grey[600]),
                   ),
                   SizedBox(width: 4.w),
                   Text(
@@ -841,7 +885,11 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-                      color: isActive ? activeColor : Colors.grey[600],
+                      color: isActive
+                          ? activeColor
+                          : (AppTheme.isDark(context)
+                          ? Colors.grey[400]
+                          : Colors.grey[600]),
                     ),
                   ),
                 ],
@@ -862,6 +910,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15.r),
           ),
+          backgroundColor: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
           child: Container(
             padding: EdgeInsets.all(12.w),
             child: Column(
@@ -894,7 +943,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     ),
                   ),
                 ),
-                Divider(),
+                Divider(
+                  color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
+                ),
                 InkWell(
                   onTap: () {
                     Navigator.pop(context);
@@ -908,6 +959,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
+                        color: AppTheme.getTextColor(context),
                       ),
                     ),
                   ),
@@ -1114,12 +1166,20 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24.r),
           topRight: Radius.circular(24.r),
         ),
-        boxShadow: [
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: Offset(0, -3),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
             blurRadius: 10,
@@ -1140,7 +1200,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     intensity: 0.7,
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
-                    color: Color(0xFFF5F5F5),
+                    color: AppTheme.isDark(context)
+                        ? Color(0xFF2A2A36)
+                        : Color(0xFFF5F5F5),
                     boxShape: NeumorphicBoxShape.roundRect(
                         BorderRadius.circular(16.r)),
                   ),
@@ -1163,7 +1225,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                             hintText: "아이디",
                             hintStyle: TextStyle(
                               fontSize: 14.sp,
-                              color: Colors.grey[600],
+                              color: AppTheme.isDark(context)
+                                  ? Colors.grey[500]
+                                  : Colors.grey[600],
                             ),
                             border: InputBorder.none,
                             isDense: true,
@@ -1173,7 +1237,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                           ),
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: Colors.black87,
+                            color: AppTheme.getTextColor(context),
                           ),
                         ),
                       ),
@@ -1191,7 +1255,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                     intensity: 0.7,
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
-                    color: Color(0xFFF5F5F5),
+                    color: AppTheme.isDark(context)
+                        ? Color(0xFF2A2A36)
+                        : Color(0xFFF5F5F5),
                     boxShape: NeumorphicBoxShape.roundRect(
                         BorderRadius.circular(16.r)),
                   ),
@@ -1215,7 +1281,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                             hintText: "비밀번호",
                             hintStyle: TextStyle(
                               fontSize: 14.sp,
-                              color: Colors.grey[600],
+                              color: AppTheme.isDark(context)
+                                  ? Colors.grey[500]
+                                  : Colors.grey[600],
                             ),
                             border: InputBorder.none,
                             isDense: true,
@@ -1225,7 +1293,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                           ),
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: Colors.black87,
+                            color: AppTheme.getTextColor(context),
                           ),
                         ),
                       ),
@@ -1241,12 +1309,33 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           // 댓글 입력 필드
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.isDark(context)
+                  ? Color(0xFF2A2A36)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
-                color: Color(0xFFE0E0E0),
+                color: AppTheme.isDark(context)
+                    ? Color(0xFF3C3B48)
+                    : Color(0xFFE0E0E0),
                 width: 1.5,
               ),
+              boxShadow: AppTheme.isDark(context)
+                  ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                  offset: Offset(0, 1),
+                ),
+              ]
+                  : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                  offset: Offset(0, 1),
+                ),
+              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -1266,7 +1355,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                         hintText: "생각을 공유해주세요 :)",
                         hintStyle: TextStyle(
                           fontSize: 15.sp,
-                          color: Colors.grey[400],
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[500]
+                              : Colors.grey[400],
                         ),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 8.h),
@@ -1274,7 +1365,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                       ),
                       style: TextStyle(
                         fontSize: 15.sp,
-                        color: Colors.black87,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[300]
+                            : Colors.black87,
                         height: 1.3,
                       ),
                     ),
@@ -1286,13 +1379,15 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
                     color: _isCommenting
-                        ? Colors.grey[300]
+                        ? (AppTheme.isDark(context)
+                        ? Colors.grey[700]
+                        : Colors.grey[300])
                         : Color(0xFF19B3F6),
                     borderRadius: BorderRadius.circular(18.r),
                     boxShadow: [
                       BoxShadow(
                         color: _isCommenting
-                            ? Colors.grey[300]!.withOpacity(0.2)
+                            ? Colors.black.withOpacity(0.2)
                             : Color(0xFF19B3F6).withOpacity(0.2),
                         blurRadius: 4,
                         spreadRadius: 0,

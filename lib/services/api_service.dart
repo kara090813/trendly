@@ -464,7 +464,7 @@ class ApiService {
   /// GET /discussion/subcomment/<int:parent_comment_id>/[new/pop]/
   Future<List<Comment>> getSubComments(int parentCommentId, {bool isPopular = false}) async {
     final String sortType = isPopular ? 'pop' : 'new';
-    final String url = '$_baseUrl/discussion/subcomment/$parentCommentId/$sortType/';
+    final String url = '$_baseUrl/discussion/subcomment/$parentCommentId/$sortType';
     try {
       final response = await _client.get(
         Uri.parse(url),
@@ -472,6 +472,7 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
+        print('요청 URL: $url');
         // UTF-8 디코딩 적용
         final String decodedBody = utf8.decode(response.bodyBytes);
         final List<dynamic> data = json.decode(decodedBody);
@@ -699,6 +700,34 @@ class ApiService {
     } catch (e) {
       print('관심 키워드 가져오기 오류: $e');
       return [];
+    }
+  }
+
+  /// 특정 댓글 ID로 댓글 정보 가져오기
+  /// GET /comment/<int:comment_id>/
+  Future<Comment> getCommentById(int commentId) async {
+    final String url = '$_baseUrl/comment/$commentId/';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return Comment.fromJson(data);
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('댓글 정보 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('댓글 정보 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: commentId=$commentId');
+      rethrow;
     }
   }
 

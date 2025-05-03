@@ -1146,7 +1146,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.4),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -1349,7 +1349,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.4),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -1474,7 +1474,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           boxShadow: AppTheme.isDark(context)
               ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withOpacity(0.4),
               blurRadius: 2,
               spreadRadius: 0,
               offset: Offset(0, 1),
@@ -1730,7 +1730,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.4),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
@@ -1756,7 +1756,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               boxShadow: AppTheme.isDark(context)
                   ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withOpacity(0.3),
                   blurRadius: 3,
                   offset: Offset(0, 1),
                 ),
@@ -1979,7 +1979,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     onTap: () {
                       // 답글 기능 처리 (나중에 구현)
                       context.push('/comment/${comment.id}');
-                      StylishToast.show(context, message: '답글 기능은 준비 중입니다.');
                     },
                     child: Row(
                       children: [

@@ -6,6 +6,7 @@ import 'package:trendly/widgets/circleButton_widget.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../widgets/sortingToggle_widget.dart'; // 추가: SortPopupWidget 임포트
 
 class DiscussionHomeComponent extends StatefulWidget {
   const DiscussionHomeComponent({super.key});
@@ -59,7 +60,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
 
       // 히스토리 토론방은 랜덤하게 4개만 가져오기
       final historicRooms =
-          await _apiService.getRandomDiscussionRooms(_initialCardCount);
+      await _apiService.getRandomDiscussionRooms(_initialCardCount);
 
       // 새로고침 시 약간의 지연 추가 (로딩 애니메이션이 보이도록)
       if (_isRefreshing) {
@@ -188,247 +189,270 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildErrorWidget()
-              : Stack(
-                  children: [
-                    // 메인 콘텐츠 부분
-                    Opacity(
-                      opacity: _isRefreshing ? 0.3 : 1.0,
-                      child: CustomScrollView(
-                        physics: _isRefreshing
-                            ? NeverScrollableScrollPhysics()
-                            : BouncingScrollPhysics(),
-                        slivers: [
-                          SliverAppBar(
-                            pinned: true,
-                            backgroundColor: Colors.white,
-                            elevation: 8,
-                            expandedHeight: 0,
-                            toolbarHeight: 54.h,
-                            centerTitle: true,
-                            automaticallyImplyLeading: false,
-                            shadowColor: Colors.black.withOpacity(0.2),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(15),
-                                bottomRight: Radius.circular(15),
-                              ),
-                            ),
-                            flexibleSpace: Container(
-                              decoration: BoxDecoration(
-                                color: AppTheme.getContainerColor(context),
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(15),
-                                  bottomRight: Radius.circular(15),
+          ? _buildErrorWidget()
+          : Stack(
+        children: [
+          // 메인 콘텐츠 부분
+          Opacity(
+            opacity: _isRefreshing ? 0.3 : 1.0,
+            child: CustomScrollView(
+              physics: _isRefreshing
+                  ? NeverScrollableScrollPhysics()
+                  : BouncingScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  backgroundColor: Colors.white,
+                  elevation: 8,
+                  expandedHeight: 0,
+                  toolbarHeight: 54.h,
+                  centerTitle: true,
+                  automaticallyImplyLeading: false,
+                  shadowColor: Colors.black.withOpacity(0.2),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(15),
+                      bottomRight: Radius.circular(15),
+                    ),
+                  ),
+                  flexibleSpace: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.getContainerColor(context),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                      ),
+                      boxShadow: AppTheme.isDark(context)
+                          ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          spreadRadius: 2,
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                          : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.18),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(child: _buildHeader()),
+                  ),
+                ),
+                SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Top container for main discussion section
+                    Container(
+                      margin: EdgeInsets.only(bottom: 16.h),
+                      decoration: BoxDecoration(
+                        color: AppTheme.getContainerColor(context),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(24.r),
+                          bottomRight: Radius.circular(24.r),
+                        ),
+                        boxShadow: AppTheme.isDark(context)
+                            ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                            : [
+                          BoxShadow(
+                            color:
+                            Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 40.h),
+                          _buildToggleTabs(),
+                          SizedBox(height: 12.h),
+                          Center(
+                            child: Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.info,
+                                  size: 18.sp,
+                                  color: AppTheme.isDark(context)
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
                                 ),
-                                boxShadow: AppTheme.isDark(context)
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.white.withOpacity(0.02),
-                                          spreadRadius: 2,
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ]
-                                    : [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.18),
-                                          spreadRadius: 1,
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                              ),
-                              child: SafeArea(child: _buildHeader()),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  '타인에 대한 비방글은 삭제될 수 있습니다',
+                                  style: TextStyle(
+                                      color: AppTheme.isDark(context)
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                      fontSize: 14.sp),
+                                ),
+                              ],
                             ),
                           ),
-                          SliverList(
-                            delegate: SliverChildListDelegate([
-                              // Top container for main discussion section
-                              Container(
-                                margin: EdgeInsets.only(bottom: 16.h),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.getContainerColor(context),
-                                  borderRadius: BorderRadius.only(
-                                    bottomLeft: Radius.circular(24.r),
-                                    bottomRight: Radius.circular(24.r),
-                                  ),
-                                  boxShadow: AppTheme.isDark(context)
-                                      ? []
-                                      : [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.08),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: 40.h),
-                                    _buildToggleTabs(),
-                                    SizedBox(height: 12.h),
-                                    Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.info,
-                                            size: 18.sp,
-                                            color: Colors.grey,
-                                          ),
-                                          SizedBox(width: 4.w),
-                                          Text(
-                                            '타인에 대한 비방글은 삭제될 수 있습니다',
-                                            style: TextStyle(
-                                                color: Colors.grey[600],
-                                                fontSize: 14.sp),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(height: 24.h),
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 16.w),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // 탭에 따라 다른 헤더 표시
-                                          _selectedTab == '실시간'
-                                              ? _buildSortControl()
-                                              : _buildHeaderWithButton(
-                                                  '', '전체보기'),
-                                          SizedBox(height: 15.h),
+                          SizedBox(height: 24.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w),
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                // 탭에 따라 다른 헤더 표시 (SortPopupWidget 사용)
+                                _selectedTab == '실시간'
+                                    ? SortPopupWidget(
+                                  isPopularSort: _sortOption == '인기순',
+                                  onSortChanged: (isPopular) {
+                                    setState(() {
+                                      _sortOption = isPopular ? '인기순' : '최신순';
+                                    });
+                                  },
+                                )
+                                    : _buildHeaderWithButton(
+                                    '', '전체보기'),
+                                SizedBox(height: 15.h),
 
-                                          // 토론방 카드 목록
-                                          ..._buildDiscussionCards(),
+                                // 토론방 카드 목록
+                                ..._buildDiscussionCards(),
 
-                                          // 실시간 탭일 때만 펼쳐보기 버튼 표시
-                                          if (_selectedTab == '실시간' &&
-                                              _getSortedRooms().length >
-                                                  _initialCardCount)
-                                            _buildExpandButton(),
+                                // 실시간 탭일 때만 펼쳐보기 버튼 표시
+                                if (_selectedTab == '실시간' &&
+                                    _getSortedRooms().length >
+                                        _initialCardCount)
+                                  _buildExpandButton(),
 
-                                          SizedBox(height: 20.h),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                height: 10.h,
-                              ),
-
-                              // Bottom container for favorites and participated discussions
-                              Container(
-                                padding: EdgeInsets.only(bottom: 20.h),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.getContainerColor(context),
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(24.r),
-                                    topRight: Radius.circular(24.r),
-                                  ),
-                                  boxShadow: AppTheme.isDark(context)
-                                      ? []
-                                      : [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.08),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, -3),
-                                          ),
-                                        ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.fromLTRB(
-                                          16.w, 16.h, 14.w, 0),
-                                      child: _buildHeaderWithButton(
-                                          '즐겨찾기한 토론방', '더보기'),
-                                    ),
-                                    SizedBox(height: 15.h),
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 16.w),
-                                      child: _buildFavoriteCard(),
-                                    ),
-                                    SizedBox(height: 20.h),
-                                    Padding(
-                                      padding:
-                                          EdgeInsets.fromLTRB(16.w, 0, 14.w, 0),
-                                      child: _buildHeaderWithButton(
-                                          '내가 참여한 토론방', '더보기'),
-                                    ),
-                                    SizedBox(height: 15.h),
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 16.w),
-                                      child: _buildParticipatedCard(),
-                                    ),
-                                    SizedBox(height: 10.h),
-                                  ],
-                                ),
-                              ),
-                            ]),
+                                SizedBox(height: 20.h),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    SizedBox(
+                      height: 10.h,
+                    ),
 
-                    // 새로고침 오버레이
-                    if (_isRefreshing)
-                      Center(
-                        child: Container(
-                          width: 120.w,
-                          height: 120.w,
-                          decoration: BoxDecoration(
-                            color: AppTheme.isDark(context)
-                                ? Color(0xFF21202C).withOpacity(0.9)
-                                : Colors.white.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(16.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.isDark(context)
-                                    ? Colors.black.withOpacity(0.3)
-                                    : Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 50.w,
-                                height: 50.w,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF19B3F6),
-                                  strokeWidth: 3.w,
-                                ),
-                              ),
-                              SizedBox(height: 12.h),
-                              Text(
-                                "새로고침 중...",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF19B3F6),
-                                ),
-                              ),
-                            ],
-                          ),
+                    // Bottom container for favorites and participated discussions
+                    Container(
+                      padding: EdgeInsets.only(bottom: 20.h),
+                      decoration: BoxDecoration(
+                        color: AppTheme.getContainerColor(context),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(24.r),
+                          topRight: Radius.circular(24.r),
                         ),
+                        boxShadow: AppTheme.isDark(context)
+                            ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, -3),
+                          ),
+                        ]
+                            : [
+                          BoxShadow(
+                            color:
+                            Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, -3),
+                          ),
+                        ],
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                16.w, 16.h, 14.w, 0),
+                            child: _buildHeaderWithButton(
+                                '즐겨찾기한 토론방', '더보기'),
+                          ),
+                          SizedBox(height: 15.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w),
+                            child: _buildFavoriteCard(),
+                          ),
+                          SizedBox(height: 20.h),
+                          Padding(
+                            padding:
+                            EdgeInsets.fromLTRB(16.w, 0, 14.w, 0),
+                            child: _buildHeaderWithButton(
+                                '내가 참여한 토론방', '더보기'),
+                          ),
+                          SizedBox(height: 15.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w),
+                            child: _buildParticipatedCard(),
+                          ),
+                          SizedBox(height: 10.h),
+                        ],
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+
+          // 새로고침 오버레이
+          if (_isRefreshing)
+            Center(
+              child: Container(
+                width: 120.w,
+                height: 120.w,
+                decoration: BoxDecoration(
+                  color: AppTheme.isDark(context)
+                      ? Color(0xFF21202C).withOpacity(0.9)
+                      : Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.isDark(context)
+                          ? Colors.black.withOpacity(0.5)
+                          : Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                    ),
                   ],
                 ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 50.w,
+                      height: 50.w,
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF19B3F6),
+                        strokeWidth: 3.w,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      "새로고침 중...",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF19B3F6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -464,83 +488,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     );
   }
 
-  // 정렬 컨트롤 - 텍스트와 드롭다운 버튼
-  Widget _buildSortControl() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // 전체 영역에 GestureDetector 적용하여 텍스트와 버튼 모두 터치 가능하게 함
-        GestureDetector(
-          onTap: () {
-            _showSortOptions(context);
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white,
-                  offset: Offset(-1, -1),
-                  blurRadius: 3,
-                ),
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  offset: Offset(2, 2),
-                  blurRadius: 3,
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _sortOption,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16.sp,
-                    color: Color(0xFF4A4A4A),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                // 버튼 크기 증가
-                Container(
-                  width: 28.w,
-                  height: 28.w,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white,
-                        offset: Offset(-1, -1),
-                        blurRadius: 2,
-                      ),
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        offset: Offset(2, 2),
-                        blurRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 24.sp,
-                      color: Color(0xFF19B3F6),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // 헤더 + 버튼 (우측 정렬)
+  // 헤더 + 버튼 (우측 정렬) - 다크모드 지원 추가
   Widget _buildHeaderWithButton(String title, String buttonText) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -552,7 +500,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18.sp,
-              color: Color(0xFF4A4A4A),
+              color: AppTheme.getTextColor(context),
             ),
           ),
           _buildCustomButton(buttonText),
@@ -561,7 +509,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     );
   }
 
-  // 커스텀 버튼 (뉴모픽 효과)
+  // 커스텀 버튼 (뉴모픽 효과) - 다크모드 지원 추가
   Widget _buildCustomButton(String text) {
     return GestureDetector(
       onTap: () {
@@ -571,9 +519,24 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.isDark(context)
+              ? Color(0xFF2A2A36)
+              : Colors.white,
           borderRadius: BorderRadius.circular(15.r),
-          boxShadow: [
+          boxShadow: AppTheme.isDark(context)
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              offset: Offset(2, 2),
+              blurRadius: 4,
+            ),
+            BoxShadow(
+              color: Colors.white.withOpacity(0.05),
+              offset: Offset(-1, -1),
+              blurRadius: 3,
+            ),
+          ]
+              : [
             BoxShadow(
               color: Colors.white,
               offset: Offset(-1, -1),
@@ -593,7 +556,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
               text,
               style: TextStyle(
                 fontSize: 15.sp,
-                color: Color(0xFF4A4A4A),
+                color: AppTheme.getTextColor(context),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -609,195 +572,6 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     );
   }
 
-  // 정렬 옵션 팝업 메뉴
-  void _showSortOptions(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.r),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildSortOption('인기순'),
-                Divider(),
-                _buildSortOption('최신순'),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 정렬 옵션 버튼
-  Widget _buildSortOption(String option) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _sortOption = option;
-        });
-        Navigator.pop(context);
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        child: Text(
-          option,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight:
-                _sortOption == option ? FontWeight.bold : FontWeight.normal,
-            color:
-                _sortOption == option ? Color(0xFF19B3F6) : Color(0xFF4A4A4A),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 토론방 카드 목록 생성 함수 수정
-  List<Widget> _buildDiscussionCards() {
-    final List<DiscussionRoom> rooms = _getSortedRooms();
-
-    if (rooms.isEmpty) {
-      return [
-        Container(
-          padding: EdgeInsets.all(20.h),
-          alignment: Alignment.center,
-          child: Text(
-            '${_selectedTab == '실시간' ? '활성화된' : '종료된'} 토론방이 없습니다.',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.grey[600],
-            ),
-          ),
-        )
-      ];
-    }
-
-    // 현재 표시할 항목 수 (최대 길이보다 크지 않도록)
-    int displayCount =
-        _displayCount > rooms.length ? rooms.length : _displayCount;
-
-    // 히스토리 탭에서는 항상 초기 개수만 표시
-    if (_selectedTab != '실시간') {
-      displayCount =
-          _initialCardCount > rooms.length ? rooms.length : _initialCardCount;
-    }
-
-    // 결과 위젯 리스트
-    List<Widget> cardWidgets = [];
-
-    // 실제 카드 추가
-    for (int i = 0; i < displayCount; i++) {
-      cardWidgets.add(
-        _discussionCard(
-          room: rooms[i],
-          isEmpty: (rooms[i].commentCount ?? 0) == 0,
-        ),
-      );
-    }
-
-    // 로딩 중인 경우 스켈레톤 카드 추가
-    if (_isLoadingMore) {
-      for (int i = 0; i < _loadMoreCount; i++) {
-        cardWidgets.add(_buildSkeletonCard());
-      }
-    }
-
-    return cardWidgets;
-  }
-
-// 스켈레톤 카드 위젯 (로딩 시 표시)
-  Widget _buildSkeletonCard() {
-    return Container(
-      margin: EdgeInsets.only(bottom: 20.h, right: 0.w),
-      height: 140.h, // 일반 카드와 비슷한 높이
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(1, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 메인 콘텐츠 영역
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(18.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 제목 스켈레톤
-                  Container(
-                    width: 200.w,
-                    height: 24.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-
-                  // 카테고리 스켈레톤
-                  Container(
-                    width: 160.w,
-                    height: 16.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // 구분선
-                  Divider(color: Colors.grey[200], thickness: 1.2),
-                  SizedBox(height: 12.h),
-
-                  // 반응 바 스켈레톤
-                  Container(
-                    width: double.infinity,
-                    height: 8.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          VerticalDivider(
-            color: Colors.grey[200],
-            thickness: 3,
-            width: 20, // Divider 자체의 너비 (공간 차지)
-          ),
-          // 오른쪽 입장 버튼 스켈레톤
-          Container(
-            width: 60.w,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.horizontal(
-                right: Radius.circular(20.r),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildExpandButton() {
     final List<DiscussionRoom> rooms = _getSortedRooms();
     final bool hasMoreToShow = _displayCount < rooms.length;
@@ -806,6 +580,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     // 테마 관련 변수
     final bool isDark = AppTheme.isDark(context);
     final Color primaryColor = Color(0xFF19B3F6);
+    final Color accentColor = Color(0xFFE74C3C);
     final Color bgColor = isDark ? Color(0xFF2D2D3A) : Colors.white;
     final Color separatorColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
 
@@ -895,7 +670,16 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
+        boxShadow: isDark
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
@@ -925,18 +709,18 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                 SizedBox(width: 8.w),
                 isLoading
                     ? SizedBox(
-                        width: 20.w,
-                        height: 20.h,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(textColor),
-                        ),
-                      )
+                  width: 20.w,
+                  height: 20.h,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                  ),
+                )
                     : Icon(
-                        icon,
-                        size: 20.sp,
-                        color: textColor,
-                      ),
+                  icon,
+                  size: 20.sp,
+                  color: textColor,
+                ),
               ],
             ),
           ),
@@ -962,24 +746,33 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
 
     BorderRadius borderRadius = isLeft
         ? BorderRadius.only(
-            topLeft: Radius.circular(12.r),
-            bottomLeft: Radius.circular(12.r),
-            topRight: Radius.circular(4.r),
-            bottomRight: Radius.circular(4.r),
-          )
+      topLeft: Radius.circular(12.r),
+      bottomLeft: Radius.circular(12.r),
+      topRight: Radius.circular(4.r),
+      bottomRight: Radius.circular(4.r),
+    )
         : BorderRadius.only(
-            topLeft: Radius.circular(4.r),
-            bottomLeft: Radius.circular(4.r),
-            topRight: Radius.circular(12.r),
-            bottomRight: Radius.circular(12.r),
-          );
+      topLeft: Radius.circular(4.r),
+      bottomLeft: Radius.circular(4.r),
+      topRight: Radius.circular(12.r),
+      bottomRight: Radius.circular(12.r),
+    );
 
     return Container(
       height: 48.h,
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: borderRadius,
-        boxShadow: [
+        boxShadow: isDark
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
+          ),
+        ]
+            : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
@@ -1048,19 +841,19 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                       SizedBox(width: 12.w),
                       isLoading
                           ? SizedBox(
-                              width: 20.w,
-                              height: 20.h,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(textColor),
-                              ),
-                            )
+                        width: 20.w,
+                        height: 20.h,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                          AlwaysStoppedAnimation<Color>(textColor),
+                        ),
+                      )
                           : Icon(
-                              icon,
-                              color: textColor,
-                              size: 20.sp,
-                            ),
+                        icon,
+                        color: textColor,
+                        size: 20.sp,
+                      ),
                       SizedBox(width: 14.w),
                     ],
                   ),
@@ -1211,19 +1004,19 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                         '실시간',
                         style: AppTheme.isDark(context)
                             ? TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: _selectedTab == '실시간'
-                                    ? Colors.white
-                                    : Colors.black,
-                              )
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: _selectedTab == '실시간'
+                              ? Colors.white
+                              : Colors.black,
+                        )
                             : TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: _selectedTab == '실시간'
-                                    ? Colors.black
-                                    : Colors.white,
-                              ),
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: _selectedTab == '실시간'
+                              ? Colors.black
+                              : Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -1243,24 +1036,169 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                         '히스토리',
                         style: AppTheme.isDark(context)
                             ? TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: _selectedTab == '히스토리'
-                                    ? Colors.white
-                                    : Colors.black,
-                              )
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: _selectedTab == '히스토리'
+                              ? Colors.white
+                              : Colors.black,
+                        )
                             : TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: _selectedTab == '히스토리'
-                                    ? Colors.black
-                                    : Colors.white,
-                              ),
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: _selectedTab == '히스토리'
+                              ? Colors.black
+                              : Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 토론방 카드 목록 생성 함수 수정
+  List<Widget> _buildDiscussionCards() {
+    final List<DiscussionRoom> rooms = _getSortedRooms();
+
+    if (rooms.isEmpty) {
+      return [
+        Container(
+          padding: EdgeInsets.all(20.h),
+          alignment: Alignment.center,
+          child: Text(
+            '${_selectedTab == '실시간' ? '활성화된' : '종료된'} 토론방이 없습니다.',
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+        )
+      ];
+    }
+
+    // 현재 표시할 항목 수 (최대 길이보다 크지 않도록)
+    int displayCount =
+    _displayCount > rooms.length ? rooms.length : _displayCount;
+
+    // 히스토리 탭에서는 항상 초기 개수만 표시
+    if (_selectedTab != '실시간') {
+      displayCount =
+      _initialCardCount > rooms.length ? rooms.length : _initialCardCount;
+    }
+
+    // 결과 위젯 리스트
+    List<Widget> cardWidgets = [];
+
+    // 실제 카드 추가
+    for (int i = 0; i < displayCount; i++) {
+      cardWidgets.add(
+        _discussionCard(
+          room: rooms[i],
+          isEmpty: (rooms[i].commentCount ?? 0) == 0,
+        ),
+      );
+    }
+
+    // 로딩 중인 경우 스켈레톤 카드 추가
+    if (_isLoadingMore) {
+      for (int i = 0; i < _loadMoreCount; i++) {
+        cardWidgets.add(_buildSkeletonCard());
+      }
+    }
+
+    return cardWidgets;
+  }
+
+  // 스켈레톤 카드 위젯 (로딩 시 표시) - 다크모드 지원 추가
+  Widget _buildSkeletonCard() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 20.h, right: 0.w),
+      height: 140.h, // 일반 카드와 비슷한 높이
+      decoration: BoxDecoration(
+        color: AppTheme.isDark(context) ? Color(0xFF2D2D3A) : Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 8,
+            offset: const Offset(1, 3),
+          ),
+        ]
+            : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(1, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // 메인 콘텐츠 영역
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(18.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 제목 스켈레톤
+                  Container(
+                    width: 200.w,
+                    height: 24.h,
+                    decoration: BoxDecoration(
+                      color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // 카테고리 스켈레톤
+                  Container(
+                    width: 160.w,
+                    height: 16.h,
+                    decoration: BoxDecoration(
+                      color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+
+                  // 구분선
+                  Divider(color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200], thickness: 1.2),
+                  SizedBox(height: 12.h),
+
+                  // 반응 바 스켈레톤
+                  Container(
+                    width: double.infinity,
+                    height: 8.h,
+                    decoration: BoxDecoration(
+                      color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          VerticalDivider(
+            color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
+            thickness: 3,
+            width: 20, // Divider 자체의 너비 (공간 차지)
+          ),
+          // 오른쪽 입장 버튼 스켈레톤
+          Container(
+            width: 60.w,
+            decoration: BoxDecoration(
+              color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
+              borderRadius: BorderRadius.horizontal(
+                right: Radius.circular(20.r),
+              ),
             ),
           ),
         ],
@@ -1279,29 +1217,29 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: AppTheme.isDark(context)
                 ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(1, 3),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, -1),
-                    ),
-                  ]
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(1, 3),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(0, -1),
+              ),
+            ]
                 : [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(1, 3),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, -1),
-                    ),
-                  ],
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(1, 3),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, -1),
+              ),
+            ],
           ),
           child: Padding(
             padding: EdgeInsets.only(
@@ -1332,7 +1270,12 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
                       fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 4.h),
-                Divider(color: Color(0xFFE0DDDD), thickness: 1.2),
+                Divider(
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[700]
+                        : Color(0xFFE0DDDD),
+                    thickness: 1.2
+                ),
                 SizedBox(height: 4.h),
                 isEmpty ? _buildEmptyCommentMessage() : _buildReactionBar(room),
               ],
@@ -1348,13 +1291,13 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
           child: Container(
             width: 60.w,
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.horizontal(
                 right: Radius.circular(20.r),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
+                  color: Colors.black.withOpacity(AppTheme.isDark(context) ? 0.4 : 0.12),
                   blurRadius: 8,
                   offset: const Offset(-3, 0),
                 ),
@@ -1401,7 +1344,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     );
   }
 
-  // 즐겨찾기 토론방 카드 (임시 데모용)
+  // 즐겨찾기 토론방 카드 (임시 데모용) - 다크모드 지원 추가
   Widget _buildFavoriteCard() {
     // 미구현 기능으로 임시 카드 표시
     return Stack(
@@ -1410,9 +1353,18 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
           margin: EdgeInsets.only(bottom: 8.h),
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
             borderRadius: BorderRadius.circular(16.r),
-            boxShadow: [
+            boxShadow: AppTheme.isDark(context)
+                ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 5,
+                spreadRadius: 0,
+                offset: Offset(0, 1),
+              ),
+            ]
+                : [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
                 blurRadius: 5,
@@ -1426,7 +1378,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
               '즐겨찾기 기능은 준비 중입니다',
               style: TextStyle(
                 fontSize: 16.sp,
-                color: Colors.grey,
+                color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
           ),
@@ -1435,7 +1387,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     );
   }
 
-  // 참여한 토론방 카드 (임시 데모용)
+  // 참여한 토론방 카드 (임시 데모용) - 다크모드 지원 추가
   Widget _buildParticipatedCard() {
     // 미구현 기능으로 임시 카드 표시
     return Stack(
@@ -1444,9 +1396,18 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
           margin: EdgeInsets.only(bottom: 8.h),
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
             borderRadius: BorderRadius.circular(16.r),
-            boxShadow: [
+            boxShadow: AppTheme.isDark(context)
+                ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 5,
+                spreadRadius: 0,
+                offset: Offset(0, 1),
+              ),
+            ]
+                : [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
                 blurRadius: 5,
@@ -1460,7 +1421,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
               '참여 기록 기능은 준비 중입니다',
               style: TextStyle(
                 fontSize: 16.sp,
-                color: Colors.grey,
+                color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
           ),
@@ -1480,7 +1441,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             Icons.info_outline,
             size: 18.sp,
             color:
-                AppTheme.isDark(context) ? Color(0xFFD8D8D8) : Colors.grey[500],
+            AppTheme.isDark(context) ? Color(0xFFD8D8D8) : Colors.grey[500],
           ),
           SizedBox(width: 6.w),
           Text(
@@ -1505,11 +1466,11 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
         (room.negativeCount ?? 0);
 
     double positiveRatio =
-        totalReactions > 0 ? (room.positiveCount ?? 0) / totalReactions : 0.33;
+    totalReactions > 0 ? (room.positiveCount ?? 0) / totalReactions : 0.33;
     double neutralRatio =
-        totalReactions > 0 ? (room.neutralCount ?? 0) / totalReactions : 0.34;
+    totalReactions > 0 ? (room.neutralCount ?? 0) / totalReactions : 0.34;
     double negativeRatio =
-        totalReactions > 0 ? (room.negativeCount ?? 0) / totalReactions : 0.33;
+    totalReactions > 0 ? (room.negativeCount ?? 0) / totalReactions : 0.33;
 
     // 비율 표시 형식으로 변환
     String positivePercent = '${(positiveRatio * 100).round()}%';
@@ -1574,7 +1535,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
           style: TextStyle(
             fontSize: 12.sp,
             color:
-                AppTheme.isDark(context) ? Colors.white : Colors.grey.shade700,
+            AppTheme.isDark(context) ? Colors.white : Colors.grey.shade700,
           ),
         ),
       ],

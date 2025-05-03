@@ -18,7 +18,7 @@ class DetailStyles {
     boxShadow: AppTheme.isDark(context)
         ? [
       BoxShadow(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.black.withOpacity(0.4),
         blurRadius: 10,
         spreadRadius: 0,
         offset: Offset(0, 2),
@@ -236,7 +236,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             ),
           ),
           shadowColor: AppTheme.isDark(context)
-              ? Colors.white.withOpacity(0.1)
+              ? Colors.black.withOpacity(0.4)
               : Colors.black.withOpacity(0.3),
         ),
 
@@ -356,7 +356,8 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       ),
                     ),
                     Spacer(),
-                    DetailSummaryToggleWidget(
+                    // 여기서 DetailSummaryToggleWidget을 SummaryToggleWidget으로 변경
+                    SummaryToggleWidget(
                       currentType: _selectedSummaryType,
                       onChanged: _onSummaryTypeChanged,
                     ),
@@ -445,156 +446,15 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
   // 토론방 반응 섹션 - discussionHome 컴포넌트 스타일로 변경
   Widget _buildDiscussionReactionSection() {
-    // 토론방 반응 데이터 계산
-    final int positiveCount = _discussionRoom?.positiveCount ?? 0;
-    final int neutralCount = _discussionRoom?.neutralCount ?? 0;
-    final int negativeCount = _discussionRoom?.negativeCount ?? 0;
-    final int totalCount = positiveCount + neutralCount + negativeCount;
-
-    // 퍼센티지 계산 (총합이 0인 경우 예외 처리)
-    final double positiveRatio = totalCount > 0 ? (positiveCount / totalCount * 100) : 0;
-    final double neutralRatio = totalCount > 0 ? (neutralCount / totalCount * 100) : 0;
-    final double negativeRatio = totalCount > 0 ? (negativeCount / totalCount * 100) : 0;
-
-    // 표시할 퍼센티지 (반올림하여 정수로 표시)
-    final int positivePercent = positiveRatio.round();
-    final int neutralPercent = neutralRatio.round();
-    final int negativePercent = negativeRatio.round();
-
-    // 토론방 반응 요약 텍스트
-    final String summaryText = _discussionRoom?.commentSummary ??
-        '${_keyword!.keyword}에 대한 토론방 반응을 분석한 결과입니다.';
-
-    return RepaintBoundary(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        decoration: DetailStyles.cardDecoration(context),
-        child: Padding(
-          padding: EdgeInsets.all(15.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '토론방 반응',
-                style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-              SizedBox(height: 20.h),
-
-              if (totalCount > 0)
-              // 반응이 있는 경우 그래프 표시
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 긍정/중립/부정 그래프 - discussionHome 스타일로 변경
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4.r),
-                      child: Container(
-                        height: 8.h,
-                        child: Row(
-                          children: [
-                            // 긍정 부분 (블루 컬러)
-                            _reactionSegment(positiveRatio / 100, const Color(0xFF00AEEF)),
-                            // 중립 부분 (회색)
-                            _reactionSegment(neutralRatio / 100, Colors.grey.shade400),
-                            // 부정 부분 (빨간색)
-                            _reactionSegment(negativeRatio / 100, const Color(0xFFFF5A5F)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-
-                    // 긍정/중립/부정 레이블
-                    Row(
-                      children: [
-                        _reactionLabel('긍정', '$positivePercent%', const Color(0xFF00AEEF)),
-                        SizedBox(width: 16.w),
-                        _reactionLabel('중립', '$neutralPercent%', Colors.grey.shade600),
-                        SizedBox(width: 16.w),
-                        _reactionLabel('부정', '$negativePercent%', const Color(0xFFFF5A5F)),
-                      ],
-                    ),
-                  ],
-                )
-              else
-              // 반응이 없는 경우 안내 메시지 표시
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16.sp,
-                        color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        '아직 토론방 반응이 없습니다.',
-                        style: TextStyle(
-                          color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              Divider(
-                color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
-                thickness: 1,
-                height: 30.h,
-              ),
-
-              Text(
-                summaryText,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 반응 그래프의 세그먼트 생성
-  Widget _reactionSegment(double value, Color color) {
-    return Expanded(
-      flex: (value * 100).toInt() > 0 ? (value * 100).toInt() : 1, // 최소 1의 flex 값 보장
-      child: Container(
-        color: color,
-      ),
-    );
-  }
-
-  // 반응 레이블 생성
-  Widget _reactionLabel(String text, String percentage, Color dotColor) {
-    return Row(
-      children: [
-        Container(
-          width: 8.w,
-          height: 8.w,
-          decoration: BoxDecoration(
-            color: dotColor,
-            shape: BoxShape.circle,
-          ),
-        ),
-        SizedBox(width: 4.w),
-        Text(
-          '$text $percentage',
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey.shade700,
-          ),
-        ),
-      ],
+    return DiscussionReactionWidget(
+      discussionRoom: _discussionRoom,
+      keyword: _keyword,
+      onEnterTap: () {
+        if (_discussionRoom != null) {
+          // 토론방으로 이동
+          context.push('/discussion/${_discussionRoom!.id}');
+        }
+      },
     );
   }
 
