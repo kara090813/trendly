@@ -113,6 +113,40 @@ class ApiService {
     }
   }
 
+  /// 여러 키워드 ID로 키워드 정보 가져오기
+  /// POST /keyword/get_keyword_many/
+  Future<List<Keyword>> getKeywordsByIds(List<int> idList) async {
+    final String url = '$_baseUrl/keyword/get_keyword_many/';
+    final Map<String, dynamic> requestData = {
+      'id_list': idList,
+    };
+
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestData),
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((item) => Keyword.fromJson(item)).toList();
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        print('요청 데이터: $requestData');
+        throw Exception('키워드 정보 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('키워드 정보 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 데이터: $requestData');
+      rethrow;
+    }
+  }
+
   /// 특정 시점의 1~10 키워드 가져오기 (타임머신 기능)
   /// GET /keyword/time_machine/<str:time>/
   Future<List<Keyword>> getKeywordsByTime(DateTime date) async {
@@ -252,10 +286,6 @@ class ApiService {
 
   /// 랜덤 토론방 가져오기
   /// GET /discussion/get_random/<int:count>/<int:option>/
-  /// option:
-  /// No option 또는 1: Any (모든 토론방)
-  /// 2: Open only (열린 토론방만)
-  /// 3: Closed only (닫힌 토론방만)
   Future<List<DiscussionRoom>> getRandomDiscussionRooms(int count, {int option = 1}) async {
     final String url = '$_baseUrl/discussion/get_random/$count/$option/';
     try {
@@ -277,40 +307,6 @@ class ApiService {
     } catch (e) {
       print('랜덤 토론방 가져오기 오류: $e');
       print('요청 URL: $url');
-      rethrow;
-    }
-  }
-
-  /// 여러 키워드 ID로 키워드 정보 가져오기
-  /// POST /keyword/get_keyword_many/
-  Future<List<Keyword>> getKeywordsByIds(List<int> idList) async {
-    final String url = '$_baseUrl/keyword/get_keyword_many/';
-    final Map<String, dynamic> requestData = {
-      'id_list': idList,
-    };
-
-    try {
-      final response = await _client.post(
-        Uri.parse(url),
-        headers: _headers,
-        body: json.encode(requestData),
-      );
-
-      if (response.statusCode == 200) {
-        // UTF-8 디코딩 적용
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        final List<dynamic> data = json.decode(decodedBody);
-        return data.map((item) => Keyword.fromJson(item)).toList();
-      } else {
-        print('API 요청 실패: 상태 코드 ${response.statusCode}');
-        print('요청 URL: $url');
-        print('요청 데이터: $requestData');
-        throw Exception('키워드 정보 로딩 실패: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('키워드 정보 가져오기 오류: $e');
-      print('요청 URL: $url');
-      print('요청 데이터: $requestData');
       rethrow;
     }
   }
@@ -592,6 +588,34 @@ class ApiService {
     }
   }
 
+  /// 특정 댓글 ID로 댓글 정보 가져오기
+  /// GET /comment/<int:comment_id>/
+  Future<Comment> getCommentById(int commentId) async {
+    final String url = '$_baseUrl/comment/$commentId/';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return Comment.fromJson(data);
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('댓글 정보 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('댓글 정보 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: commentId=$commentId');
+      rethrow;
+    }
+  }
+
   /// 댓글 추천 +1
   /// POST /comment/<int:comment_id>/like/
   Future<bool> likeComment(int commentId, {bool isCancel = false}) async {
@@ -700,34 +724,6 @@ class ApiService {
     } catch (e) {
       print('관심 키워드 가져오기 오류: $e');
       return [];
-    }
-  }
-
-  /// 특정 댓글 ID로 댓글 정보 가져오기
-  /// GET /comment/<int:comment_id>/
-  Future<Comment> getCommentById(int commentId) async {
-    final String url = '$_baseUrl/comment/$commentId/';
-    try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: _headers,
-      );
-
-      if (response.statusCode == 200) {
-        // UTF-8 디코딩 적용
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        final Map<String, dynamic> data = json.decode(decodedBody);
-        return Comment.fromJson(data);
-      } else {
-        print('API 요청 실패: 상태 코드 ${response.statusCode}');
-        print('요청 URL: $url');
-        throw Exception('댓글 정보 로딩 실패: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('댓글 정보 가져오기 오류: $e');
-      print('요청 URL: $url');
-      print('요청 파라미터: commentId=$commentId');
-      rethrow;
     }
   }
 

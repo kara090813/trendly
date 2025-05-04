@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// 테마 색상만 정의하는 간소화된 AppTheme 클래스
 class AppTheme {
@@ -119,4 +120,81 @@ class AppTheme {
         ? darkText
         : lightText;
   }
+  static BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
+    color: getContainerColor(context),
+    borderRadius: BorderRadius.circular(20.r),
+    boxShadow: isDark(context)
+        ? [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.4),
+        blurRadius: 10,
+        spreadRadius: 0,
+        offset: Offset(0, 2),
+      ),
+    ]
+        : [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.3),
+        blurRadius: 10,
+        spreadRadius: 0,
+        offset: Offset(0, 2),
+      ),
+    ],
+  );
+
+  static BoxDecoration insetDecoration(BuildContext context) => BoxDecoration(
+    color: isDark(context) ? Color(0xFF2D2D3A) : Color(0xFFFAFAFA),
+    borderRadius: BorderRadius.circular(15.r),
+    boxShadow: isDark(context)
+        ? [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.2),
+        blurRadius: 4,
+        spreadRadius: 1,
+        offset: Offset(2, 2),
+      ),
+      BoxShadow(
+        color: Colors.white.withOpacity(0.05),
+        blurRadius: 4,
+        spreadRadius: 1,
+        offset: Offset(-2, -2),
+      ),
+    ]
+        : [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 4,
+        spreadRadius: 1,
+        offset: Offset(2, 2),
+      ),
+      BoxShadow(
+        color: Colors.white.withOpacity(0.9),
+        blurRadius: 4,
+        spreadRadius: 1,
+        offset: Offset(-2, -2),
+      ),
+    ],
+  );
+
+  static BoxDecoration commentDecoration(BuildContext context) => BoxDecoration(
+    color: isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
+    borderRadius: BorderRadius.circular(15.r),
+    boxShadow: isDark(context)
+        ? [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.2),
+        blurRadius: 4,
+        spreadRadius: 0,
+        offset: Offset(2, 2),
+      ),
+    ]
+        : [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 4,
+        spreadRadius: 0,
+        offset: Offset(2, 2),
+      ),
+    ],
+  );
 }

@@ -11,85 +11,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 공통 스타일을 정의한 클래스 - 다크모드 지원 추가
-class DetailStyles {
-  static BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
-    color: AppTheme.getContainerColor(context),
-    borderRadius: BorderRadius.circular(20.r),
-    boxShadow: AppTheme.isDark(context)
-        ? [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.4),
-        blurRadius: 10,
-        spreadRadius: 0,
-        offset: Offset(0, 2),
-      ),
-    ]
-        : [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.3),
-        blurRadius: 10,
-        spreadRadius: 0,
-        offset: Offset(0, 2),
-      ),
-    ],
-  );
-
-  static BoxDecoration insetDecoration(BuildContext context) => BoxDecoration(
-    color: AppTheme.isDark(context) ? Color(0xFF2D2D3A) : Color(0xFFFAFAFA),
-    borderRadius: BorderRadius.circular(15.r),
-    boxShadow: AppTheme.isDark(context)
-        ? [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.2),
-        blurRadius: 4,
-        spreadRadius: 1,
-        offset: Offset(2, 2),
-      ),
-      BoxShadow(
-        color: Colors.white.withOpacity(0.05),
-        blurRadius: 4,
-        spreadRadius: 1,
-        offset: Offset(-2, -2),
-      ),
-    ]
-        : [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.1),
-        blurRadius: 4,
-        spreadRadius: 1,
-        offset: Offset(2, 2),
-      ),
-      BoxShadow(
-        color: Colors.white.withOpacity(0.9),
-        blurRadius: 4,
-        spreadRadius: 1,
-        offset: Offset(-2, -2),
-      ),
-    ],
-  );
-
-  static BoxDecoration commentDecoration(BuildContext context) => BoxDecoration(
-    color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
-    borderRadius: BorderRadius.circular(15.r),
-    boxShadow: AppTheme.isDark(context)
-        ? [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.2),
-        blurRadius: 4,
-        spreadRadius: 0,
-        offset: Offset(2, 2),
-      ),
-    ]
-        : [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.1),
-        blurRadius: 4,
-        spreadRadius: 0,
-        offset: Offset(2, 2),
-      ),
-    ],
-  );
-}
 
 class KeywordDetailScreen extends StatefulWidget {
   final int keywordId;
@@ -336,7 +257,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     return RepaintBoundary(
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        decoration: DetailStyles.cardDecoration(context),
+        decoration: AppTheme.cardDecoration(context),
         child: Padding(
           padding: EdgeInsets.all(15.w),
           child: Column(
@@ -462,7 +383,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   Widget _buildTopDiscussionsSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: DetailStyles.cardDecoration(context),
+      decoration: AppTheme.cardDecoration(context),
       child: Padding(
         padding: EdgeInsets.all(15.w),
         child: Column(
@@ -565,7 +486,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     return RepaintBoundary(
       child: Container(
         margin: EdgeInsets.only(bottom: 15.h),
-        decoration: DetailStyles.commentDecoration(context),
+        decoration: AppTheme.commentDecoration(context),
         child: Padding(
           padding: EdgeInsets.all(15.w),
           child: Column(
@@ -677,7 +598,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: DetailStyles.cardDecoration(context),
+      decoration: AppTheme.cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

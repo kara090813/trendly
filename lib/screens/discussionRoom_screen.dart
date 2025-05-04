@@ -25,7 +25,8 @@ class DiscussionRoomScreen extends StatefulWidget {
   State<DiscussionRoomScreen> createState() => _DiscussionRoomScreenState();
 }
 
-class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with TickerProviderStateMixin {
+class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
+    with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
 
   // 상태 변수들
@@ -34,6 +35,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   bool _isAnimating = false;
   bool _isLoading = true;
   bool _isCommentLoading = false;
+
   // 토론방 요약 표시 여부
   bool _isDiscussionReactionEnabled = false;
   bool _isSentimentUpdating = false;
@@ -103,7 +105,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
   // 댓글 반응 데이터 로드 메서드
   void _loadCommentReactions() async {
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
 
     // 사용자가 좋아요/싫어요 한 댓글 정보 로드
     await provider.loadCommentReactions();
@@ -138,8 +141,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
     try {
       // 데이터 로드
-      final discussionRoom = await _apiService.getDiscussionRoomById(widget.discussionRoomId);
-      final keyword = await _apiService.getLatestKeywordByDiscussionRoomId(widget.discussionRoomId);
+      final discussionRoom =
+          await _apiService.getDiscussionRoomById(widget.discussionRoomId);
+      final keyword = await _apiService
+          .getLatestKeywordByDiscussionRoomId(widget.discussionRoomId);
       await _loadComments(isPopular: _isPopularSort);
 
       if (_isRefreshing) {
@@ -187,8 +192,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     });
 
     try {
-      final comments = await _apiService.getDiscussionComments(
-          widget.discussionRoomId, isPopular: isPopular);
+      final comments = await _apiService
+          .getDiscussionComments(widget.discussionRoomId, isPopular: isPopular);
 
       if (mounted) {
         setState(() {
@@ -211,7 +216,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
   // 댓글 반응 상태 초기화
   void _updateLocalCommentReactions() {
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
 
     for (var comment in _comments) {
       final String? reaction = provider.getCommentReaction(comment.id);
@@ -269,7 +275,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
   // 사용자 정보 로드
   void _loadUserPreference() {
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
 
     if (provider.nickname != null) {
       _idController.text = provider.nickname!;
@@ -282,8 +289,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
   // 이전 선택 감정 로드
   void _loadPreviousSentiment() async {
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
-    final sentiment = await provider.checkRoomSentiment(widget.discussionRoomId);
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
+    final sentiment =
+        await provider.checkRoomSentiment(widget.discussionRoomId);
 
     if (sentiment != null && mounted) {
       setState(() {
@@ -312,113 +321,115 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
             : Column(
-          children: [
-            // 헤더 영역 - 항상 온전히 표시
-            _buildHeaderSection(context),
-
-            // 나머지 콘텐츠 영역
-            Expanded(
-              child: Stack(
                 children: [
-                  // 메인 콘텐츠 부분
-                  Opacity(
-                    opacity: _isRefreshing ? 0.3 : 1.0,
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      physics: _isRefreshing
-                          ? NeverScrollableScrollPhysics()
-                          : BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 12.h),
-                          _buildInfoSection(),
-                          SizedBox(height: 12.h),
-                          _buildSummaryToggleSection(),
-                          SizedBox(height: 12.h),
-                          _buildDiscussionReactionToggleSection(),
-                          SizedBox(height: 12.h,),
-                          AnimatedSwitcher(
-                            duration: Duration(milliseconds: 600),
-                            transitionBuilder: (Widget child,
-                                Animation<double> animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: ScaleTransition(
-                                  scale:
-                                  Tween<double>(begin: 0.95, end: 1.0)
-                                      .animate(CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutBack,
-                                  )),
-                                  child: child,
+                  // 헤더 영역 - 항상 온전히 표시
+                  _buildHeaderSection(context),
+
+                  // 나머지 콘텐츠 영역
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        // 메인 콘텐츠 부분
+                        Opacity(
+                          opacity: _isRefreshing ? 0.3 : 1.0,
+                          child: SingleChildScrollView(
+                            controller: _scrollController,
+                            physics: _isRefreshing
+                                ? NeverScrollableScrollPhysics()
+                                : BouncingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 12.h),
+                                _buildInfoSection(),
+                                SizedBox(height: 12.h),
+                                _buildSummaryToggleSection(),
+                                SizedBox(height: 12.h),
+                                _buildDiscussionReactionToggleSection(),
+                                SizedBox(
+                                  height: 12.h,
                                 ),
-                              );
-                            },
-                            child: _buildEmotionButtonsSection(),
+                                AnimatedSwitcher(
+                                  duration: Duration(milliseconds: 600),
+                                  transitionBuilder: (Widget child,
+                                      Animation<double> animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: ScaleTransition(
+                                        scale:
+                                            Tween<double>(begin: 0.95, end: 1.0)
+                                                .animate(CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOutBack,
+                                        )),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: _buildEmotionButtonsSection(),
+                                ),
+                                _buildWarningMessage(),
+                                SizedBox(height: 4.h),
+                                _buildCommentSection(),
+                                SizedBox(height: 20.h),
+                              ],
+                            ),
                           ),
-                          _buildWarningMessage(),
-                          SizedBox(height: 4.h),
-                          _buildCommentSection(),
-                          SizedBox(height: 20.h),
-                        ],
-                      ),
+                        ),
+
+                        // 새로고침 오버레이
+                        if (_isRefreshing)
+                          Center(
+                            child: Container(
+                              width: 120.w,
+                              height: 120.w,
+                              decoration: BoxDecoration(
+                                color: AppTheme.isDark(context)
+                                    ? Color(0xFF21202C).withOpacity(0.9)
+                                    : Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(16.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.isDark(context)
+                                        ? Colors.black.withOpacity(0.5)
+                                        : Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 50.w,
+                                    height: 50.w,
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF19B3F6),
+                                      strokeWidth: 3.w,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  Text(
+                                    "새로고침 중...",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF19B3F6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
-                  // 새로고침 오버레이
-                  if (_isRefreshing)
-                    Center(
-                      child: Container(
-                        width: 120.w,
-                        height: 120.w,
-                        decoration: BoxDecoration(
-                          color: AppTheme.isDark(context)
-                              ? Color(0xFF21202C).withOpacity(0.9)
-                              : Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(16.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.isDark(context)
-                                  ? Colors.black.withOpacity(0.5)
-                                  : Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 50.w,
-                              height: 50.w,
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF19B3F6),
-                                strokeWidth: 3.w,
-                              ),
-                            ),
-                            SizedBox(height: 12.h),
-                            Text(
-                              "새로고침 중...",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF19B3F6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // 입력 영역
+                  _buildInputSection(),
                 ],
               ),
-            ),
-
-            // 입력 영역
-            _buildInputSection(),
-          ],
-        ),
       ),
     );
   }
@@ -433,9 +444,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           Icon(
             Icons.info_outline,
             size: 16.sp,
-            color: AppTheme.isDark(context)
-                ? Colors.grey[400]
-                : Colors.grey[600],
+            color:
+                AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
           ),
           SizedBox(width: 6.w),
           Text(
@@ -471,49 +481,50 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: isDisabled
           ? _buildDisabledEmotionSection() // 토론방 종료시 표시
           : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 헤더 - 선택 전/후에 따라 다르게 표시
-          Text(
-            _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.getTextColor(context),
-            ),
-          ),
-          SizedBox(height: 16.h),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 헤더 - 선택 전/후에 따라 다르게 표시
+                Text(
+                  _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                ),
+                SizedBox(height: 16.h),
 
-          // 애니메이션 영역 - Expanded로 남은 공간 채우기
-          _isSentimentUpdating
-              ? Center(child: CircularProgressIndicator())
-              : Expanded(
-              child: _selectedSentiment == null
-                  ? _buildSelectionButtons() // 선택 전 버튼들
-                  : _buildSelectedOpinion() // 선택 후 내용
-          ),
-        ],
-      ),
+                // 애니메이션 영역 - Expanded로 남은 공간 채우기
+                _isSentimentUpdating
+                    ? Center(child: CircularProgressIndicator())
+                    : Expanded(
+                        child: _selectedSentiment == null
+                            ? _buildSelectionButtons() // 선택 전 버튼들
+                            : _buildSelectedOpinion() // 선택 후 내용
+                        ),
+              ],
+            ),
     );
   }
+
 // 토론방 요약 토글 섹션
   Widget _buildDiscussionReactionToggleSection() {
     return Container(
@@ -523,27 +534,27 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 제목과 On/Off 토글 스위치
           Padding(
-            padding: EdgeInsets.only(left: 20.w,right:20.w, top: 16.h),
+            padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 16.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -570,8 +581,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           SizedBox(height: 20.h),
           // 토글이 켜져있을 때만 DiscussionReactionWidget 표시
           if (_isDiscussionReactionEnabled) ...[
-
-
             // 상단 구분선
             _buildDivider(),
 
@@ -591,6 +600,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       ),
     );
   }
+
   // 비활성화된 감정 선택 섹션
   Widget _buildDisabledEmotionSection() {
     return Column(
@@ -600,9 +610,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         Icon(
           Icons.lock_outline,
           size: 40.sp,
-          color: AppTheme.isDark(context)
-              ? Colors.grey[600]
-              : Colors.grey[400],
+          color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[400],
         ),
         SizedBox(height: 16.h),
         Text(
@@ -610,9 +618,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           style: TextStyle(
             fontSize: 16.sp,
             fontWeight: FontWeight.w500,
-            color: AppTheme.isDark(context)
-                ? Colors.grey[400]
-                : Colors.grey[600],
+            color:
+                AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
           ),
         ),
         SizedBox(height: 8.h),
@@ -620,9 +627,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           "더 이상 의견을 남길 수 없습니다",
           style: TextStyle(
             fontSize: 14.sp,
-            color: AppTheme.isDark(context)
-                ? Colors.grey[500]
-                : Colors.grey[500],
+            color:
+                AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[500],
           ),
           textAlign: TextAlign.center,
         ),
@@ -649,15 +655,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           )
               .animate()
               .moveX(
-              begin: -100,
-              end: 0,
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: -100,
+                  end: 0,
+                  duration: motionDuration,
+                  curve: animCurve)
               .scale(
-              begin: Offset(0.6, 0.6),
-              end: Offset(1.0, 1.0),
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: Offset(0.6, 0.6),
+                  end: Offset(1.0, 1.0),
+                  duration: motionDuration,
+                  curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
         SizedBox(width: 10.w),
@@ -671,15 +677,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           )
               .animate()
               .moveY(
-              begin: 100,
-              end: 0,
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: 100,
+                  end: 0,
+                  duration: motionDuration,
+                  curve: animCurve)
               .scale(
-              begin: Offset(0.6, 0.6),
-              end: Offset(1.0, 1.0),
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: Offset(0.6, 0.6),
+                  end: Offset(1.0, 1.0),
+                  duration: motionDuration,
+                  curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
         SizedBox(width: 10.w),
@@ -693,15 +699,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           )
               .animate()
               .moveX(
-              begin: 100,
-              end: 0,
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: 100,
+                  end: 0,
+                  duration: motionDuration,
+                  curve: animCurve)
               .scale(
-              begin: Offset(0.6, 0.6),
-              end: Offset(1.0, 1.0),
-              duration: motionDuration,
-              curve: animCurve)
+                  begin: Offset(0.6, 0.6),
+                  end: Offset(1.0, 1.0),
+                  duration: motionDuration,
+                  curve: animCurve)
               .fadeIn(begin: 0.0, duration: fadeDuration, curve: fadeCurve),
         ),
       ],
@@ -750,18 +756,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   ),
                 )
                     .animate(
-                    onComplete: (controller) =>
-                        _animController.forward(from: 0.0))
+                        onComplete: (controller) =>
+                            _animController.forward(from: 0.0))
                     .moveY(
-                    begin: 20,
-                    end: 0,
-                    duration: 400.ms,
-                    curve: Curves.easeOutCubic)
+                        begin: 20,
+                        end: 0,
+                        duration: 400.ms,
+                        curve: Curves.easeOutCubic)
                     .scale(
-                    begin: Offset(0.6, 0.6),
-                    end: Offset(1.0, 1.0),
-                    duration: 600.ms,
-                    curve: Curves.elasticOut),
+                        begin: Offset(0.6, 0.6),
+                        end: Offset(1.0, 1.0),
+                        duration: 600.ms,
+                        curve: Curves.elasticOut),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
@@ -779,11 +785,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                       )
                           .animate()
                           .moveX(
-                          begin: 20,
-                          end: 0,
-                          duration: 400.ms,
-                          delay: 200.ms,
-                          curve: Curves.easeOutCubic)
+                              begin: 20,
+                              end: 0,
+                              duration: 400.ms,
+                              delay: 200.ms,
+                              curve: Curves.easeOutCubic)
                           .fadeIn(duration: 300.ms, delay: 200.ms),
                       SizedBox(height: 4.h),
                       Text(
@@ -799,11 +805,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                       )
                           .animate()
                           .moveX(
-                          begin: 30,
-                          end: 0,
-                          duration: 500.ms,
-                          delay: 300.ms,
-                          curve: Curves.easeOutCubic)
+                              begin: 30,
+                              end: 0,
+                              duration: 500.ms,
+                              delay: 300.ms,
+                              curve: Curves.easeOutCubic)
                           .fadeIn(duration: 400.ms, delay: 300.ms),
                     ],
                   ),
@@ -838,21 +844,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               ),
               boxShadow: AppTheme.isDark(context)
                   ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 3,
-                  spreadRadius: 0,
-                  offset: Offset(0, 1),
-                ),
-              ]
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 3,
+                        spreadRadius: 0,
+                        offset: Offset(0, 1),
+                      ),
+                    ]
                   : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  blurRadius: 3,
-                  spreadRadius: 0,
-                  offset: Offset(0, 1),
-                ),
-              ],
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        blurRadius: 3,
+                        spreadRadius: 0,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
             ),
             child: Center(
               child: Icon(
@@ -868,15 +874,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             .animate()
             .fadeIn(duration: 400.ms, delay: 500.ms)
             .scale(
-            begin: Offset(0.5, 0.5),
-            end: Offset(1.0, 1.0),
-            duration: 500.ms,
-            curve: Curves.elasticOut)
+                begin: Offset(0.5, 0.5),
+                end: Offset(1.0, 1.0),
+                duration: 500.ms,
+                curve: Curves.elasticOut)
             .rotate(
-            begin: -0.5,
-            end: 0,
-            duration: 600.ms,
-            curve: Curves.easeOutBack),
+                begin: -0.5,
+                end: 0,
+                duration: 600.ms,
+                curve: Curves.easeOutBack),
       ],
     );
   }
@@ -908,21 +914,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             borderRadius: BorderRadius.circular(12.r),
             boxShadow: AppTheme.isDark(context)
                 ? [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 8,
-                spreadRadius: 0,
-                offset: Offset(0, 4),
-              ),
-            ]
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                      offset: Offset(0, 4),
+                    ),
+                  ]
                 : [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 8,
-                spreadRadius: 0,
-                offset: Offset(0, 4),
-              ),
-            ],
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
           ),
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -1018,7 +1024,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
       // 로컬에도 저장
       final provider =
-      Provider.of<UserPreferenceProvider>(context, listen: false);
+          Provider.of<UserPreferenceProvider>(context, listen: false);
       await provider.setRoomSentiment(widget.discussionRoomId, sentiment);
     } catch (e) {
       print('감정 의견 업데이트 오류: $e');
@@ -1047,6 +1053,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   }
 
   // 감정 재선택 메서드
+  // 감정 재선택 메서드
   void _resetEmotionSelection() async {
     if (_discussionRoom?.isClosed ?? true) return;
 
@@ -1056,13 +1063,31 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     });
 
     try {
-      // 서버에서 감정 의견 제거 (0으로 설정)
+      // 현재 선택된 감정에 따라 -1 설정
+      int positive = 0;
+      int neutral = 0;
+      int negative = 0;
+
+      // 현재 선택된 감정에 따라 -1로 설정하여 카운트 감소
+      switch (_selectedSentiment) {
+        case 'positive':
+          positive = -1;
+          break;
+        case 'neutral':
+          neutral = -1;
+          break;
+        case 'negative':
+          negative = -1;
+          break;
+      }
+
+      // 서버에 감정 의견 업데이트
       await _apiService.setDiscussionSentiment(
-          widget.discussionRoomId, 0, 0, 0);
+          widget.discussionRoomId, positive, neutral, negative);
 
       // 로컬에서도 제거
       final provider =
-      Provider.of<UserPreferenceProvider>(context, listen: false);
+          Provider.of<UserPreferenceProvider>(context, listen: false);
       await provider.removeRoomSentiment(widget.discussionRoomId);
 
       if (mounted) {
@@ -1084,15 +1109,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         });
       }
     }
-
-    // 애니메이션이 완료된 후 플래그 해제
-    Future.delayed(Duration(milliseconds: 600), () {
-      if (mounted) {
-        setState(() {
-          _isAnimating = false;
-        });
-      }
-    });
   }
 
   // 헤더 섹션
@@ -1107,19 +1123,19 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         ),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1174,7 +1190,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
             },
             icon: Icons.refresh,
             color: Color(0xFF19B3F6),
-            iconSize: 22.sp, context: context,
+            iconSize: 22.sp,
+            context: context,
           ),
 
           SizedBox(width: 8.w),
@@ -1226,20 +1243,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -1328,7 +1345,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                       style: TextStyle(
                         fontSize: 15.sp,
                         color: isExpired
-                            ? (AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey)
+                            ? (AppTheme.isDark(context)
+                                ? Colors.grey[500]
+                                : Colors.grey)
                             : AppTheme.getTextColor(context),
                         fontWeight: FontWeight.w500,
                       ),
@@ -1346,7 +1365,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                               fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
                               color: isExpired
-                                  ? (AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey)
+                                  ? (AppTheme.isDark(context)
+                                      ? Colors.grey[600]
+                                      : Colors.grey)
                                   : AppTheme.getTextColor(context),
                             ),
                           ),
@@ -1360,7 +1381,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                               fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
                               color: isExpired
-                                  ? (AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey)
+                                  ? (AppTheme.isDark(context)
+                                      ? Colors.grey[600]
+                                      : Colors.grey)
                                   : AppTheme.getTextColor(context),
                             ),
                           ),
@@ -1391,21 +1414,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         borderRadius: BorderRadius.circular(10.r),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDisabled ? 0.25 : 0.4),
-            blurRadius: 5,
-            spreadRadius: 1,
-            offset: Offset(0, 2),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDisabled ? 0.25 : 0.4),
+                  blurRadius: 5,
+                  spreadRadius: 1,
+                  offset: Offset(0, 2),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDisabled ? 0.1 : 0.2),
-            blurRadius: 5,
-            spreadRadius: 1,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDisabled ? 0.1 : 0.2),
+                  blurRadius: 5,
+                  spreadRadius: 1,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Text(
         time,
@@ -1430,20 +1453,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1485,7 +1508,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               child: _buildSummaryToggle(),
             ),
 
-
             SizedBox(height: 8.h),
 
             // 선택된 유형에 따른 요약 내용
@@ -1521,15 +1543,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         gradient: LinearGradient(
           colors: AppTheme.isDark(context)
               ? [
-            Colors.grey[800]!.withOpacity(0.5),
-            Colors.grey[700]!,
-            Colors.grey[800]!.withOpacity(0.5),
-          ]
+                  Colors.grey[800]!.withOpacity(0.5),
+                  Colors.grey[700]!,
+                  Colors.grey[800]!.withOpacity(0.5),
+                ]
               : [
-            Colors.grey[300]!.withOpacity(0.5),
-            Colors.grey[200]!,
-            Colors.grey[300]!.withOpacity(0.5),
-          ],
+                  Colors.grey[300]!.withOpacity(0.5),
+                  Colors.grey[200]!,
+                  Colors.grey[300]!.withOpacity(0.5),
+                ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -1551,24 +1573,28 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         height: 30.h,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.r),
-          color: value ? Color(0xFF19B3F6) : (AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300]),
+          color: value
+              ? Color(0xFF19B3F6)
+              : (AppTheme.isDark(context)
+                  ? Colors.grey[700]
+                  : Colors.grey[300]),
           boxShadow: AppTheme.isDark(context)
               ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 2,
-              spreadRadius: 0,
-              offset: Offset(0, 1),
-            ),
-          ]
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 2,
+                    spreadRadius: 0,
+                    offset: Offset(0, 1),
+                  ),
+                ]
               : [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 2,
-              spreadRadius: 0,
-              offset: Offset(0, 1),
-            ),
-          ],
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 2,
+                    spreadRadius: 0,
+                    offset: Offset(0, 1),
+                  ),
+                ],
         ),
         child: Stack(
           children: [
@@ -1613,9 +1639,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       width: totalWidth,
       height: buttonHeight,
       decoration: BoxDecoration(
-        color: AppTheme.isDark(context)
-            ? Color(0xFF2A2A36)
-            : Color(0xFFF2F2F2),
+        color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Stack(
@@ -1651,20 +1675,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   ),
                 ),
               ),
-            ).animate()
-                .scale(
+            ).animate().scale(
                 begin: Offset(0.95, 0.95),
                 end: Offset(1.0, 1.0),
                 duration: 300.ms,
-                curve: Curves.easeOutCubic
-            ),
+                curve: Curves.easeOutCubic),
           ),
 
           // 터치 영역과 라벨들
           Row(
             children: List.generate(
               ['3줄', '짧은 글', '긴 글'].length,
-                  (index) => Expanded(
+              (index) => Expanded(
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -1720,10 +1742,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _keyword!.type1
-              .asMap()
-              .entries
-              .map((entry) {
+          children: _keyword!.type1.asMap().entries.map((entry) {
             int index = entry.key;
             String line = entry.value;
 
@@ -1766,8 +1785,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                 ],
               ),
             );
-          })
-              .toList(),
+          }).toList(),
         );
 
       case '짧은 글':
@@ -1776,7 +1794,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           style: TextStyle(
             fontSize: 18.sp,
             height: 1.5,
-            color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
+            color:
+                AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
           ),
         );
 
@@ -1786,7 +1805,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           style: TextStyle(
             fontSize: 18.sp,
             height: 1.5,
-            color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
+            color:
+                AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
           ),
         );
 
@@ -1810,20 +1830,20 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -1837,19 +1857,19 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
               ),
               boxShadow: AppTheme.isDark(context)
                   ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
-                ),
-              ]
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ]
                   : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
-                ),
-              ],
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1893,13 +1913,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     Icon(
                       Icons.forum_outlined,
                       size: 40.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[400],
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[600]
+                          : Colors.grey[400],
                     ),
                     SizedBox(height: 8.h),
                     Text(
                       "아직 의견이 없어요! 첫 의견을 남겨주세요!",
                       style: TextStyle(
-                        color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[400]
+                            : Colors.grey[500],
                         fontSize: 15.sp,
                       ),
                     ),
@@ -1927,7 +1951,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   // 댓글 아이템 위젯 - 최적화된 버전
   Widget _buildCommentItem(Comment comment) {
     // 내 댓글인지 확인
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
     final isMyComment = provider.isMyComment(comment.id);
 
     // 이 댓글에 좋아요/싫어요 했는지 확인 (로컬 상태 우선)
@@ -1954,223 +1979,175 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
     return RepaintBoundary(
       child: Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        decoration: BoxDecoration(
-          color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: AppTheme.isDark(context)
-              ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 5,
-              spreadRadius: 0,
-              offset: Offset(0, 2),
-            ),
-          ]
-              : [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 5,
-              spreadRadius: 0,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          margin: EdgeInsets.only(bottom: 12.h),
+          decoration: BoxDecoration(
+            color: AppTheme.isDark(context)
+                ? Color(0xFF2A2A36)
+                : Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(12.r),
+            boxShadow: AppTheme.isDark(context)
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 5,
+                      spreadRadius: 0,
+                      offset: Offset(0, 2),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 5,
+                      spreadRadius: 0,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Stack(
             children: [
-              // 닉네임 및 시간
-              Row(
-                children: [
-                  Text(
-                    comment.nick,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    timeAgo,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[500],
-                    ),
-                  ),
-                  Spacer(),
-                  // 더보기 버튼 (내 댓글일 때만 작동)
-                  isMyComment
-                      ? GestureDetector(
-                    onTap: () => _showCommentOptions(comment),
-                    child: Icon(
-                      Icons.more_horiz,
-                      size: 16.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[400],
-                    ),
-                  )
-                      : SizedBox.shrink(),
-                ],
-              ),
-
-              SizedBox(height: 10.h),
-
-              // 댓글 내용
-              Text(
-                comment.comment,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  height: 1.4,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[300]
-                      : Colors.black.withOpacity(0.85),
-                ),
-              ),
-
-              SizedBox(height: 12.h),
-
-              // 좋아요/싫어요/답글 수
-              Row(
-                children: [
-                  // 좋아요 버튼
-                  _buildAnimatedReactionButton(
-                    icon: hasLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                    count: likeCount,
-                    isActive: hasLiked,
-                    activeColor: Color(0xFF19B3F6),
-                    onTap: () => _handleLikeComment(comment.id, hasLiked, hasDisliked),
-                  ),
-                  SizedBox(width: 16.w),
-
-                  // 싫어요 버튼
-                  _buildAnimatedReactionButton(
-                    icon: hasDisliked
-                        ? Icons.thumb_down
-                        : Icons.thumb_down_outlined,
-                    count: dislikeCount,
-                    isActive: hasDisliked,
-                    activeColor: Color(0xFFE74C3C),
-                    onTap: () => _handleDislikeComment(comment.id, hasDisliked, hasLiked),
-                  ),
-                  Spacer(),
-
-                  // 답글 버튼
-                  InkWell(
-                    onTap: () {
-                      // 답글 기능 처리 (나중에 구현)
-                      context.push('/comment/${comment.id}');
-                    },
-                    child: Row(
+              // 주 컨텐츠
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 닉네임 및 시간
+                    Row(
                       children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 16.sp,
-                          color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
-                        ),
-                        SizedBox(width: 4.w),
                         Text(
-                          (comment.replies ?? 0).toString(),
+                          comment.nick,
                           style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: isMyComment
+                                ? Color(0xFF19B3F6)
+                                : AppTheme.getTextColor(context),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 댓글 옵션 표시 (삭제 등)
-  void _showCommentOptions(Comment comment) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.r),
-          ),
-          backgroundColor: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
-          child: Container(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InkWell(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteComment(comment.id);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.delete_outline,
-                            color: Colors.red, size: 20.sp),
                         SizedBox(width: 8.w),
                         Text(
-                          "댓글 삭제하기",
-                          textAlign: TextAlign.center,
+                          timeAgo,
                           style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red,
+                            fontSize: 13.sp,
+                            color: AppTheme.isDark(context)
+                                ? Colors.grey[500]
+                                : Colors.grey[500],
+                          ),
+                        ),
+                        Spacer(),
+                      ],
+                    ),
+
+                    SizedBox(height: 10.h),
+
+                    // 댓글 내용
+                    Text(
+                      comment.comment,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        height: 1.4,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[300]
+                            : Colors.black.withOpacity(0.85),
+                      ),
+                    ),
+
+                    SizedBox(height: 12.h),
+
+                    // 좋아요/싫어요/답글 수
+                    Row(
+                      children: [
+                        // 좋아요 버튼
+                        _buildAnimatedReactionButton(
+                          icon: hasLiked
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_outlined,
+                          count: likeCount,
+                          isActive: hasLiked,
+                          activeColor: Color(0xFF19B3F6),
+                          onTap: () => _handleLikeComment(
+                              comment.id, hasLiked, hasDisliked),
+                        ),
+                        SizedBox(width: 16.w),
+
+                        // 싫어요 버튼
+                        _buildAnimatedReactionButton(
+                          icon: hasDisliked
+                              ? Icons.thumb_down
+                              : Icons.thumb_down_outlined,
+                          count: dislikeCount,
+                          isActive: hasDisliked,
+                          activeColor: Color(0xFFE74C3C),
+                          onTap: () => _handleDislikeComment(
+                              comment.id, hasDisliked, hasLiked),
+                        ),
+                        Spacer(),
+
+                        // 답글 버튼
+                        InkWell(
+                          onTap: () {
+                            context.push('/comment/${comment.id}');
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 16.sp,
+                                color: AppTheme.isDark(context)
+                                    ? Colors.grey[400]
+                                    : Colors.grey[500],
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                (comment.replies ?? 0).toString(),
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppTheme.isDark(context)
+                                      ? Colors.grey[400]
+                                      : Colors.grey[500],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-                Divider(
-                  color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
+              ),
+
+              // 삭제 버튼 (오른쪽 상단에 배치)
+              Positioned(
+                top: 6.h,
+                right: 6.w,
+                child: DeleteButtonWidget(
+                  onTap: () => _showDeletePasswordDialog(comment.id),
+                  size: 24,
                 ),
-                InkWell(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    child: Text(
-                      "취소",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.getTextColor(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+            ],
+          )),
     );
   }
 
-  // 댓글 삭제 처리
-  Future<void> _deleteComment(int commentId) async {
-    final provider =
-    Provider.of<UserPreferenceProvider>(context, listen: false);
-    final password = provider.password;
+  // 비밀번호 입력 팝업을 표시하고 삭제 처리
+  Future<void> _showDeletePasswordDialog(int commentId) async {
+    final password = await PasswordPopupWidget.show(
+      context,
+      title: "댓글 삭제",
+      message: "이 댓글을 삭제하려면 암호를 입력하세요",
+      confirmButtonText: "삭제",
+      cancelButtonText: "취소",
+    );
 
-    if (password == null || password.isEmpty) {
-      StylishToast.error(context, '비밀번호가 설정되어 있지 않습니다.');
-      return;
+    // 암호가 입력된 경우 삭제 처리
+    if (password != null && password.isNotEmpty) {
+      _deleteCommentWithPassword(commentId, password);
     }
+  }
 
+// 암호를 사용한 댓글 삭제 처리
+  Future<void> _deleteCommentWithPassword(int commentId, String password) async {
     try {
       final result = await _apiService.deleteComment(
           widget.discussionRoomId, commentId, password);
@@ -2180,7 +2157,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         _loadComments(isPopular: _isPopularSort);
         StylishToast.success(context, '댓글이 삭제되었습니다.');
       } else {
-        StylishToast.error(context, '댓글 삭제에 실패했습니다.');
+        StylishToast.error(context, '댓글 삭제에 실패했습니다. 암호가 올바른지 확인하세요.');
       }
     } catch (e) {
       print('댓글 삭제 오류: $e');
@@ -2189,7 +2166,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   }
 
   // 좋아요 처리 - 최적화된 버전
-  Future<void> _handleLikeComment(int commentId, bool hasLiked, bool hasDisliked) async {
+  Future<void> _handleLikeComment(
+      int commentId, bool hasLiked, bool hasDisliked) async {
     // 해당 댓글 찾기
     final commentIndex = _comments.indexWhere((c) => c.id == commentId);
     if (commentIndex == -1) return;
@@ -2227,7 +2205,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     });
 
     try {
-      final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+      final provider =
+          Provider.of<UserPreferenceProvider>(context, listen: false);
 
       // 이미 싫어요 상태인 경우, 백그라운드에서 싫어요 취소 API 호출
       if (hasDisliked) {
@@ -2235,7 +2214,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       }
 
       // 백그라운드에서 좋아요 상태 변경 API 호출
-      final result = await _apiService.likeComment(commentId, isCancel: hasLiked);
+      final result =
+          await _apiService.likeComment(commentId, isCancel: hasLiked);
 
       if (result) {
         // API 호출 성공 시 로컬 상태 업데이트
@@ -2269,7 +2249,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
   }
 
   // 싫어요 처리 - 최적화된 버전
-  Future<void> _handleDislikeComment(int commentId, bool hasDisliked, bool hasLiked) async {
+  Future<void> _handleDislikeComment(
+      int commentId, bool hasDisliked, bool hasLiked) async {
     // 해당 댓글 찾기
     final commentIndex = _comments.indexWhere((c) => c.id == commentId);
     if (commentIndex == -1) return;
@@ -2307,7 +2288,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
     });
 
     try {
-      final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+      final provider =
+          Provider.of<UserPreferenceProvider>(context, listen: false);
 
       // 이미 좋아요 상태인 경우, 백그라운드에서 좋아요 취소 API 호출
       if (hasLiked) {
@@ -2315,7 +2297,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       }
 
       // 백그라운드에서 싫어요 상태 변경 API 호출
-      final result = await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
+      final result =
+          await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
 
       if (result) {
         // API 호출 성공 시 로컬 상태 업데이트
@@ -2372,17 +2355,22 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     size: 16.sp,
                     color: isActive
                         ? activeColor
-                        : (AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]),
+                        : (AppTheme.isDark(context)
+                            ? Colors.grey[400]
+                            : Colors.grey[600]),
                   ),
                   SizedBox(width: 4.w),
                   Text(
                     count.toString(),
                     style: TextStyle(
                       fontSize: 13.sp,
-                      fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight:
+                          isActive ? FontWeight.w500 : FontWeight.normal,
                       color: isActive
                           ? activeColor
-                          : (AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]),
+                          : (AppTheme.isDark(context)
+                              ? Colors.grey[400]
+                              : Colors.grey[600]),
                     ),
                   ),
                 ],
@@ -2433,7 +2421,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
 
         // Provider로 사용자 정보 저장
         final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
+            Provider.of<UserPreferenceProvider>(context, listen: false);
         await provider.setNickname(id);
         await provider.setPassword(password);
 
@@ -2479,6 +2467,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
       }
     }
   }
+
   // 하단 입력 섹션
   // 하단 입력 섹션
   Widget _buildInputSection() {
@@ -2496,19 +2485,19 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
         ),
         boxShadow: AppTheme.isDark(context)
             ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: Offset(0, -3),
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: Offset(0, -3),
+                ),
+              ]
             : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: Offset(0, -3),
-          ),
-        ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: Offset(0, -3),
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -2524,12 +2513,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
                     color: isDisabled
-                        ? (AppTheme.isDark(context) ? Color(0xFF252530) : Colors.grey[200])
-                        : (AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5)),
+                        ? (AppTheme.isDark(context)
+                            ? Color(0xFF252530)
+                            : Colors.grey[200])
+                        : (AppTheme.isDark(context)
+                            ? Color(0xFF2A2A36)
+                            : Color(0xFFF5F5F5)),
                     boxShape: NeumorphicBoxShape.roundRect(
                         BorderRadius.circular(16.r)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -2545,7 +2539,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                           controller: _idController,
                           enabled: !isDisabled,
                           decoration: InputDecoration(
-                            hintText: "아이디",
+                            hintText: "닉네임",
                             hintStyle: TextStyle(
                               fontSize: 14.sp,
                               color: AppTheme.isDark(context)
@@ -2581,12 +2575,17 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     shape: NeumorphicShape.flat,
                     lightSource: LightSource.topLeft,
                     color: isDisabled
-                        ? (AppTheme.isDark(context) ? Color(0xFF252530) : Colors.grey[200])
-                        : (AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5)),
+                        ? (AppTheme.isDark(context)
+                            ? Color(0xFF252530)
+                            : Colors.grey[200])
+                        : (AppTheme.isDark(context)
+                            ? Color(0xFF2A2A36)
+                            : Color(0xFFF5F5F5)),
                     boxShape: NeumorphicBoxShape.roundRect(
                         BorderRadius.circular(16.r)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -2636,33 +2635,36 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
           // 댓글 입력 필드
           Container(
             decoration: BoxDecoration(
-              color: AppTheme.isDark(context)
-                  ? Color(0xFF2A2A36)
-                  : Colors.white,
+              color:
+                  AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
                 color: isDisabled
-                    ? (AppTheme.isDark(context) ? Colors.grey[700]! : Colors.grey[300]!)
-                    : (AppTheme.isDark(context) ? Color(0xFF3C3B48) : Color(0xFFE0E0E0)),
+                    ? (AppTheme.isDark(context)
+                        ? Colors.grey[700]!
+                        : Colors.grey[300]!)
+                    : (AppTheme.isDark(context)
+                        ? Color(0xFF3C3B48)
+                        : Color(0xFFE0E0E0)),
                 width: 1.5,
               ),
               boxShadow: AppTheme.isDark(context)
                   ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 4,
-                  spreadRadius: 0,
-                  offset: Offset(0, 1),
-                ),
-              ]
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 4,
+                        spreadRadius: 0,
+                        offset: Offset(0, 1),
+                      ),
+                    ]
                   : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  spreadRadius: 0,
-                  offset: Offset(0, 1),
-                ),
-              ],
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        spreadRadius: 0,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -2706,7 +2708,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                   margin: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
                     color: isDisabled || _isCommenting
-                        ? (AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300])
+                        ? (AppTheme.isDark(context)
+                            ? Colors.grey[700]
+                            : Colors.grey[300])
                         : Color(0xFF19B3F6),
                     borderRadius: BorderRadius.circular(18.r),
                     boxShadow: [
@@ -2724,25 +2728,26 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen> with Ticker
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18.r),
-                      onTap: isDisabled || _isCommenting ? null : _submitComment,
+                      onTap:
+                          isDisabled || _isCommenting ? null : _submitComment,
                       child: Container(
                         width: 44.w,
                         height: 44.w,
                         child: _isCommenting
                             ? SizedBox(
-                          width: 20.w,
-                          height: 20.h,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white),
-                          ),
-                        )
+                                width: 20.w,
+                                height: 20.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
                             : Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                          size: 22.sp,
-                        ),
+                                Icons.send_rounded,
+                                color: Colors.white,
+                                size: 22.sp,
+                              ),
                       ),
                     ),
                   ),

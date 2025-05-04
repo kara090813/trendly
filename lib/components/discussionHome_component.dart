@@ -1230,7 +1230,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
             ]
                 : [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 8,
                 offset: const Offset(1, 3),
               ),

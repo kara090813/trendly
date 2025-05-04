@@ -7,3 +7,5 @@ export 'sortingToggle_widget.dart';
 export 'circleButton_widget.dart';
 export 'sortingToggle_widget.dart';
 export 'discussionReaction_widget.dart';
+export 'deleteButton_widget.dart';
+export 'passwordPopup_widget.dart';
