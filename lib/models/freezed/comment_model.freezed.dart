@@ -30,6 +30,8 @@ mixin _$Comment {
   bool get isSubComment => throw _privateConstructorUsedError;
   @JsonKey(name: 'parent_id')
   int? get parentId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'sub_comment_count')
+  int? get subCommentCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'like_count')
@@ -61,6 +63,7 @@ abstract class $CommentCopyWith<$Res> {
       String comment,
       @JsonKey(name: 'is_sub_comment') bool isSubComment,
       @JsonKey(name: 'parent_id') int? parentId,
+      @JsonKey(name: 'sub_comment_count') int? subCommentCount,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'like_count') int? likeCount,
       @JsonKey(name: 'dislike_count') int? dislikeCount,
@@ -90,6 +93,7 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
     Object? comment = null,
     Object? isSubComment = null,
     Object? parentId = freezed,
+    Object? subCommentCount = freezed,
     Object? createdAt = null,
     Object? likeCount = freezed,
     Object? dislikeCount = freezed,
@@ -124,6 +128,10 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
       parentId: freezed == parentId
           ? _value.parentId
           : parentId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      subCommentCount: freezed == subCommentCount
+          ? _value.subCommentCount
+          : subCommentCount // ignore: cast_nullable_to_non_nullable
               as int?,
       createdAt: null == createdAt
           ? _value.createdAt
@@ -164,6 +172,7 @@ abstract class _$$CommentImplCopyWith<$Res> implements $CommentCopyWith<$Res> {
       String comment,
       @JsonKey(name: 'is_sub_comment') bool isSubComment,
       @JsonKey(name: 'parent_id') int? parentId,
+      @JsonKey(name: 'sub_comment_count') int? subCommentCount,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'like_count') int? likeCount,
       @JsonKey(name: 'dislike_count') int? dislikeCount,
@@ -191,6 +200,7 @@ class __$$CommentImplCopyWithImpl<$Res>
     Object? comment = null,
     Object? isSubComment = null,
     Object? parentId = freezed,
+    Object? subCommentCount = freezed,
     Object? createdAt = null,
     Object? likeCount = freezed,
     Object? dislikeCount = freezed,
@@ -225,6 +235,10 @@ class __$$CommentImplCopyWithImpl<$Res>
       parentId: freezed == parentId
           ? _value.parentId
           : parentId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      subCommentCount: freezed == subCommentCount
+          ? _value.subCommentCount
+          : subCommentCount // ignore: cast_nullable_to_non_nullable
               as int?,
       createdAt: null == createdAt
           ? _value.createdAt
@@ -261,6 +275,7 @@ class _$CommentImpl implements _Comment {
       required this.comment,
       @JsonKey(name: 'is_sub_comment') required this.isSubComment,
       @JsonKey(name: 'parent_id') this.parentId,
+      @JsonKey(name: 'sub_comment_count') this.subCommentCount,
       @JsonKey(name: 'created_at') required this.createdAt,
       @JsonKey(name: 'like_count') this.likeCount,
       @JsonKey(name: 'dislike_count') this.dislikeCount,
@@ -288,6 +303,9 @@ class _$CommentImpl implements _Comment {
   @JsonKey(name: 'parent_id')
   final int? parentId;
   @override
+  @JsonKey(name: 'sub_comment_count')
+  final int? subCommentCount;
+  @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
@@ -303,7 +321,7 @@ class _$CommentImpl implements _Comment {
 
   @override
   String toString() {
-    return 'Comment(id: $id, discussionRoomId: $discussionRoomId, user: $user, nick: $nick, comment: $comment, isSubComment: $isSubComment, parentId: $parentId, createdAt: $createdAt, likeCount: $likeCount, dislikeCount: $dislikeCount, replies: $replies, timeAgo: $timeAgo)';
+    return 'Comment(id: $id, discussionRoomId: $discussionRoomId, user: $user, nick: $nick, comment: $comment, isSubComment: $isSubComment, parentId: $parentId, subCommentCount: $subCommentCount, createdAt: $createdAt, likeCount: $likeCount, dislikeCount: $dislikeCount, replies: $replies, timeAgo: $timeAgo)';
   }
 
   @override
@@ -321,6 +339,8 @@ class _$CommentImpl implements _Comment {
                 other.isSubComment == isSubComment) &&
             (identical(other.parentId, parentId) ||
                 other.parentId == parentId) &&
+            (identical(other.subCommentCount, subCommentCount) ||
+                other.subCommentCount == subCommentCount) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.likeCount, likeCount) ||
@@ -342,6 +362,7 @@ class _$CommentImpl implements _Comment {
       comment,
       isSubComment,
       parentId,
+      subCommentCount,
       createdAt,
       likeCount,
       dislikeCount,
@@ -373,6 +394,7 @@ abstract class _Comment implements Comment {
       required final String comment,
       @JsonKey(name: 'is_sub_comment') required final bool isSubComment,
       @JsonKey(name: 'parent_id') final int? parentId,
+      @JsonKey(name: 'sub_comment_count') final int? subCommentCount,
       @JsonKey(name: 'created_at') required final DateTime createdAt,
       @JsonKey(name: 'like_count') final int? likeCount,
       @JsonKey(name: 'dislike_count') final int? dislikeCount,
@@ -398,6 +420,9 @@ abstract class _Comment implements Comment {
   @override
   @JsonKey(name: 'parent_id')
   int? get parentId;
+  @override
+  @JsonKey(name: 'sub_comment_count')
+  int? get subCommentCount;
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;

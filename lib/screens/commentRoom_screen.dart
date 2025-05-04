@@ -51,6 +51,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
   List<Comment> _subComments = [];
   int _discussionRoomId = 0;
 
+  DiscussionRoom? _discussionRoom;
+  Keyword? _keyword;
+
   @override
   void initState() {
     super.initState();
@@ -114,9 +117,25 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     });
 
     try {
-      // 부모 댓글 정보 가져오기 - 실제 API 호출 적용
+      // 부모 댓글 정보 가져오기
       final comment = await _fetchParentComment(widget.commentRoomId);
       await _loadSubComments(isPopular: _isPopularSort);
+
+      // 토론방 및 키워드 정보 가져오기
+      DiscussionRoom? discussionRoom;
+      Keyword? keyword;
+
+      try {
+        discussionRoom = await _apiService.getDiscussionRoomById(comment.discussionRoomId);
+
+        // 토론방 정보를 성공적으로 가져온 경우, 해당 토론방의 최신 키워드 정보 가져오기
+        if (discussionRoom != null) {
+          keyword = await _apiService.getLatestKeywordByDiscussionRoomId(comment.discussionRoomId);
+        }
+      } catch (e) {
+        print('토론방 또는 키워드 정보 로드 오류: $e');
+        // 오류가 발생해도 UI는 계속 진행
+      }
 
       if (_isRefreshing) {
         await Future.delayed(Duration(milliseconds: 600));
@@ -126,6 +145,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
         setState(() {
           _parentComment = comment;
           _discussionRoomId = comment.discussionRoomId;
+          _discussionRoom = discussionRoom;
+          _keyword = keyword;
           _isLoading = false;
           _isRefreshing = false;
         });
@@ -253,7 +274,21 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                           SizedBox(height: 4.h),
 
                           // 대댓글 섹션
-                          _buildSubCommentsSection(),
+                          CommentListWidget(
+                            comments: _subComments,
+                            discussionRoomId: _discussionRoomId,
+                            isPopularSort: _isPopularSort,
+                            isCommentLoading: _isCommentLoading,
+                            commentReactions: _commentReactions,
+                            showReplyButton: false,
+                            onSortChanged: (isPopular) {
+                              setState(() {
+                                _isPopularSort = isPopular;
+                              });
+                              _loadSubComments(isPopular: isPopular);
+                            },
+                            onRefresh: () => _loadSubComments(isPopular: _isPopularSort),
+                          ),
                           SizedBox(height: 20.h),
                         ],
                       ),
@@ -322,12 +357,14 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     String title = "답글";
     String category = "카테고리";
 
-    // 부모 댓글에서 키워드 정보가 있으면 표시
-    if (_parentComment != null) {
-      // 실제로는 키워드 정보를 가져오는 로직이 필요할 수 있음
-      // 이 예시에서는 간단히 닉네임을 타이틀로 사용
+    // 키워드 정보가 있으면 표시
+    if (_keyword != null) {
+      title = _keyword!.keyword;
+      category = _keyword!.category;
+    }
+    // 키워드 정보가 없지만 부모 댓글이 있는 경우 닉네임 표시
+    else if (_parentComment != null) {
       title = "${_parentComment!.nick}님의 댓글";
-      // 카테고리는 API에서 제공하지 않으므로 기본값 사용
     }
 
     return Container(
@@ -368,7 +405,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
           SizedBox(width: 12.w),
 
-          // 타이틀
+          // 타이틀과 카테고리
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,14 +523,6 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   ),
                 ),
                 Spacer(),
-                // 메뉴 버튼 (생략 가능)
-                Icon(
-                  Icons.more_horiz,
-                  size: 18.sp,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[500]
-                      : Colors.grey[400],
-                ),
               ],
             ),
 

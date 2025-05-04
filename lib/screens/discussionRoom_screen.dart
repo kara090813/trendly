@@ -43,6 +43,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   String _summaryType = '3줄'; // 기본 요약 타입
   bool _isRefreshing = false;
   bool _isPopularSort = true;
+  bool _isDisabled = false;
 
   // 댓글 반응 로컬 상태 관리 (좋아요/싫어요 즉시 UI 반영용)
   Map<int, CommentReaction> _commentReactions = {};
@@ -159,6 +160,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           // 토론방 종료 시간 계산
           if (discussionRoom.isClosed) {
             _expireTime = null;
+            _isDisabled = true;
+            _isDiscussionReactionEnabled = true;
           } else {
             if (discussionRoom.updatedAt != null) {
               _expireTime = discussionRoom.updatedAt!.add(Duration(hours: 24));
@@ -341,33 +344,39 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(height: 12.h),
+                                if (_discussionRoom?.isClosed ?? false)
+                                  _buildClosedDiscussionAlert(),
+                                SizedBox(height: 12.h),
                                 _buildInfoSection(),
                                 SizedBox(height: 12.h),
                                 _buildSummaryToggleSection(),
                                 SizedBox(height: 12.h),
                                 _buildDiscussionReactionToggleSection(),
+                                SizedBox(height: 12.h),
                                 SizedBox(
                                   height: 12.h,
                                 ),
-                                AnimatedSwitcher(
-                                  duration: Duration(milliseconds: 600),
-                                  transitionBuilder: (Widget child,
-                                      Animation<double> animation) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: ScaleTransition(
-                                        scale:
-                                            Tween<double>(begin: 0.95, end: 1.0)
-                                                .animate(CurvedAnimation(
-                                          parent: animation,
-                                          curve: Curves.easeOutBack,
-                                        )),
-                                        child: child,
+                                _isDisabled
+                                    ? SizedBox.shrink()
+                                    : AnimatedSwitcher(
+                                        duration: Duration(milliseconds: 600),
+                                        transitionBuilder: (Widget child,
+                                            Animation<double> animation) {
+                                          return FadeTransition(
+                                            opacity: animation,
+                                            child: ScaleTransition(
+                                              scale: Tween<double>(
+                                                      begin: 0.95, end: 1.0)
+                                                  .animate(CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.easeOutBack,
+                                              )),
+                                              child: child,
+                                            ),
+                                          );
+                                        },
+                                        child: _buildEmotionButtonsSection(),
                                       ),
-                                    );
-                                  },
-                                  child: _buildEmotionButtonsSection(),
-                                ),
                                 _buildWarningMessage(),
                                 SizedBox(height: 4.h),
                                 _buildCommentSection(),
@@ -427,11 +436,179 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                   ),
 
                   // 입력 영역
-                  _buildInputSection(),
+                  _isDisabled ? SizedBox.shrink() : _buildInputSection(),
                 ],
               ),
       ),
     );
+  }
+
+// 닫힌 토론방 알림 위젯 - 원래 디자인을 유지하면서 개선
+  Widget _buildClosedDiscussionAlert() {
+    final DateTime closedAt =
+        _discussionRoom?.closedAt ?? _discussionRoom!.createdAt;
+
+    final String closedTimeStr =
+        '${closedAt.year}년 ${closedAt.month}월 ${closedAt.day}일 ${_formatHour(closedAt.hour)} ${_formatMinutes(closedAt.minute)}분';
+
+    final String timeAgoStr = _formatTimeAgo(closedAt);
+
+    final Color mainColor = Color(0xFF406BD3);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      decoration: BoxDecoration(
+        color: AppTheme.getContainerColor(context),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(11.r),
+          topRight: Radius.circular(11.r),
+          bottomLeft: Radius.circular(20.r),
+          bottomRight: Radius.circular(20.r),
+        ),
+        boxShadow: AppTheme.isDark(context)
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Column(
+        children: [
+          // 상단 구분선
+          Container(
+            height: 7.h,
+            decoration: BoxDecoration(
+              color: mainColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(6.r),
+                topRight: Radius.circular(6.r),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 좌측 아이콘 영역
+                Container(
+                  width: 54.w,
+                  height: 54.w,
+                  decoration: BoxDecoration(
+                    color: AppTheme.getBackgroundColor(context),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: mainColor.withOpacity(0.6),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    size: 28.sp,
+                    color: mainColor,
+                  ),
+                ),
+
+                SizedBox(width: 16.w),
+
+                // 종료 상태 및 정보
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "토론이 종료되었습니다",
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.getTextColor(context),
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+
+                      Text(
+                        "이 토론은 종료되어 더 이상 참여할 수 없습니다.",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
+                        ),
+                      ),
+
+                      SizedBox(height: 8.h),
+
+                      // 종료 시간
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.event_available_outlined,
+                            size: 16.sp,
+                            color: Colors.grey[500],
+                          ),
+                          SizedBox(width: 6.w),
+                          Flexible(
+                            child: Text(
+                              "종료: $closedTimeStr",
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: AppTheme.isDark(context)
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 4.h),
+
+                      // 얼마나 지났는지
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: 16.sp,
+                            color: mainColor,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            "$timeAgoStr에 종료됨",
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: mainColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).slide(
+        begin: Offset(0, -0.1),
+        end: Offset(0, 0),
+        duration: 500.ms,
+        curve: Curves.easeOutQuad);
   }
 
   // 경고 메시지 위젯
@@ -475,53 +652,33 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       key: ValueKey('emotion_container_${_selectedSentiment}'),
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      width: double.infinity,
       height: containerHeight,
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
-      child: isDisabled
-          ? _buildDisabledEmotionSection() // 토론방 종료시 표시
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 헤더 - 선택 전/후에 따라 다르게 표시
-                Text(
-                  _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.getTextColor(context),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-
-                // 애니메이션 영역 - Expanded로 남은 공간 채우기
-                _isSentimentUpdating
-                    ? Center(child: CircularProgressIndicator())
-                    : Expanded(
-                        child: _selectedSentiment == null
-                            ? _buildSelectionButtons() // 선택 전 버튼들
-                            : _buildSelectedOpinion() // 선택 후 내용
-                        ),
-              ],
+      decoration: AppTheme.cardDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 헤더 - 선택 전/후에 따라 다르게 표시
+          Text(
+            _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.getTextColor(context),
             ),
+          ),
+          SizedBox(height: 16.h),
+
+          // 애니메이션 영역 - Expanded로 남은 공간 채우기
+          _isSentimentUpdating
+              ? Center(child: CircularProgressIndicator())
+              : Expanded(
+                  child: _selectedSentiment == null
+                      ? _buildSelectionButtons() // 선택 전 버튼들
+                      : _buildSelectedOpinion() // 선택 후 내용
+                  ),
+        ],
+      ),
     );
   }
 
@@ -529,26 +686,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   Widget _buildDiscussionReactionToggleSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
+      decoration: AppTheme.cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -598,41 +736,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           ],
         ],
       ),
-    );
-  }
-
-  // 비활성화된 감정 선택 섹션
-  Widget _buildDisabledEmotionSection() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.lock_outline,
-          size: 40.sp,
-          color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[400],
-        ),
-        SizedBox(height: 16.h),
-        Text(
-          "종료된 토론방입니다",
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-            color:
-                AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          "더 이상 의견을 남길 수 없습니다",
-          style: TextStyle(
-            fontSize: 14.sp,
-            color:
-                AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[500],
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 
@@ -1238,26 +1341,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
+      decoration: AppTheme.cardDecoration(context),
       child: IntrinsicHeight(
         child: Row(
           children: [
@@ -1448,26 +1532,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
+      decoration: AppTheme.cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1822,129 +1887,19 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
   // 댓글 섹션
   Widget _buildCommentSection() {
-    return Container(
-      key: _commentSectionKey,
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppTheme.getContainerColor(context),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16.r),
-                topRight: Radius.circular(16.r),
-              ),
-              boxShadow: AppTheme.isDark(context)
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 3,
-                        offset: Offset(0, 1),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 3,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "댓글",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.getTextColor(context),
-                  ),
-                ),
-                SortPopupWidget(
-                  isPopularSort: _isPopularSort,
-                  onSortChanged: (isPopular) {
-                    setState(() {
-                      _isPopularSort = isPopular;
-                    });
-                    _loadComments(isPopular: isPopular);
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 8.h),
-
-          // 댓글 로딩 중
-          if (_isCommentLoading)
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          // 댓글이 없는 경우
-          else if (_comments.isEmpty)
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.forum_outlined,
-                      size: 40.sp,
-                      color: AppTheme.isDark(context)
-                          ? Colors.grey[600]
-                          : Colors.grey[400],
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      "아직 의견이 없어요! 첫 의견을 남겨주세요!",
-                      style: TextStyle(
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[400]
-                            : Colors.grey[500],
-                        fontSize: 15.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          // 댓글 리스트
-          else
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: Column(
-                children: _comments
-                    .map((comment) => _buildCommentItem(comment))
-                    .toList(),
-              ),
-            ),
-
-          SizedBox(height: 12.h),
-        ],
-      ),
+    return CommentListWidget(
+      comments: _comments,
+      discussionRoomId: widget.discussionRoomId,
+      isPopularSort: _isPopularSort,
+      isCommentLoading: _isCommentLoading,
+      commentReactions: _commentReactions,
+      onSortChanged: (isPopular) {
+        setState(() {
+          _isPopularSort = isPopular;
+        });
+        _loadComments(isPopular: isPopular);
+      },
+      onRefresh: () => _loadComments(isPopular: _isPopularSort),
     );
   }
 
@@ -2147,7 +2102,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   }
 
 // 암호를 사용한 댓글 삭제 처리
-  Future<void> _deleteCommentWithPassword(int commentId, String password) async {
+  Future<void> _deleteCommentWithPassword(
+      int commentId, String password) async {
     try {
       final result = await _apiService.deleteComment(
           widget.discussionRoomId, commentId, password);

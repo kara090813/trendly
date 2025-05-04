@@ -70,7 +70,7 @@ class DiscussionReactionWidget extends StatelessWidget {
               : EdgeInsets.symmetric(horizontal: 10.w, vertical: 0.h),
           decoration: BoxDecoration(
             color: showEnterButtons
-                ? AppTheme.getCardColor(context)
+                ? (AppTheme.isDark(context) ? Color(0xFF20212A) : Colors.white)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: showEnterButtons
@@ -183,7 +183,7 @@ class DiscussionReactionWidget extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            AppTheme.getCardColor(context),
+                            AppTheme.isDark(context) ? Color(0xFF20212A) : Colors.white,
                             AppTheme.isDark(context)
                                 ? Color(0xFF242430)
                                 : Color(0xFFF8F8F8),
@@ -236,7 +236,7 @@ class DiscussionReactionWidget extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black
-                        .withOpacity(AppTheme.isDark(context) ? 0.4 : 0.12),
+                        .withOpacity(AppTheme.isDark(context) ? 0.4 : 0.2),
                     blurRadius: 8,
                     offset: const Offset(-3, 0),
                   ),
@@ -409,6 +409,23 @@ class DiscussionReactionWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(10.r),
+          boxShadow: AppTheme.isDark(context)
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 6,
+              spreadRadius: 0,
+              offset: Offset(0, 2),
+            )
+          ]
+              : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              spreadRadius: 0,
+              offset: Offset(0, 2),
+            )
+          ]
       ),
       child: Row(
         children: [

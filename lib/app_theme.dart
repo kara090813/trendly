@@ -122,7 +122,7 @@ class AppTheme {
   }
   static BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
     color: getContainerColor(context),
-    borderRadius: BorderRadius.circular(20.r),
+    borderRadius: BorderRadius.circular(15.r),
     boxShadow: isDark(context)
         ? [
       BoxShadow(
@@ -134,7 +134,7 @@ class AppTheme {
     ]
         : [
       BoxShadow(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withOpacity(0.23),
         blurRadius: 10,
         spreadRadius: 0,
         offset: Offset(0, 2),
@@ -182,18 +182,18 @@ class AppTheme {
     boxShadow: isDark(context)
         ? [
       BoxShadow(
-        color: Colors.black.withOpacity(0.2),
+        color: Colors.black.withOpacity(0.3),
         blurRadius: 4,
         spreadRadius: 0,
-        offset: Offset(2, 2),
+        offset: Offset(0, 2),
       ),
     ]
         : [
       BoxShadow(
-        color: Colors.black.withOpacity(0.1),
+        color: Colors.black.withOpacity(0.2),
         blurRadius: 4,
         spreadRadius: 0,
-        offset: Offset(2, 2),
+        offset: Offset(0, 2),
       ),
     ],
   );

@@ -14,6 +14,7 @@ class Comment with _$Comment {
     required String comment,
     @JsonKey(name: 'is_sub_comment') required bool isSubComment,
     @JsonKey(name: 'parent_id') int? parentId,
+    @JsonKey(name: 'sub_comment_count') int? subCommentCount,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'like_count') int? likeCount,
     @JsonKey(name: 'dislike_count') int? dislikeCount,

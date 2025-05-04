@@ -9,3 +9,4 @@ export 'sortingToggle_widget.dart';
 export 'discussionReaction_widget.dart';
 export 'deleteButton_widget.dart';
 export 'passwordPopup_widget.dart';
+export 'commentList_widget.dart';
