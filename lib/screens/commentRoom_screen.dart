@@ -53,6 +53,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
   DiscussionRoom? _discussionRoom;
   Keyword? _keyword;
+  CommentReaction? _parentCommentReaction;
 
   @override
   void initState() {
@@ -65,7 +66,28 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserPreference();
       _loadCommentReactions();
+      _loadParentCommentReaction(); // 추가된 부분
     });
+  }
+
+// 원본 댓글 반응 데이터 로드 메서드
+  void _loadParentCommentReaction() async {
+    if (_parentComment == null) return;
+
+    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+
+    // 사용자가 좋아요/싫어요 한 상태 확인
+    final String? reaction = provider.getCommentReaction(_parentComment!.id);
+
+    if (mounted) {
+      setState(() {
+        _parentCommentReaction = CommentReaction(
+          reactionType: reaction,
+          likeCount: _parentComment!.likeCount ?? 0,
+          dislikeCount: _parentComment!.dislikeCount ?? 0,
+        );
+      });
+    }
   }
 
   // 사용자 정보 로드
@@ -475,6 +497,13 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     // 시간 포맷팅
     final String timeAgo = _formatTimeAgo(_parentComment!.createdAt);
 
+    // 좋아요/싫어요 상태 확인
+    final reaction = _parentCommentReaction;
+    final int likeCount = reaction?.likeCount ?? _parentComment!.likeCount ?? 0;
+    final int dislikeCount = reaction?.dislikeCount ?? _parentComment!.dislikeCount ?? 0;
+    final bool hasLiked = reaction?.reactionType == 'like';
+    final bool hasDisliked = reaction?.reactionType == 'dislike';
+
     return Container(
       margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
       decoration: BoxDecoration(
@@ -542,23 +571,26 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
             SizedBox(height: 16.h),
 
-            // 좋아요/싫어요 버튼
+            // 좋아요/싫어요 버튼 (수정된 부분)
             Row(
               children: [
-                _buildReactionButton(
-                  icon: Icons.thumb_up_outlined,
-                  count: _parentComment!.likeCount ?? 0,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[400]!
-                      : Colors.grey[600]!,
+                // 좋아요 버튼 - 애니메이션 버튼으로 교체
+                _buildAnimatedReactionButton(
+                  icon: hasLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  count: likeCount,
+                  isActive: hasLiked,
+                  activeColor: Color(0xFF19B3F6),
+                  onTap: () => _handleParentLikeComment(hasLiked, hasDisliked),
                 ),
                 SizedBox(width: 16.w),
-                _buildReactionButton(
-                  icon: Icons.thumb_down_outlined,
-                  count: _parentComment!.dislikeCount ?? 0,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[400]!
-                      : Colors.grey[600]!,
+
+                // 싫어요 버튼 - 애니메이션 버튼으로 교체
+                _buildAnimatedReactionButton(
+                  icon: hasDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
+                  count: dislikeCount,
+                  isActive: hasDisliked,
+                  activeColor: Color(0xFFE74C3C),
+                  onTap: () => _handleParentDislikeComment(hasDisliked, hasLiked),
                 ),
               ],
             ),
@@ -567,7 +599,161 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       ),
     );
   }
+// 원본 댓글 좋아요 처리
+  Future<void> _handleParentLikeComment(bool hasLiked, bool hasDisliked) async {
+    if (_parentComment == null) return;
 
+    final commentId = _parentComment!.id;
+
+    // 현재 상태 백업
+    final CommentReaction currentReaction = _parentCommentReaction ??
+        CommentReaction(
+          reactionType: null,
+          likeCount: _parentComment!.likeCount ?? 0,
+          dislikeCount: _parentComment!.dislikeCount ?? 0,
+        );
+
+    // 먼저 UI 업데이트 (즉시 반응 위해)
+    setState(() {
+      if (hasLiked) {
+        // 이미 좋아요 -> 취소
+        _parentCommentReaction = CommentReaction(
+          reactionType: null,
+          likeCount: currentReaction.likeCount - 1,
+          dislikeCount: currentReaction.dislikeCount,
+        );
+      } else {
+        // 좋아요 추가
+        _parentCommentReaction = CommentReaction(
+          reactionType: 'like',
+          likeCount: currentReaction.likeCount + 1,
+          // 싫어요 상태였다면 싫어요 카운트 감소
+          dislikeCount: hasDisliked
+              ? currentReaction.dislikeCount - 1
+              : currentReaction.dislikeCount,
+        );
+      }
+    });
+
+    try {
+      final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+
+      // 이미 싫어요 상태인 경우, 백그라운드에서 싫어요 취소 API 호출
+      if (hasDisliked) {
+        await _apiService.dislikeComment(commentId, isCancel: true);
+      }
+
+      // 백그라운드에서 좋아요 상태 변경 API 호출
+      final result = await _apiService.likeComment(commentId, isCancel: hasLiked);
+
+      if (result) {
+        // API 호출 성공 시 로컬 상태 업데이트
+        if (hasLiked) {
+          // 이미 좋아요 상태면 취소
+          await provider.removeCommentReaction(commentId);
+        } else {
+          // 좋아요 설정 (싫어요 상태면 싫어요 제거)
+          await provider.toggleLike(commentId);
+        }
+      } else {
+        // API 호출 실패 시 원래 상태로 복원
+        if (mounted) {
+          setState(() {
+            _parentCommentReaction = currentReaction;
+          });
+          StylishToast.error(context, '좋아요 처리 중 오류가 발생했습니다.');
+        }
+      }
+    } catch (e) {
+      print('좋아요 처리 오류: $e');
+
+      // 오류 시 원래 상태로 복원
+      if (mounted) {
+        setState(() {
+          _parentCommentReaction = currentReaction;
+        });
+        StylishToast.error(context, '좋아요 처리 중 오류가 발생했습니다.');
+      }
+    }
+  }
+
+// 원본 댓글 싫어요 처리
+  Future<void> _handleParentDislikeComment(bool hasDisliked, bool hasLiked) async {
+    if (_parentComment == null) return;
+
+    final commentId = _parentComment!.id;
+
+    // 현재 상태 백업
+    final CommentReaction currentReaction = _parentCommentReaction ??
+        CommentReaction(
+          reactionType: null,
+          likeCount: _parentComment!.likeCount ?? 0,
+          dislikeCount: _parentComment!.dislikeCount ?? 0,
+        );
+
+    // 먼저 UI 업데이트 (즉시 반응 위해)
+    setState(() {
+      if (hasDisliked) {
+        // 이미 싫어요 -> 취소
+        _parentCommentReaction = CommentReaction(
+          reactionType: null,
+          likeCount: currentReaction.likeCount,
+          dislikeCount: currentReaction.dislikeCount - 1,
+        );
+      } else {
+        // 싫어요 추가
+        _parentCommentReaction = CommentReaction(
+          reactionType: 'dislike',
+          // 좋아요 상태였다면 좋아요 카운트 감소
+          likeCount: hasLiked
+              ? currentReaction.likeCount - 1
+              : currentReaction.likeCount,
+          dislikeCount: currentReaction.dislikeCount + 1,
+        );
+      }
+    });
+
+    try {
+      final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+
+      // 이미 좋아요 상태인 경우, 백그라운드에서 좋아요 취소 API 호출
+      if (hasLiked) {
+        await _apiService.likeComment(commentId, isCancel: true);
+      }
+
+      // 백그라운드에서 싫어요 상태 변경 API 호출
+      final result = await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
+
+      if (result) {
+        // API 호출 성공 시 로컬 상태 업데이트
+        if (hasDisliked) {
+          // 이미 싫어요 상태면 취소
+          await provider.removeCommentReaction(commentId);
+        } else {
+          // 싫어요 설정 (좋아요 상태면 좋아요 제거)
+          await provider.toggleDislike(commentId);
+        }
+      } else {
+        // API 호출 실패 시 원래 상태로 복원
+        if (mounted) {
+          setState(() {
+            _parentCommentReaction = currentReaction;
+          });
+          StylishToast.error(context, '싫어요 처리 중 오류가 발생했습니다.');
+        }
+      }
+    } catch (e) {
+      print('싫어요 처리 오류: $e');
+
+      // 오류 시 원래 상태로 복원
+      if (mounted) {
+        setState(() {
+          _parentCommentReaction = currentReaction;
+        });
+        StylishToast.error(context, '싫어요 처리 중 오류가 발생했습니다.');
+      }
+    }
+  }
   // 경고 메시지 위젯
   Widget _buildWarningMessage() {
     return Container(

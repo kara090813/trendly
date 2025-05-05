@@ -29,7 +29,7 @@ class DiscussionReactionWidget extends StatelessWidget {
     this.showEnterButtons = true,
     // 일시적 통제 변수에 대한 기본값 설정 (추후 실제 데이터로 대체 예정)
     this.hasSummaries = true,
-    this.summaryAvailability = const [true, false, true], // [긍정, 중립, 부정]
+    this.summaryAvailability = const [true, true, false], // [긍정, 중립, 부정]
   }) : super(key: key);
 
   @override
@@ -333,7 +333,7 @@ class DiscussionReactionWidget extends StatelessWidget {
             context: context,
             icon: Icons.thumb_up,
             label: '긍정',
-            opinion: summaryAvailability[0] ? '나는 크레스티드 게코 발 주는게 재밌다' : null,
+            opinion: summaryAvailability[0] ? '긍정 의견 요약 내용입니다' : null,
             color: const Color(0xFF00AEEF),
           ),
           SizedBox(height: 10.h),
@@ -343,7 +343,7 @@ class DiscussionReactionWidget extends StatelessWidget {
             context: context,
             icon: Icons.thumbs_up_down,
             label: '중립',
-            opinion: summaryAvailability[1] ? '나는 별생각 없다 그냥 의무일 뿐' : null,
+            opinion: summaryAvailability[1] ? '중립 의견 요약 내용입니다' : null,
             color: Colors.grey.shade600,
           ),
           SizedBox(height: 10.h),
@@ -353,7 +353,7 @@ class DiscussionReactionWidget extends StatelessWidget {
             context: context,
             icon: Icons.thumb_down,
             label: '부정',
-            opinion: summaryAvailability[2] ? '발 주는게 너무 귀찮다 혼자서 먹으면 좋겠다' : null,
+            opinion: summaryAvailability[2] ? '부정 의견 요약 내용입니다' : null,
             color: const Color(0xFFFF5A5F),
           ),
         ],

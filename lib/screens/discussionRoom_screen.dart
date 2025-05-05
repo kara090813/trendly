@@ -353,9 +353,6 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                                 SizedBox(height: 12.h),
                                 _buildDiscussionReactionToggleSection(),
                                 SizedBox(height: 12.h),
-                                SizedBox(
-                                  height: 12.h,
-                                ),
                                 _isDisabled
                                     ? SizedBox.shrink()
                                     : AnimatedSwitcher(
