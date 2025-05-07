@@ -1901,37 +1901,48 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-
   // 댓글 섹션으로 스크롤
-  void _scrollToComments([double? position]) {
-    if (position != null) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(position);
+  // 댓글 섹션으로 스크롤 - 간단한 수동 계산 버전
+  void _scrollToComments() {
+    // 키보드 닫기
+    FocusScope.of(context).unfocus();
+
+    // 기본 높이 값 (ScreenUtil 사용)
+    double baseScrollHeight = 420.h;
+
+    // 토글된 요소별 추가 높이 (ScreenUtil 사용)
+    double realTimeSummaryHeight = 150.h;
+    double discussionReactionHeight = 340.h;
+
+    // 요약 타입별 추가 높이 (ScreenUtil 사용)
+    Map<String, double> summaryTypeHeights = {
+      '3줄': 200.h,
+      '짧은 글': 240.h,
+      '긴 글': 600.h,
+    };
+
+    // 수동으로 스크롤 위치 계산
+    double scrollPosition = baseScrollHeight;
+
+    // 실검 요약이 활성화된 경우
+    if (_isRealTimeSummaryEnabled) {
+      // 기본 컨테이너 높이
+      scrollPosition += realTimeSummaryHeight;
+
+      // 선택된 요약 타입에 따른 추가 높이
+      if (summaryTypeHeights.containsKey(_summaryType)) {
+        scrollPosition += summaryTypeHeights[_summaryType]!;
       }
-      return;
     }
 
-    // GlobalKey를 사용하여 위치 파악
-    final RenderBox? renderBox = _commentSectionKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null && _scrollController.hasClients) {
-      // 댓글 섹션의 현재 위치 계산
-      final commentPosition = renderBox.localToGlobal(Offset.zero).dy;
+    // 토론방 요약이 활성화된 경우
+    if (_isDiscussionReactionEnabled) {
+      scrollPosition += discussionReactionHeight;
+    }
 
-      // SafeArea 및 AppBar 높이 등을 고려하여 조정
-      final screenPosition = commentPosition - MediaQuery.of(context).padding.top - 100.h;
-
-      // 스크롤 위치 설정 (애니메이션 효과 추가)
-      _scrollController.animateTo(
-        screenPosition > 0 ? screenPosition : 0,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    } else {
-      // 폴백: GlobalKey가 작동하지 않을 경우 기존 동작 유지
-      final scrollPosition = 380.h;
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(scrollPosition);
-      }
+    // 계산된 위치로 스크롤 (애니메이션 없이)
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(scrollPosition);
     }
   }
 
@@ -1994,10 +2005,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         FocusScope.of(context).unfocus();
 
         // 즉시 댓글 섹션으로 스크롤
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToComments();
-        });
-
+        _scrollToComments();
 
         StylishToast.success(context, '댓글이 등록되었습니다.');
       } else {

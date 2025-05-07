@@ -23,7 +23,6 @@ class StylishToast {
       }) {
     _dismissCurrent();
 
-    print(MediaQuery.of(context).size.height * position);
     // 애니메이션 컨트롤러 생성
     final animationController = AnimationController(
       vsync: Navigator.of(context).overlay! as TickerProvider,

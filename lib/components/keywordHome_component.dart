@@ -482,8 +482,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                               boxShadow: [
                                 BoxShadow(
                                   color: AppTheme.isDark(context)
-                                      ? Colors.black.withOpacity(0.2)
-                                      : Colors.black.withOpacity(0.08),
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.black.withOpacity(0.15),
                                   blurRadius: 15,
                                   spreadRadius: 0,
                                 ),
@@ -494,13 +494,32 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                             ),
                           ),
                           SizedBox(height: 16.h),
-                          Text(
-                            "최신 트렌드로 새로고침 중...",
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF19B3F6), // 브랜드 색상 유지
-                              letterSpacing: 0.5,
+                          // 텍스트에 배경 추가
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                            decoration: BoxDecoration(
+                              color: AppTheme.isDark(context)
+                                  ? Color(0xFF21202C).withOpacity(0.9)
+                                  : Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(12.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.isDark(context)
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.black.withOpacity(0.15),
+                                  blurRadius: 4,
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              "최신 트렌드로 새로고침 중...",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF19B3F6), // 브랜드 색상 유지
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                         ],

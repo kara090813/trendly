@@ -582,7 +582,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   activeColor: Color(0xFF19B3F6),
                   onTap: () => _handleParentLikeComment(hasLiked, hasDisliked),
                 ),
-                SizedBox(width: 16.w),
+                SizedBox(width: 6.w),
 
                 // 싫어요 버튼 - 애니메이션 버튼으로 교체
                 _buildAnimatedReactionButton(
@@ -1041,30 +1041,6 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     );
   }
 
-  // 단순 좋아요/싫어요 버튼 (애니메이션 없음)
-  Widget _buildReactionButton({
-    required IconData icon,
-    required int count,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16.sp,
-          color: color,
-        ),
-        SizedBox(width: 4.w),
-        Text(
-          count.toString(),
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
 
   // 애니메이션 버튼
   Widget _buildAnimatedReactionButton({
@@ -1075,15 +1051,32 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     required VoidCallback onTap,
   }) {
     return RepaintBoundary(
-      child: GestureDetector(
-        onTap: onTap,
-        child: TweenAnimationBuilder(
-          duration: Duration(milliseconds: 200),
-          tween: Tween<double>(begin: 1.0, end: isActive ? 1.0 : 1.0),
-          builder: (context, double scale, child) {
-            return Transform.scale(
-              scale: scale,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(2.r),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: isActive
+                  ? activeColor.withOpacity(0.1)
+                  : (AppTheme.isDark(context)
+                  ? Colors.grey[800]?.withOpacity(0.3)
+                  : Colors.grey[200]?.withOpacity(0.7)),
+              borderRadius: BorderRadius.circular(2.r),
+              border: Border.all(
+                color: isActive
+                    ? activeColor.withOpacity(0.4)
+                    : (AppTheme.isDark(context)
+                    ? Colors.grey[700]!.withOpacity(0.2)
+                    : Colors.grey[300]!.withOpacity(0.5)),
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     icon,
@@ -1094,7 +1087,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                         ? Colors.grey[400]
                         : Colors.grey[600]),
                   ),
-                  SizedBox(width: 4.w),
+                  SizedBox(width: 6.w),
                   Text(
                     count.toString(),
                     style: TextStyle(
@@ -1109,8 +1102,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   ),
                 ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

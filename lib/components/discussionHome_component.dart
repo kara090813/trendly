@@ -1522,8 +1522,9 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
     return Row(
       children: [
         Container(
-          width: 8.w,
-          height: 8.w,
+          margin: EdgeInsets.only(top: 2.h),
+          width: 10.w,
+          height: 10.w,
           decoration: BoxDecoration(
             color: dotColor,
             shape: BoxShape.circle,
@@ -1533,7 +1534,7 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent> {
         Text(
           '$text $percentage',
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 14.sp,
             color:
             AppTheme.isDark(context) ? Colors.white : Colors.grey.shade700,
           ),

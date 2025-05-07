@@ -199,41 +199,51 @@ class _CommentListWidgetState extends State<CommentListWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 닉네임 및 시간
-              Row(
-                children: [
-                  Text(
-                    comment.nick,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal:2.w),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          comment.nick,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          timeAgo,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: AppTheme.isDark(context)
+                                ? Colors.grey[500]
+                                : Colors.grey[500],
+                          ),
+                        ),
+                        Spacer(),
+                      ],
                     ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    timeAgo,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppTheme.isDark(context)
-                          ? Colors.grey[500]
-                          : Colors.grey[500],
+
+                    SizedBox(height: 10.h),
+
+                    // 댓글 내용
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        comment.comment,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          height: 1.4,
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[300]
+                              : Colors.black.withOpacity(0.85),
+                        ),
+                      ),
                     ),
-                  ),
-                  Spacer(),
-                ],
-              ),
-
-              SizedBox(height: 10.h),
-
-              // 댓글 내용
-              Text(
-                comment.comment,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  height: 1.4,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[300]
-                      : Colors.black.withOpacity(0.85),
+                  ],
                 ),
               ),
 
@@ -253,7 +263,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                     onTap: () => _handleLikeComment(
                         comment.id, hasLiked, hasDisliked),
                   ),
-                  SizedBox(width: 16.w),
+                  SizedBox(width: 6.w),
 
                   // 싫어요 버튼
                   _buildAnimatedReactionButton(
@@ -269,31 +279,59 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                   Spacer(),
 
                   // 답글 버튼
+
                   if (widget.showReplyButton)
-                    InkWell(
-                      onTap: () {
-                        context.push('/comment/${comment.id}');
-                      },
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.chat_bubble_outline,
-                            size: 16.sp,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          context.push('/comment/${comment.id}');
+                        },
+                        borderRadius: BorderRadius.circular(8.r),
+                        child: Ink(
+                          decoration: BoxDecoration(
                             color: AppTheme.isDark(context)
-                                ? Colors.grey[400]
-                                : Colors.grey[500],
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            comment.subCommentCount.toString(), // 속성 이름이 이렇게 되어 있는지 확인
-                            style: TextStyle(
-                              fontSize: 13.sp,
+                                ? Colors.grey[800]?.withOpacity(0.3)
+                                : Colors.grey[200]?.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
                               color: AppTheme.isDark(context)
-                                  ? Colors.grey[400]
-                                  : Colors.grey[500],
+                                  ? Colors.grey[700]!.withOpacity(0.2)
+                                  : Colors.grey[300]!.withOpacity(0.5),
+                              width: 1,
                             ),
                           ),
-                        ],
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  margin: EdgeInsets.only(top:3.h),
+                                  child: Icon(
+                                    Icons.chat_bubble_outline,
+                                    size: 16.sp,
+                                    color: AppTheme.isDark(context)
+                                        ? Colors.grey[400]
+                                        : Colors.grey[500],
+                                  ),
+                                ),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  comment.subCommentCount != null
+                                      ? comment.subCommentCount.toString()
+                                      : (comment.replies ?? 0).toString(),
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: AppTheme.isDark(context)
+                                        ? Colors.grey[400]
+                                        : Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -304,8 +342,8 @@ class _CommentListWidgetState extends State<CommentListWidget> {
 
         // 삭제 버튼 (오른쪽 상단에 배치)
         Positioned(
-          top: 16.h,
-          right: 16.w,
+          top: 20.h,
+          right: 20.w,
           child: DeleteButtonWidget(
             onTap: () => _showDeletePasswordDialog(comment.id),
             size: 24,
@@ -316,6 +354,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
   }
 
   // 좋아요/싫어요 버튼에 애니메이션 효과 추가
+  // _buildAnimatedReactionButton 메서드 수정
   Widget _buildAnimatedReactionButton({
     required IconData icon,
     required int count,
@@ -323,43 +362,61 @@ class _CommentListWidgetState extends State<CommentListWidget> {
     required Color activeColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: TweenAnimationBuilder(
-        duration: Duration(milliseconds: 200),
-        tween: Tween<double>(begin: 1.0, end: isActive ? 1.0 : 1.0),
-        builder: (context, double scale, child) {
-          return Transform.scale(
-            scale: scale,
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 16.sp,
-                  color: isActive
-                      ? activeColor
-                      : (AppTheme.isDark(context)
-                      ? Colors.grey[400]
-                      : Colors.grey[600]),
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  count.toString(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight:
-                    isActive ? FontWeight.w500 : FontWeight.normal,
+    return RepaintBoundary(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(2.r),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: isActive
+                  ? activeColor.withOpacity(0.1)
+                  : (AppTheme.isDark(context)
+                  ? Colors.grey[800]?.withOpacity(0.3)
+                  : Colors.grey[200]?.withOpacity(0.7)),
+              borderRadius: BorderRadius.circular(2.r),
+              border: Border.all(
+                color: isActive
+                    ? activeColor.withOpacity(0.4)
+                    : (AppTheme.isDark(context)
+                    ? Colors.grey[700]!.withOpacity(0.2)
+                    : Colors.grey[300]!.withOpacity(0.5)),
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 16.sp,
                     color: isActive
                         ? activeColor
                         : (AppTheme.isDark(context)
                         ? Colors.grey[400]
                         : Colors.grey[600]),
                   ),
-                ),
-              ],
+                  SizedBox(width: 6.w),
+                  Text(
+                    count.toString(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+                      color: isActive
+                          ? activeColor
+                          : (AppTheme.isDark(context)
+                          ? Colors.grey[400]
+                          : Colors.grey[600]),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
