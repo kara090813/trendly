@@ -55,20 +55,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
   Keyword? _keyword;
   CommentReaction? _parentCommentReaction;
 
-  @override
-  void initState() {
-    super.initState();
-
-    // 댓글 정보 로드
-    _loadCommentData();
-
-    // 빌드 후 콜백으로 사용자 정보 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadUserPreference();
-      _loadCommentReactions();
-      _loadParentCommentReaction(); // 추가된 부분
-    });
-  }
+   
 
 // 원본 댓글 반응 데이터 로드 메서드
   void _loadParentCommentReaction() async {
@@ -127,7 +114,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     }
   }
 
-  // 댓글 정보 로드 함수
+  // 1. _loadCommentData() 메서드 수정
   Future<void> _loadCommentData() async {
     // 상태 업데이트
     setState(() {
@@ -172,6 +159,9 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           _isLoading = false;
           _isRefreshing = false;
         });
+
+        // 부모 댓글 정보가 로드된 후 좋아요 상태 로드
+        _loadParentCommentReaction();
       }
     } catch (e) {
       print('댓글 정보 로드 오류: $e');
@@ -183,6 +173,22 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
         StylishToast.error(context, '댓글 정보를 불러오는 중 오류가 발생했습니다.');
       }
     }
+  }
+
+// 2. initState() 메서드에서 _loadParentCommentReaction() 호출 제거
+  @override
+  void initState() {
+    super.initState();
+
+    // 댓글 정보 로드
+    _loadCommentData();
+
+    // 빌드 후 콜백으로 사용자 정보 로드
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserPreference();
+      _loadCommentReactions();
+      // _loadParentCommentReaction() 호출 제거 (이제 _loadCommentData() 내에서 호출됨)
+    });
   }
 
   // 부모 댓글 가져오기 (실제 API 구현)

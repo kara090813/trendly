@@ -97,7 +97,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                   color: AppTheme.getTextColor(context),
                 ),
               ),
-              SortPopupWidget(
+              SortToggleWidget(
                 isPopularSort: widget.isPopularSort,
                 onSortChanged: widget.onSortChanged,
               ),
