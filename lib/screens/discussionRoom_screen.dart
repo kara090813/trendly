@@ -30,20 +30,23 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   final ApiService _apiService = ApiService();
 
   // 상태 변수들
-  bool _isRealTimeSummaryEnabled = false;
+  bool _isRealTimeSummaryEnabled = true;
   String? _selectedSentiment; // null, 'positive', 'neutral', 'negative'
   bool _isAnimating = false;
   bool _isLoading = true;
   bool _isCommentLoading = false;
 
   // 토론방 요약 표시 여부
-  bool _isDiscussionReactionEnabled = false;
+  bool _isDiscussionReactionEnabled = true;
   bool _isSentimentUpdating = false;
   bool _isCommenting = false;
   String _summaryType = '3줄'; // 기본 요약 타입
   bool _isRefreshing = false;
   bool _isPopularSort = true;
   bool _isDisabled = false;
+
+  // 탭 컨트롤러 추가
+  late TabController _tabController;
 
   // 댓글 반응 로컬 상태 관리 (좋아요/싫어요 즉시 UI 반영용)
   Map<int, CommentReaction> _commentReactions = {};
@@ -77,6 +80,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   @override
   void initState() {
     super.initState();
+
+    // 탭 컨트롤러 초기화
+    _tabController = TabController(length: 2, vsync: this);
 
     // 펄스 애니메이션 컨트롤러 설정
     _animController = AnimationController(
@@ -313,6 +319,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     _scrollController.dispose();
     _timer?.cancel();
     _animController.dispose();
+    _tabController.dispose(); // 탭 컨트롤러 해제
     super.dispose();
   }
 
@@ -324,118 +331,286 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: Color(0xFF19B3F6)))
             : Column(
+          children: [
+            // 헤더 영역 - 항상 온전히 표시
+            _buildHeaderSection(context),
+
+            // 탭바 (새로 추가)
+            _buildTabBar(),
+
+            // 탭 내용 영역 (새로 추가)
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                physics: BouncingScrollPhysics(),
                 children: [
-                  // 헤더 영역 - 항상 온전히 표시
-                  _buildHeaderSection(context),
+                  // 첫 번째 탭: 토론
+                  _buildDiscussionTabContent(),
 
-                  // 나머지 콘텐츠 영역
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        // 메인 콘텐츠 부분
-                        Opacity(
-                          opacity: _isRefreshing ? 0.3 : 1.0,
-                          child: SingleChildScrollView(
-                            controller: _scrollController,
-                            physics: _isRefreshing
-                                ? NeverScrollableScrollPhysics()
-                                : BouncingScrollPhysics(),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(height: 12.h),
-                                if (_discussionRoom?.isClosed ?? false)
-                                  _buildClosedDiscussionAlert(),
-                                SizedBox(height: 12.h),
-                                _buildInfoSection(),
-                                SizedBox(height: 12.h),
-                                _buildSummaryToggleSection(),
-                                SizedBox(height: 12.h),
-                                _buildDiscussionReactionToggleSection(),
-                                SizedBox(height: 12.h),
-                                _isDisabled
-                                    ? SizedBox.shrink()
-                                    : AnimatedSwitcher(
-                                        duration: Duration(milliseconds: 600),
-                                        transitionBuilder: (Widget child,
-                                            Animation<double> animation) {
-                                          return FadeTransition(
-                                            opacity: animation,
-                                            child: ScaleTransition(
-                                              scale: Tween<double>(
-                                                      begin: 0.95, end: 1.0)
-                                                  .animate(CurvedAnimation(
-                                                parent: animation,
-                                                curve: Curves.easeOutBack,
-                                              )),
-                                              child: child,
-                                            ),
-                                          );
-                                        },
-                                        child: _buildEmotionButtonsSection(),
-                                      ),
-                                _buildWarningMessage(),
-                                SizedBox(height: 4.h),
-                                _buildCommentSection(),
-                                SizedBox(height: 20.h),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // 새로고침 오버레이
-                        if (_isRefreshing)
-                          Center(
-                            child: Container(
-                              width: 120.w,
-                              height: 120.w,
-                              decoration: BoxDecoration(
-                                color: AppTheme.isDark(context)
-                                    ? Color(0xFF21202C).withOpacity(0.9)
-                                    : Colors.white.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(16.r),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.isDark(context)
-                                        ? Colors.black.withOpacity(0.5)
-                                        : Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    spreadRadius: 0,
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 50.w,
-                                    height: 50.w,
-                                    child: CircularProgressIndicator(
-                                      color: Color(0xFF19B3F6),
-                                      strokeWidth: 3.w,
-                                    ),
-                                  ),
-                                  SizedBox(height: 12.h),
-                                  Text(
-                                    "새로고침 중...",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF19B3F6),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  // 입력 영역
-                  _isDisabled ? SizedBox.shrink() : _buildInputSection(),
+                  // 두 번째 탭: 요약
+                  _buildSummaryTabContent(),
                 ],
               ),
+            ),
+
+            // 입력 영역 (첫 번째 탭에서만 표시)
+            _tabController.index == 0 && !_isDisabled
+                ? _buildInputSection()
+                : SizedBox.shrink(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 탭바 위젯 (새로 추가)
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.getContainerColor(context),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.isDark(context)
+                ? Colors.grey[800]!
+                : Colors.grey[300]!,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: Color(0xFF19B3F6),
+        unselectedLabelColor: AppTheme.isDark(context)
+            ? Colors.grey[400]
+            : Colors.grey[600],
+        labelStyle: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.bold,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w500,
+        ),
+        indicatorColor: Color(0xFF19B3F6),
+        indicatorWeight: 3.0,
+        tabs: [
+          Tab(text: "토론"),
+          Tab(text: "요약"),
+        ],
+        onTap: (index) {
+          // 포커스 해제 (탭 전환 시)
+          FocusScope.of(context).unfocus();
+        },
+      ),
+    );
+  }
+
+  // 토론 탭 내용 (새로 추가)
+  Widget _buildDiscussionTabContent() {
+    return Stack(
+      children: [
+        // 메인 콘텐츠
+        Opacity(
+          opacity: _isRefreshing ? 0.3 : 1.0,
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            physics: _isRefreshing
+                ? NeverScrollableScrollPhysics()
+                : BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 12.h),
+                if (_discussionRoom?.isClosed ?? false)
+                  _buildClosedDiscussionAlert(),
+                SizedBox(height: 12.h),
+                _buildInfoSection(),
+                SizedBox(height: 12.h),
+                _isDisabled
+                    ? SizedBox.shrink()
+                    : AnimatedSwitcher(
+                  duration: Duration(milliseconds: 600),
+                  transitionBuilder: (Widget child,
+                      Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(
+                            begin: 0.95, end: 1.0)
+                            .animate(CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutBack,
+                        )),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _buildEmotionButtonsSection(),
+                ),
+                _buildWarningMessage(),
+                SizedBox(height: 4.h),
+                _buildCommentSection(),
+                SizedBox(height: 100.h), // 하단 여백 추가
+              ],
+            ),
+          ),
+        ),
+
+        // 새로고침 오버레이
+        if (_isRefreshing)
+          Center(
+            child: Container(
+              width: 120.w,
+              height: 120.w,
+              decoration: BoxDecoration(
+                color: AppTheme.isDark(context)
+                    ? Color(0xFF21202C).withOpacity(0.9)
+                    : Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.isDark(context)
+                        ? Colors.black.withOpacity(0.5)
+                        : Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 50.w,
+                    height: 50.w,
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF19B3F6),
+                      strokeWidth: 3.w,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    "새로고침 중...",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF19B3F6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 요약 탭 내용 (새로 추가)
+  Widget _buildSummaryTabContent() {
+    return SingleChildScrollView(
+      physics: BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 16.h),
+
+          // 실검 요약 섹션 (토글 기능 제거, 항상 표시)
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.w),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            decoration: AppTheme.cardDecoration(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 제목
+                Text(
+                  "실검 요약",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                // 상단 구분선
+                _buildDivider(),
+
+                // 요약 종류 토글
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  child: _buildSummaryToggle(),
+                ),
+
+                SizedBox(height: 8.h),
+
+                // 선택된 유형에 따른 요약 내용
+                AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: Offset(0.02, 0),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    key: ValueKey<String>(_summaryType),
+                    child: _buildSummaryContent(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 16.h),
+
+          // 토론방 요약 섹션 (토글 기능 제거, 항상 표시)
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: AppTheme.cardDecoration(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 제목
+                Padding(
+                  padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 16.h),
+                  child: Text(
+                    "토론방 요약",
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.getTextColor(context),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                // 상단 구분선
+                _buildDivider(),
+
+                SizedBox(height: 16.h),
+
+                // DiscussionReactionWidget 표시
+                DiscussionReactionWidget(
+                  discussionRoom: _discussionRoom,
+                  keyword: _keyword,
+                  // 토론방 내부에서는 입장 버튼 표시 안함
+                  showEnterButtons: false,
+                ),
+
+                SizedBox(height: 16.h),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 16.h),
+        ],
       ),
     );
   }
@@ -1211,31 +1386,27 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     }
   }
 
-  // 헤더 섹션
+  // 헤더 섹션 (기존 코드와 유사)
   Widget _buildHeaderSection(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(16.r),
-          bottomRight: Radius.circular(16.r),
-        ),
         boxShadow: AppTheme.isDark(context)
             ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ]
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ]
             : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1313,6 +1484,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       ),
     );
   }
+
 
   // 정보 섹션 (토론방 시작 시간, 남은 시간)
   Widget _buildInfoSection() {
