@@ -368,14 +368,21 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.isDark(context)
-                ? Colors.grey[800]!
-                : Colors.grey[300]!,
-            width: 1.0,
+        boxShadow: AppTheme.isDark(context)
+            ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: Offset(0, 4),
           ),
-        ),
+        ]
+            : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: TabBar(
         controller: _tabController,
@@ -392,10 +399,18 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           fontWeight: FontWeight.w500,
         ),
         indicatorColor: Color(0xFF19B3F6),
-        indicatorWeight: 3.0,
+        indicatorWeight: 4.0,
+        indicatorSize: TabBarIndicatorSize.label,
+        dividerColor: Colors.transparent, // 이 속성을 추가해서 구분선 제거
         tabs: [
-          Tab(text: "토론"),
-          Tab(text: "요약"),
+          Tab(child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text("토론"),
+          )),
+          Tab(child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text("요약"),
+          )),
         ],
         onTap: (index) {
           // 포커스 해제 (탭 전환 시)
@@ -1392,21 +1407,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
+
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
