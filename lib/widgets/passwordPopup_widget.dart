@@ -16,23 +16,29 @@ class PasswordPopupWidget {
     return showDialog<String>(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.4),
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-          child: _buildPopupContent(
-            context,
-            passwordController,
-            title,
-            message,
-            confirmButtonText,
-            cancelButtonText,
-            confirmColor,
+        return WillPopScope(
+          onWillPop: () async {
+            // 물리적 뒤로가기 버튼 처리 - true 반환하여 다이얼로그 닫기 허용
+            return true;
+          },
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+            child: _buildPopupContent(
+              context,
+              passwordController,
+              title,
+              message,
+              confirmButtonText,
+              cancelButtonText,
+              confirmColor,
+            ),
           ),
         );
       },
@@ -58,14 +64,14 @@ class PasswordPopupWidget {
 
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(maxWidth: 500.w),
+      constraints: BoxConstraints(maxWidth: 400.w),
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppTheme.isDark(context)
             ? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withOpacity(0.6),
             blurRadius: 10,
             spreadRadius: 0,
             offset: Offset(0, 4),
@@ -73,7 +79,7 @@ class PasswordPopupWidget {
         ]
             : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.4),
             blurRadius: 10,
             spreadRadius: 0,
             offset: Offset(0, 4),
@@ -85,7 +91,7 @@ class PasswordPopupWidget {
         children: [
           // 헤더
           Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 16.h, 16.w, 8.h),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 12.w, 6.h),
             child: Row(
               children: [
                 Icon(
@@ -93,11 +99,11 @@ class PasswordPopupWidget {
                   color: confirmColor,
                   size: 20.sp,
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: 8.w),
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 16.sp,
+                    fontSize: 17.sp,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.getTextColor(context),
                   ),
@@ -105,9 +111,10 @@ class PasswordPopupWidget {
                 Spacer(),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close_rounded, size: 22.sp),
+                  icon: Icon(Icons.close_rounded, size: 20.sp),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
+                  visualDensity: VisualDensity.compact,
                   splashRadius: 20.r,
                   color: AppTheme.isDark(context)
                       ? Colors.grey[400]
@@ -127,7 +134,7 @@ class PasswordPopupWidget {
 
           // 메시지
           Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 12.h),
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
             child: Text(
               message,
               style: TextStyle(
@@ -141,7 +148,7 @@ class PasswordPopupWidget {
 
           // 암호 입력 필드
           Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
             child: TextField(
               controller: controller,
               focusNode: focusNode,
@@ -159,8 +166,8 @@ class PasswordPopupWidget {
                     ? Color(0xFF2A2A36)
                     : Colors.grey[100],
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 12.h,
+                  horizontal: 14.w,
+                  vertical: 10.h,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.r),
@@ -199,17 +206,17 @@ class PasswordPopupWidget {
           Container(
             decoration: BoxDecoration(
               color: AppTheme.isDark(context)
-                  ? Color(0xFF242430)
+                  ? Color(0xFF232329)
                   : Colors.grey[50],
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20.r),
-                bottomRight: Radius.circular(20.r),
+                bottomLeft: Radius.circular(16.r),
+                bottomRight: Radius.circular(16.r),
               ),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: 20.w,
-                vertical: 12.h,
+                horizontal: 16.w,
+                vertical: 10.h,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -222,9 +229,10 @@ class PasswordPopupWidget {
                           ? Colors.grey[400]
                           : Colors.grey[700],
                       padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 10.h,
+                        horizontal: 14.w,
+                        vertical: 8.h,
                       ),
+                      visualDensity: VisualDensity.compact,
                     ),
                     child: Text(
                       cancelButtonText,
@@ -247,12 +255,13 @@ class PasswordPopupWidget {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 10.h,
+                        horizontal: 14.w,
+                        vertical: 8.h,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
                       ),
+                      visualDensity: VisualDensity.compact,
                     ),
                     child: Text(
                       confirmButtonText,

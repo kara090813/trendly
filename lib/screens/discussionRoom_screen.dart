@@ -1885,6 +1885,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 댓글 섹션
   Widget _buildCommentSection() {
     return CommentListWidget(
+      key: _commentSectionKey,
       comments: _comments,
       discussionRoomId: widget.discussionRoomId,
       isPopularSort: _isPopularSort,
@@ -1900,447 +1901,37 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     );
   }
 
-  // 댓글 아이템 위젯 - 최적화된 버전
-  Widget _buildCommentItem(Comment comment) {
-    // 내 댓글인지 확인
-    final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
-    final isMyComment = provider.isMyComment(comment.id);
-
-    // 이 댓글에 좋아요/싫어요 했는지 확인 (로컬 상태 우선)
-    CommentReaction? localReaction = _commentReactions[comment.id];
-
-    // 로컬 상태가 없으면 Provider에서 가져옴
-    String? userReaction;
-    int likeCount = comment.likeCount ?? 0;
-    int dislikeCount = comment.dislikeCount ?? 0;
-
-    if (localReaction != null) {
-      userReaction = localReaction.reactionType;
-      likeCount = localReaction.likeCount;
-      dislikeCount = localReaction.dislikeCount;
-    } else {
-      userReaction = provider.getCommentReaction(comment.id);
-    }
-
-    final bool hasLiked = userReaction == 'like';
-    final bool hasDisliked = userReaction == 'dislike';
-
-    // 시간 포맷팅
-    final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.createdAt);
-
-    return RepaintBoundary(
-      child: Container(
-          margin: EdgeInsets.only(bottom: 12.h),
-          decoration: BoxDecoration(
-            color: AppTheme.isDark(context)
-                ? Color(0xFF2A2A36)
-                : Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: AppTheme.isDark(context)
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 5,
-                      spreadRadius: 0,
-                      offset: Offset(0, 2),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 5,
-                      spreadRadius: 0,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-          ),
-          child: Stack(
-            children: [
-              // 주 컨텐츠
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 닉네임 및 시간
-                    Row(
-                      children: [
-                        Text(
-                          comment.nick,
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: isMyComment
-                                ? Color(0xFF19B3F6)
-                                : AppTheme.getTextColor(context),
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          timeAgo,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppTheme.isDark(context)
-                                ? Colors.grey[500]
-                                : Colors.grey[500],
-                          ),
-                        ),
-                        Spacer(),
-                      ],
-                    ),
-
-                    SizedBox(height: 10.h),
-
-                    // 댓글 내용
-                    Text(
-                      comment.comment,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        height: 1.4,
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[300]
-                            : Colors.black.withOpacity(0.85),
-                      ),
-                    ),
-
-                    SizedBox(height: 12.h),
-
-                    // 좋아요/싫어요/답글 수
-                    Row(
-                      children: [
-                        // 좋아요 버튼
-                        _buildAnimatedReactionButton(
-                          icon: hasLiked
-                              ? Icons.thumb_up
-                              : Icons.thumb_up_outlined,
-                          count: likeCount,
-                          isActive: hasLiked,
-                          activeColor: Color(0xFF19B3F6),
-                          onTap: () => _handleLikeComment(
-                              comment.id, hasLiked, hasDisliked),
-                        ),
-                        SizedBox(width: 16.w),
-
-                        // 싫어요 버튼
-                        _buildAnimatedReactionButton(
-                          icon: hasDisliked
-                              ? Icons.thumb_down
-                              : Icons.thumb_down_outlined,
-                          count: dislikeCount,
-                          isActive: hasDisliked,
-                          activeColor: Color(0xFFE74C3C),
-                          onTap: () => _handleDislikeComment(
-                              comment.id, hasDisliked, hasLiked),
-                        ),
-                        Spacer(),
-
-                        // 답글 버튼
-                        InkWell(
-                          onTap: () {
-                            context.push('/comment/${comment.id}');
-                          },
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline,
-                                size: 16.sp,
-                                color: AppTheme.isDark(context)
-                                    ? Colors.grey[400]
-                                    : Colors.grey[500],
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                (comment.replies ?? 0).toString(),
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: AppTheme.isDark(context)
-                                      ? Colors.grey[400]
-                                      : Colors.grey[500],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // 삭제 버튼 (오른쪽 상단에 배치)
-              Positioned(
-                top: 6.h,
-                right: 6.w,
-                child: DeleteButtonWidget(
-                  onTap: () => _showDeletePasswordDialog(comment.id),
-                  size: 24,
-                ),
-              ),
-            ],
-          )),
-    );
-  }
-
-  // 비밀번호 입력 팝업을 표시하고 삭제 처리
-  Future<void> _showDeletePasswordDialog(int commentId) async {
-    final password = await PasswordPopupWidget.show(
-      context,
-      title: "댓글 삭제",
-      message: "이 댓글을 삭제하려면 암호를 입력하세요",
-      confirmButtonText: "삭제",
-      cancelButtonText: "취소",
-    );
-
-    // 암호가 입력된 경우 삭제 처리
-    if (password != null && password.isNotEmpty) {
-      _deleteCommentWithPassword(commentId, password);
-    }
-  }
-
-// 암호를 사용한 댓글 삭제 처리
-  Future<void> _deleteCommentWithPassword(
-      int commentId, String password) async {
-    try {
-      final result = await _apiService.deleteComment(
-          widget.discussionRoomId, commentId, password);
-
-      if (result) {
-        // 댓글 목록 새로고침
-        _loadComments(isPopular: _isPopularSort);
-        StylishToast.success(context, '댓글이 삭제되었습니다.');
-      } else {
-        StylishToast.error(context, '댓글 삭제에 실패했습니다. 암호가 올바른지 확인하세요.');
-      }
-    } catch (e) {
-      print('댓글 삭제 오류: $e');
-      StylishToast.error(context, '댓글 삭제 중 오류가 발생했습니다.');
-    }
-  }
-
-  // 좋아요 처리 - 최적화된 버전
-  Future<void> _handleLikeComment(
-      int commentId, bool hasLiked, bool hasDisliked) async {
-    // 해당 댓글 찾기
-    final commentIndex = _comments.indexWhere((c) => c.id == commentId);
-    if (commentIndex == -1) return;
-
-    final comment = _comments[commentIndex];
-
-    // 현재 상태 백업
-    final CommentReaction currentReaction = _commentReactions[commentId] ??
-        CommentReaction(
-          reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
-        );
-
-    // 먼저 UI 업데이트 (즉시 반응 위해)
-    setState(() {
-      if (hasLiked) {
-        // 이미 좋아요 -> 취소
-        _commentReactions[commentId] = CommentReaction(
-          reactionType: null,
-          likeCount: currentReaction.likeCount - 1,
-          dislikeCount: currentReaction.dislikeCount,
-        );
-      } else {
-        // 좋아요 추가
-        _commentReactions[commentId] = CommentReaction(
-          reactionType: 'like',
-          likeCount: currentReaction.likeCount + 1,
-          // 싫어요 상태였다면 싫어요 카운트 감소
-          dislikeCount: hasDisliked
-              ? currentReaction.dislikeCount - 1
-              : currentReaction.dislikeCount,
-        );
-      }
-    });
-
-    try {
-      final provider =
-          Provider.of<UserPreferenceProvider>(context, listen: false);
-
-      // 이미 싫어요 상태인 경우, 백그라운드에서 싫어요 취소 API 호출
-      if (hasDisliked) {
-        await _apiService.dislikeComment(commentId, isCancel: true);
-      }
-
-      // 백그라운드에서 좋아요 상태 변경 API 호출
-      final result =
-          await _apiService.likeComment(commentId, isCancel: hasLiked);
-
-      if (result) {
-        // API 호출 성공 시 로컬 상태 업데이트
-        if (hasLiked) {
-          // 이미 좋아요 상태면 취소
-          await provider.removeCommentReaction(commentId);
-        } else {
-          // 좋아요 설정 (싫어요 상태면 싫어요 제거)
-          await provider.toggleLike(commentId);
-        }
-      } else {
-        // API 호출 실패 시 원래 상태로 복원
-        if (mounted) {
-          setState(() {
-            _commentReactions[commentId] = currentReaction;
-          });
-          StylishToast.error(context, '좋아요 처리 중 오류가 발생했습니다.');
-        }
-      }
-    } catch (e) {
-      print('좋아요 처리 오류: $e');
-
-      // 오류 시 원래 상태로 복원
-      if (mounted) {
-        setState(() {
-          _commentReactions[commentId] = currentReaction;
-        });
-        StylishToast.error(context, '좋아요 처리 중 오류가 발생했습니다.');
-      }
-    }
-  }
-
-  // 싫어요 처리 - 최적화된 버전
-  Future<void> _handleDislikeComment(
-      int commentId, bool hasDisliked, bool hasLiked) async {
-    // 해당 댓글 찾기
-    final commentIndex = _comments.indexWhere((c) => c.id == commentId);
-    if (commentIndex == -1) return;
-
-    final comment = _comments[commentIndex];
-
-    // 현재 상태 백업
-    final CommentReaction currentReaction = _commentReactions[commentId] ??
-        CommentReaction(
-          reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
-        );
-
-    // 먼저 UI 업데이트 (즉시 반응 위해)
-    setState(() {
-      if (hasDisliked) {
-        // 이미 싫어요 -> 취소
-        _commentReactions[commentId] = CommentReaction(
-          reactionType: null,
-          likeCount: currentReaction.likeCount,
-          dislikeCount: currentReaction.dislikeCount - 1,
-        );
-      } else {
-        // 싫어요 추가
-        _commentReactions[commentId] = CommentReaction(
-          reactionType: 'dislike',
-          // 좋아요 상태였다면 좋아요 카운트 감소
-          likeCount: hasLiked
-              ? currentReaction.likeCount - 1
-              : currentReaction.likeCount,
-          dislikeCount: currentReaction.dislikeCount + 1,
-        );
-      }
-    });
-
-    try {
-      final provider =
-          Provider.of<UserPreferenceProvider>(context, listen: false);
-
-      // 이미 좋아요 상태인 경우, 백그라운드에서 좋아요 취소 API 호출
-      if (hasLiked) {
-        await _apiService.likeComment(commentId, isCancel: true);
-      }
-
-      // 백그라운드에서 싫어요 상태 변경 API 호출
-      final result =
-          await _apiService.dislikeComment(commentId, isCancel: hasDisliked);
-
-      if (result) {
-        // API 호출 성공 시 로컬 상태 업데이트
-        if (hasDisliked) {
-          // 이미 싫어요 상태면 취소
-          await provider.removeCommentReaction(commentId);
-        } else {
-          // 싫어요 설정 (좋아요 상태면 좋아요 제거)
-          await provider.toggleDislike(commentId);
-        }
-      } else {
-        // API 호출 실패 시 원래 상태로 복원
-        if (mounted) {
-          setState(() {
-            _commentReactions[commentId] = currentReaction;
-          });
-          StylishToast.error(context, '싫어요 처리 중 오류가 발생했습니다.');
-        }
-      }
-    } catch (e) {
-      print('싫어요 처리 오류: $e');
-
-      // 오류 시 원래 상태로 복원
-      if (mounted) {
-        setState(() {
-          _commentReactions[commentId] = currentReaction;
-        });
-        StylishToast.error(context, '싫어요 처리 중 오류가 발생했습니다.');
-      }
-    }
-  }
-
-  // 좋아요/싫어요 버튼에 애니메이션 효과 추가
-  Widget _buildAnimatedReactionButton({
-    required IconData icon,
-    required int count,
-    required bool isActive,
-    required Color activeColor,
-    required VoidCallback onTap,
-  }) {
-    return RepaintBoundary(
-      child: GestureDetector(
-        onTap: onTap,
-        child: TweenAnimationBuilder(
-          duration: Duration(milliseconds: 200),
-          tween: Tween<double>(begin: 1.0, end: isActive ? 1.0 : 1.0),
-          builder: (context, double scale, child) {
-            return Transform.scale(
-              scale: scale,
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 16.sp,
-                    color: isActive
-                        ? activeColor
-                        : (AppTheme.isDark(context)
-                            ? Colors.grey[400]
-                            : Colors.grey[600]),
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    count.toString(),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight:
-                          isActive ? FontWeight.w500 : FontWeight.normal,
-                      color: isActive
-                          ? activeColor
-                          : (AppTheme.isDark(context)
-                              ? Colors.grey[400]
-                              : Colors.grey[600]),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
 
   // 댓글 섹션으로 스크롤
   void _scrollToComments([double? position]) {
-    final scrollPosition = position ?? 380.h;
+    if (position != null) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(position);
+      }
+      return;
+    }
 
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(scrollPosition);
+    // GlobalKey를 사용하여 위치 파악
+    final RenderBox? renderBox = _commentSectionKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && _scrollController.hasClients) {
+      // 댓글 섹션의 현재 위치 계산
+      final commentPosition = renderBox.localToGlobal(Offset.zero).dy;
+
+      // SafeArea 및 AppBar 높이 등을 고려하여 조정
+      final screenPosition = commentPosition - MediaQuery.of(context).padding.top - 100.h;
+
+      // 스크롤 위치 설정 (애니메이션 효과 추가)
+      _scrollController.animateTo(
+        screenPosition > 0 ? screenPosition : 0,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    } else {
+      // 폴백: GlobalKey가 작동하지 않을 경우 기존 동작 유지
+      final scrollPosition = 380.h;
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(scrollPosition);
+      }
     }
   }
 
@@ -2403,7 +1994,10 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         FocusScope.of(context).unfocus();
 
         // 즉시 댓글 섹션으로 스크롤
-        _scrollToComments();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToComments();
+        });
+
 
         StylishToast.success(context, '댓글이 등록되었습니다.');
       } else {
