@@ -353,10 +353,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
               ),
             ),
 
-            // 입력 영역 (첫 번째 탭에서만 표시)
-            _tabController.index == 0 && !_isDisabled
-                ? _buildInputSection()
-                : SizedBox.shrink(),
+
           ],
         ),
       ),
@@ -422,100 +419,110 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
   // 토론 탭 내용 (새로 추가)
   Widget _buildDiscussionTabContent() {
-    return Stack(
+    return Column(
       children: [
-        // 메인 콘텐츠
-        Opacity(
-          opacity: _isRefreshing ? 0.3 : 1.0,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: _isRefreshing
-                ? NeverScrollableScrollPhysics()
-                : BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 12.h),
-                if (_discussionRoom?.isClosed ?? false)
-                  _buildClosedDiscussionAlert(),
-                SizedBox(height: 12.h),
-                _buildInfoSection(),
-                SizedBox(height: 12.h),
-                _isDisabled
-                    ? SizedBox.shrink()
-                    : AnimatedSwitcher(
-                  duration: Duration(milliseconds: 600),
-                  transitionBuilder: (Widget child,
-                      Animation<double> animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: Tween<double>(
-                            begin: 0.95, end: 1.0)
-                            .animate(CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutBack,
-                        )),
-                        child: child,
+        Expanded(
+          child: Stack(
+            children: [
+              // 메인 콘텐츠
+              Opacity(
+                opacity: _isRefreshing ? 0.3 : 1.0,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: _isRefreshing
+                      ? NeverScrollableScrollPhysics()
+                      : BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 12.h),
+                      if (_discussionRoom?.isClosed ?? false)
+                        _buildClosedDiscussionAlert(),
+                      SizedBox(height: 12.h),
+                      _buildInfoSection(),
+                      SizedBox(height: 12.h),
+                      _isDisabled
+                          ? SizedBox.shrink()
+                          : AnimatedSwitcher(
+                        duration: Duration(milliseconds: 600),
+                        transitionBuilder: (Widget child,
+                            Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: Tween<double>(
+                                  begin: 0.95, end: 1.0)
+                                  .animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutBack,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _buildEmotionButtonsSection(),
                       ),
-                    );
-                  },
-                  child: _buildEmotionButtonsSection(),
+                      _buildWarningMessage(),
+                      SizedBox(height: 4.h),
+                      _buildCommentSection(),
+                      SizedBox(height: 100.h), // 하단 여백 추가
+                    ],
+                  ),
                 ),
-                _buildWarningMessage(),
-                SizedBox(height: 4.h),
-                _buildCommentSection(),
-                SizedBox(height: 100.h), // 하단 여백 추가
-              ],
-            ),
+              ),
+
+              // 새로고침 오버레이
+              if (_isRefreshing)
+                Center(
+                  child: Container(
+                    width: 120.w,
+                    height: 120.w,
+                    decoration: BoxDecoration(
+                      color: AppTheme.isDark(context)
+                          ? Color(0xFF21202C).withOpacity(0.9)
+                          : Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.isDark(context)
+                              ? Colors.black.withOpacity(0.5)
+                              : Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 50.w,
+                          height: 50.w,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF19B3F6),
+                            strokeWidth: 3.w,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          "새로고침 중...",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF19B3F6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-
-        // 새로고침 오버레이
-        if (_isRefreshing)
-          Center(
-            child: Container(
-              width: 120.w,
-              height: 120.w,
-              decoration: BoxDecoration(
-                color: AppTheme.isDark(context)
-                    ? Color(0xFF21202C).withOpacity(0.9)
-                    : Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.isDark(context)
-                        ? Colors.black.withOpacity(0.5)
-                        : Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 50.w,
-                    height: 50.w,
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF19B3F6),
-                      strokeWidth: 3.w,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    "새로고침 중...",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF19B3F6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        // 입력 영역 (첫 번째 탭에서만 표시)
+        !_isDisabled
+            ? _buildInputSection()
+            : SizedBox.shrink(),
       ],
     );
   }

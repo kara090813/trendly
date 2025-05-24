@@ -12,11 +12,12 @@ class Keyword with _$Keyword {
     required String category,
     required int rank,
     @JsonKey(name: 'created_at') required DateTime createdAt,
-    required List<String> type1,
+    @Default([]) List<String> type1,
     required String type2,
     required String type3,
-    required List<Reference> references,
-    @JsonKey(name: 'current_discussion_room_id') required int currentDiscussionRoomId,
+    @Default([]) List<Reference> references,
+    // 필드명을 API 응답에 맞게 수정
+    @JsonKey(name: 'current_discussion_room') @Default(0) int currentDiscussionRoomId,
   }) = _Keyword;
 
   factory Keyword.fromJson(Map<String, dynamic> json) => _$KeywordFromJson(json);

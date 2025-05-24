@@ -7,7 +7,7 @@ import '../models/_models.dart';
 /// API 통신과 관련된 모든 메서드를 포함하고 있습니다.
 class ApiService {
   // 기본 API URL
-  static const String _baseUrl = 'http://211.59.133.91:8001/api';
+  static const String _baseUrl = 'https://trendly.servehttp.com:10443/api';
 
   // 싱글톤 패턴 구현
   static final ApiService _instance = ApiService._internal();
@@ -214,10 +214,13 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
+
         // UTF-8 디코딩 적용
         final String decodedBody = utf8.decode(response.bodyBytes);
         final List<dynamic> data = json.decode(decodedBody);
+
         return data.map((item) => DiscussionRoom.fromJson(item)).toList();
+
       } else {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');

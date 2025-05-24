@@ -29,8 +29,9 @@ mixin _$Keyword {
   List<String> get type1 => throw _privateConstructorUsedError;
   String get type2 => throw _privateConstructorUsedError;
   String get type3 => throw _privateConstructorUsedError;
-  List<Reference> get references => throw _privateConstructorUsedError;
-  @JsonKey(name: 'current_discussion_room_id')
+  List<Reference> get references =>
+      throw _privateConstructorUsedError; // 필드명을 API 응답에 맞게 수정
+  @JsonKey(name: 'current_discussion_room')
   int get currentDiscussionRoomId => throw _privateConstructorUsedError;
 
   /// Serializes this Keyword to a JSON map.
@@ -57,8 +58,7 @@ abstract class $KeywordCopyWith<$Res> {
       String type2,
       String type3,
       List<Reference> references,
-      @JsonKey(name: 'current_discussion_room_id')
-      int currentDiscussionRoomId});
+      @JsonKey(name: 'current_discussion_room') int currentDiscussionRoomId});
 }
 
 /// @nodoc
@@ -149,8 +149,7 @@ abstract class _$$KeywordImplCopyWith<$Res> implements $KeywordCopyWith<$Res> {
       String type2,
       String type3,
       List<Reference> references,
-      @JsonKey(name: 'current_discussion_room_id')
-      int currentDiscussionRoomId});
+      @JsonKey(name: 'current_discussion_room') int currentDiscussionRoomId});
 }
 
 /// @nodoc
@@ -231,12 +230,12 @@ class _$KeywordImpl implements _Keyword {
       required this.category,
       required this.rank,
       @JsonKey(name: 'created_at') required this.createdAt,
-      required final List<String> type1,
+      final List<String> type1 = const [],
       required this.type2,
       required this.type3,
-      required final List<Reference> references,
-      @JsonKey(name: 'current_discussion_room_id')
-      required this.currentDiscussionRoomId})
+      final List<Reference> references = const [],
+      @JsonKey(name: 'current_discussion_room')
+      this.currentDiscussionRoomId = 0})
       : _type1 = type1,
         _references = references;
 
@@ -256,6 +255,7 @@ class _$KeywordImpl implements _Keyword {
   final DateTime createdAt;
   final List<String> _type1;
   @override
+  @JsonKey()
   List<String> get type1 {
     if (_type1 is EqualUnmodifiableListView) return _type1;
     // ignore: implicit_dynamic_type
@@ -268,14 +268,16 @@ class _$KeywordImpl implements _Keyword {
   final String type3;
   final List<Reference> _references;
   @override
+  @JsonKey()
   List<Reference> get references {
     if (_references is EqualUnmodifiableListView) return _references;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_references);
   }
 
+// 필드명을 API 응답에 맞게 수정
   @override
-  @JsonKey(name: 'current_discussion_room_id')
+  @JsonKey(name: 'current_discussion_room')
   final int currentDiscussionRoomId;
 
   @override
@@ -343,12 +345,12 @@ abstract class _Keyword implements Keyword {
       required final String category,
       required final int rank,
       @JsonKey(name: 'created_at') required final DateTime createdAt,
-      required final List<String> type1,
+      final List<String> type1,
       required final String type2,
       required final String type3,
-      required final List<Reference> references,
-      @JsonKey(name: 'current_discussion_room_id')
-      required final int currentDiscussionRoomId}) = _$KeywordImpl;
+      final List<Reference> references,
+      @JsonKey(name: 'current_discussion_room')
+      final int currentDiscussionRoomId}) = _$KeywordImpl;
 
   factory _Keyword.fromJson(Map<String, dynamic> json) = _$KeywordImpl.fromJson;
 
@@ -370,9 +372,9 @@ abstract class _Keyword implements Keyword {
   @override
   String get type3;
   @override
-  List<Reference> get references;
+  List<Reference> get references; // 필드명을 API 응답에 맞게 수정
   @override
-  @JsonKey(name: 'current_discussion_room_id')
+  @JsonKey(name: 'current_discussion_room')
   int get currentDiscussionRoomId;
 
   /// Create a copy of Keyword
