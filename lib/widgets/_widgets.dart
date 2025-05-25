@@ -12,3 +12,9 @@ export 'passwordPopup_widget.dart';
 export 'commentList_widget.dart';
 export 'sortToggle_widget.dart';
 export 'common_widget.dart';
+
+// Time Machine Widgets
+export 'timeMachineDateSelector_widget.dart';
+export 'timeMachineDailySummary_widget.dart';
+export 'timeMachineWordCloud_widget.dart';
+export 'timeMachineHourlyTrends_widget.dart';
