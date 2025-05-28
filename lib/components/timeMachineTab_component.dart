@@ -51,9 +51,15 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
         TimeMachineHourlyTrendsWidget(
           categoryColors: categoryColors,
           getKeywordsForHour: _getKeywordsForHour,
-          initialSelectedHour: 12,
+          availableTimes: [
+            DateTime(2025, 1, 15, 0, 32),
+            DateTime(2025, 1, 15, 1, 30),
+            DateTime(2025, 1, 15, 2, 1),
+            DateTime(2025, 1, 15, 2, 1),
+            DateTime(2025, 1, 15, 8, 1) , DateTime(2025, 1, 15, 16, 1)
+            // API에서 받아온 DateTime 리스트들
+          ],
         ),
-
         SizedBox(height: 20.h),
 
         // 워드클라우드
