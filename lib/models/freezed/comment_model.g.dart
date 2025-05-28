@@ -9,12 +9,14 @@ part of 'comment_model.dart';
 _$CommentImpl _$$CommentImplFromJson(Map<String, dynamic> json) =>
     _$CommentImpl(
       id: (json['id'] as num).toInt(),
-      discussionRoomId: (json['discussion_room_id'] as num).toInt(),
+      discussionRoomId: (json['discussion_room'] as num).toInt(),
+      ipAddr: json['ip_addr'] as String,
       user: json['user'] as String,
+      password: json['password'] as String,
       nick: json['nick'] as String,
       comment: json['comment'] as String,
       isSubComment: json['is_sub_comment'] as bool,
-      parentId: (json['parent_id'] as num?)?.toInt(),
+      parentId: (json['parent'] as num?)?.toInt(),
       subCommentCount: (json['sub_comment_count'] as num?)?.toInt(),
       createdAt: DateTime.parse(json['created_at'] as String),
       likeCount: (json['like_count'] as num?)?.toInt(),
@@ -26,12 +28,14 @@ _$CommentImpl _$$CommentImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$CommentImplToJson(_$CommentImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'discussion_room_id': instance.discussionRoomId,
+      'discussion_room': instance.discussionRoomId,
+      'ip_addr': instance.ipAddr,
       'user': instance.user,
+      'password': instance.password,
       'nick': instance.nick,
       'comment': instance.comment,
       'is_sub_comment': instance.isSubComment,
-      'parent_id': instance.parentId,
+      'parent': instance.parentId,
       'sub_comment_count': instance.subCommentCount,
       'created_at': instance.createdAt.toIso8601String(),
       'like_count': instance.likeCount,

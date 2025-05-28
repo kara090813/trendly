@@ -6,11 +6,13 @@ class TimeMachineTabComponent extends StatefulWidget {
   const TimeMachineTabComponent({Key? key}) : super(key: key);
 
   @override
-  State<TimeMachineTabComponent> createState() => _TimeMachineTabComponentState();
+  State<TimeMachineTabComponent> createState() =>
+      _TimeMachineTabComponentState();
 }
 
 class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
-  DateTime _selectedDate = DateTime.now().subtract(const Duration(days: 1)); // 기본값: 어제
+  DateTime _selectedDate =
+      DateTime.now().subtract(const Duration(days: 1)); // 기본값: 어제
 
   // 카테고리 색상 매핑
   final Map<String, Color> categoryColors = {
@@ -45,19 +47,19 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
 
         SizedBox(height: 20.h),
 
-        // 워드클라우드
-        TimeMachineWordCloudWidget(
-          categoryColors: categoryColors,
-          wordCloudImagePath: 'assets/img/items/word_cloud.png',
-        ),
-
-        SizedBox(height: 20.h),
-
         // 시간별 트렌드
         TimeMachineHourlyTrendsWidget(
           categoryColors: categoryColors,
           getKeywordsForHour: _getKeywordsForHour,
           initialSelectedHour: 12,
+        ),
+
+        SizedBox(height: 20.h),
+
+        // 워드클라우드
+        TimeMachineWordCloudWidget(
+          categoryColors: categoryColors,
+          wordCloudImagePath: 'assets/img/items/word_cloud.png',
         ),
 
         SizedBox(height: 200.h),
@@ -94,7 +96,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
   // 일일 요약 데이터 생성
   Map<String, dynamic> _getDailySummaryData() {
     return {
-      'topKeyword': '포켓몬 우유',
+      'topKeyword': '천국보다 아름다운',
       'topKeywordStats': '15.2만 검색',
       'topCategory': '연예',
       'topCategoryStats': '전체 40%',

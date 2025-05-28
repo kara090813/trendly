@@ -18,3 +18,4 @@ export 'timeMachineDateSelector_widget.dart';
 export 'timeMachineDailySummary_widget.dart';
 export 'timeMachineWordCloud_widget.dart';
 export 'timeMachineHourlyTrends_widget.dart';
+export 'historyTitle_widget.dart';

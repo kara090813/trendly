@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../app_theme.dart';
+import '_widgets.dart';
 
 class TimeMachineWordCloudWidget extends StatelessWidget {
   final Map<String, Color> categoryColors;
@@ -21,38 +22,15 @@ class TimeMachineWordCloudWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 헤더
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFF9B59B6),
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFF9B59B6).withOpacity(0.3),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.cloud_rounded,
-                  color: Colors.white,
-                  size: 20.sp,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                "오늘의 키워드 클라우드",
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-            ],
+          HistoryTitleWidget(
+            title: "키워드 클라우드",
+            icon: Icons.assessment_rounded,
+            lightPrimaryColor: Color(0xFFDCF1FF),
+            lightSecondaryColor: Color(0xFFBAE6FD),
+            darkPrimaryColor: Color(0xFF334155),
+            darkSecondaryColor: Color(0xFF475569),
+            lightIconBackground: Color(0xFFB39DDB),  // 라벤더 (창의적)
+            darkIconBackground: Color(0xFF9C27B0),
           ),
 
           SizedBox(height: 20.h),

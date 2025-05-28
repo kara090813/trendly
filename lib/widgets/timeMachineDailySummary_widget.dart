@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../app_theme.dart';
+import '_widgets.dart';
 
 class TimeMachineDailySummaryWidget extends StatelessWidget {
   final Map<String, dynamic> summaryData;
@@ -18,122 +19,68 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
+          HistoryTitleWidget(
+            title: "요약 리포트",
+            icon: Icons.assessment_rounded,
+            lightPrimaryColor: Color(0xFFDCF1FF),
+            lightSecondaryColor: Color(0xFFBAE6FD),
+            darkPrimaryColor: Color(0xFF334155),
+            darkSecondaryColor: Color(0xFF475569),
+            lightIconBackground: Color(0xFFFF6B6B),  // 코랄 레드 (강조)
+            darkIconBackground: Color(0xFFE74C3C),
+          ),
+
+          SizedBox(height: 14.h),
+
+          // 3개 통계를 가로로 배치
           Row(
             children: [
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFF6B6B),
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFFF6B6B).withOpacity(0.3),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.trending_up_rounded,
-                  color: Colors.white,
-                  size: 20.sp,
+              // 종합 1위
+              Expanded(
+                child: _buildCompactStatItem(
+                  context: context,
+                  icon: Icons.emoji_events_rounded,
+                  label: "종합 1위",
+                  value: summaryData['topKeyword'] ?? "포켓몬 우유",
+                  subtitle: summaryData['topKeywordStats'] ?? "15.2만 검색",
+                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                 ),
               ),
-              SizedBox(width: 12.w),
-              Text(
-                "일일 트렌드 요약",
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
+
+              SizedBox(width: 8.w),
+
+              // 최다 카테고리
+              Expanded(
+                child: _buildCompactStatItem(
+                  context: context,
+                  icon: Icons.category_rounded,
+                  label: "최다 카테고리",
+                  value: summaryData['topCategory'] ?? "연예",
+                  subtitle: summaryData['topCategoryStats'] ?? "전체 40%",
+                  colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+
+              // 인기 토론방
+              Expanded(
+                child: _buildCompactStatItem(
+                  context: context,
+                  icon: Icons.forum_rounded,
+                  label: "인기 토론방",
+                  value: summaryData['topDiscussion'] ?? "갤럭시 S25",
+                  subtitle: _extractReactionCount(
+                      summaryData['topDiscussionStats'] ?? "반응 3,291개"),
+                  colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
                 ),
               ),
             ],
-          ),
-
-          SizedBox(height: 20.h),
-
-          // 3분할 통계 카드
-          Row(
-            children: [
-              Expanded(child: _buildSummaryCard(
-                context: context,
-                icon: Icons.emoji_events_rounded,
-                title: "종합 1위",
-                value: summaryData['topKeyword'] ?? "포켓몬 우유",
-                subtitle: summaryData['topKeywordStats'] ?? "15.2만 검색",
-                color: Color(0xFFFFD700),
-              )),
-              SizedBox(width: 12.w),
-              Expanded(child: _buildSummaryCard(
-                context: context,
-                icon: Icons.category_rounded,
-                title: "최다 카테고리",
-                value: summaryData['topCategory'] ?? "연예",
-                subtitle: summaryData['topCategoryStats'] ?? "전체 40%",
-                color: Color(0xFFE74C3C),
-              )),
-            ],
-          ),
-
-          SizedBox(height: 12.h),
-
-          _buildSummaryCard(
-            context: context,
-            icon: Icons.forum_rounded,
-            title: "인기 토론방",
-            value: summaryData['topDiscussion'] ?? "갤럭시 S25",
-            subtitle: summaryData['topDiscussionStats'] ?? "댓글 1,847개 • 반응 3,291개",
-            color: Color(0xFF3498DB),
-            isWide: true,
-          ),
-
-          SizedBox(height: 20.h),
-
-          // 트렌드 인사이트
-          Container(
-            padding: EdgeInsets.all(20.w),
-            decoration: BoxDecoration(
-              color: AppTheme.isDark(context)
-                  ? Color(0xFF2A2A36)
-                  : Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: Color(0xFF19B3F6).withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "트렌드 인사이트",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF19B3F6),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                ...(summaryData['insights'] as List<Map<String, String>>? ?? _getDefaultInsights())
-                    .map((insight) => Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
-                  child: _buildInsightItem(
-                    context: context,
-                    icon: insight['icon']!,
-                    text: insight['text']!,
-                  ),
-                )).toList(),
-              ],
-            ),
           ),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 400.ms, delay: 100.ms)
-        .slideY(begin: 0.05, end: 0, duration: 350.ms, curve: Curves.easeOutQuad);
+    ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(
+        begin: 0.05, end: 0, duration: 350.ms, curve: Curves.easeOutQuad);
   }
 
   Widget _buildContainer({
@@ -142,7 +89,7 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
     EdgeInsetsGeometry? padding,
   }) {
     return Container(
-      padding: padding ?? EdgeInsets.all(20.w),
+      padding: padding ?? EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
@@ -167,167 +114,132 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard({
+  Widget _buildCompactStatItem({
     required BuildContext context,
     required IconData icon,
-    required String title,
+    required String label,
     required String value,
     required String subtitle,
-    required Color color,
-    bool isWide = false,
+    required List<Color> colors,
   }) {
     return Container(
-      width: isWide ? double.infinity : null,
-      padding: EdgeInsets.all(16.w),
+      height: 140.h, // 직사각형으로 높이 증가
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: colors[0].withOpacity(0.3),
           width: 1,
         ),
-      ),
-      child: isWide
-          ? Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20.sp,
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.getTextColor(context),
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: colors[0].withOpacity(0.1),
+            blurRadius: 4,
+            spreadRadius: 0,
+            offset: Offset(0, 1),
           ),
         ],
-      )
-          : Column(
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, // 공간 균등 분배
         children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20.sp,
+          // 상단: 아이콘 + 라벨
+          Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: colors,
+                  ),
+                  borderRadius: BorderRadius.circular(8.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors[0].withOpacity(0.25),
+                      blurRadius: 3,
+                      spreadRadius: 0,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 18.sp,
+                ),
+              ),
+
+              SizedBox(height: 6.h),
+
+              // 라벨
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[400]
+                      : Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          SizedBox(
+            height: 2.h,
+          ),
+          // 중간: 메인 값 (키워드명) - 2줄 가능
+          Expanded(
+            child: Center(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.getTextColor(context),
+                  height: 1.2, // 줄 간격 조정
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2, // 2줄까지 허용
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
-          SizedBox(height: 12.h),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-            ),
-            textAlign: TextAlign.center,
+          SizedBox(
+            height: 2.h,
           ),
-          SizedBox(height: 4.h),
+          // 하단: 서브 정보
           Text(
-            value,
+            subtitle,
             style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.getTextColor(context),
+              fontSize: 10.sp,
+              color: colors[0],
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 2.h),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildInsightItem({
-    required BuildContext context,
-    required String icon,
-    required String text,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          icon,
-          style: TextStyle(fontSize: 18.sp),
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14.sp,
-              height: 1.5,
-              color: AppTheme.getTextColor(context),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  List<Map<String, String>> _getDefaultInsights() {
-    return [
-      {
-        'icon': '🚀',
-        'text': '연예계 이슈가 급부상하며 포켓몬 관련 밈이 대세로 자리잡았습니다.',
-      },
-      {
-        'icon': '⏰',
-        'text': '오후 9시경 검색량이 집중되며 IT 기기 관련 토론이 활발했습니다.',
-      },
-      {
-        'icon': '📈',
-        'text': '전체적으로 엔터테인먼트 콘텐츠에 대한 관심도가 크게 증가했습니다.',
-      },
-    ];
+  // 토론방 통계에서 반응 개수만 추출하는 함수
+  String _extractReactionCount(String stats) {
+    // "댓글 1,847개 • 반응 3,291개" 에서 "반응 3,291개"만 추출
+    List<String> parts = stats.split(' • ');
+    for (String part in parts) {
+      if (part.contains('반응')) {
+        return part.trim();
+      }
+    }
+    // 반응이 없으면 전체 문자열 반환 (fallback)
+    return stats;
   }
 }

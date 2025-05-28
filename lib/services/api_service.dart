@@ -77,10 +77,10 @@ class ApiService {
     }
   }
 
-  /// 키워드 이름과 시간 범위로 키워드 ID 목록 가져오기
-  /// POST /keyword/get/
-  Future<List<int>> getKeywordIdsByNameAndTimeRange(String keyword, DateTime startTime, DateTime endTime) async {
-    final String url = '$_baseUrl/keyword/get/';
+  /// 키워드 검색 - 키워드 이름과 시간 범위로 키워드 ID 목록 가져오기
+  /// POST /keyword/search/
+  Future<List<int>> searchKeywordIds(String keyword, DateTime startTime, DateTime endTime) async {
+    final String url = '$_baseUrl/keyword/search/';
     final Map<String, dynamic> requestData = {
       'keyword': keyword,
       'start_time': startTime.toUtc().toIso8601String(),
@@ -103,10 +103,10 @@ class ApiService {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');
         print('요청 데이터: $requestData');
-        throw Exception('키워드 ID 목록 로딩 실패: ${response.statusCode}');
+        throw Exception('키워드 ID 검색 실패: ${response.statusCode}');
       }
     } catch (e) {
-      print('키워드 ID 목록 가져오기 오류: $e');
+      print('키워드 ID 검색 오류: $e');
       print('요청 URL: $url');
       print('요청 데이터: $requestData');
       rethrow;
@@ -203,6 +203,70 @@ class ApiService {
     }
   }
 
+  /// 특정 키워드의 히스토리 가져오기
+  /// POST /keyword/history/
+  Future<List<Map<String, dynamic>>> getKeywordHistory(String keyword) async {
+    final String url = '$_baseUrl/keyword/history/';
+    final Map<String, dynamic> requestData = {
+      'keyword': keyword,
+    };
+
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestData),
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((item) => item as Map<String, dynamic>).toList();
+      } else if (response.statusCode == 404) {
+        print('키워드 히스토리 없음: $keyword');
+        return [];
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        print('요청 데이터: $requestData');
+        throw Exception('키워드 히스토리 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('키워드 히스토리 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 데이터: $requestData');
+      rethrow;
+    }
+  }
+
+  /// 임의의 키워드 n개 가져오기
+  /// GET /keyword/random/<int:count>/
+  Future<List<Keyword>> getRandomKeywords(int count) async {
+    final String url = '$_baseUrl/keyword/random/$count/';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((item) => Keyword.fromJson(item)).toList();
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('랜덤 키워드 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('랜덤 키워드 가져오기 오류: $e');
+      print('요청 URL: $url');
+      rethrow;
+    }
+  }
+
   /// 현재 인기 키워드와 관련된 토론방 목록 가져오기
   /// GET /discussion/now/
   Future<List<DiscussionRoom>> getCurrentDiscussionRooms() async {
@@ -214,13 +278,10 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-
         // UTF-8 디코딩 적용
         final String decodedBody = utf8.decode(response.bodyBytes);
         final List<dynamic> data = json.decode(decodedBody);
-
         return data.map((item) => DiscussionRoom.fromJson(item)).toList();
-
       } else {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');

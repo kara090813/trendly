@@ -8,16 +8,20 @@ part 'comment_model.g.dart';
 class Comment with _$Comment {
   const factory Comment({
     required int id,
-    @JsonKey(name: 'discussion_room_id') required int discussionRoomId,
+    @JsonKey(name: 'discussion_room') required int discussionRoomId,
+    @JsonKey(name: 'ip_addr') required String ipAddr,
     required String user,
+    required String password,
     required String nick,
     required String comment,
     @JsonKey(name: 'is_sub_comment') required bool isSubComment,
-    @JsonKey(name: 'parent_id') int? parentId,
+    @JsonKey(name: 'parent') int? parentId,
     @JsonKey(name: 'sub_comment_count') int? subCommentCount,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'like_count') int? likeCount,
     @JsonKey(name: 'dislike_count') int? dislikeCount,
+
+    // UI에서만 쓰이는 필드들은 여전히 남겨둠
     int? replies,
     String? timeAgo,
   }) = _Comment;

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
+import '../providers/_providers.dart';
+import '../widgets/_widgets.dart';
 import 'timeMachineTab_component.dart';
 import 'keywordHistoryTab_component.dart';
 import 'keywordRandomTab_component.dart';
@@ -87,17 +90,32 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
                     Padding(
                       padding: EdgeInsets.only(top: 16.h, bottom: 18.h),
                       child: Center(
-                        child: Text(
-                          "트렌드 히스토리",
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.getTextColor(context),
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "트렌드 히스토리",
+                              style: TextStyle(
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.getTextColor(context),
+                              ),
+                            ),
+                            CircleButtonWidget(
+                              context: context,
+                              onTap: () {
+                                Provider.of<UserPreferenceProvider>(context, listen: false).toggleThemeMode();
+                              },
+                              assetImagePath: 'assets/img/items/dark.png',
+                              color: Colors.blue,
+                              iconSize: 30.w,
+                              containerSize: 42.w,
+                              imagePadding: EdgeInsets.all(8.w),
+                            )
+                          ],
                         ),
                       ),
                     ),
-
                     // 뉴모픽 스타일 탭바
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24.w),
