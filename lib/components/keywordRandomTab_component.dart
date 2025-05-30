@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../app_theme.dart';
+import '../widgets/_widgets.dart';
 
 class RandomKeywordTabComponent extends StatefulWidget {
   const RandomKeywordTabComponent({Key? key}) : super(key: key);
@@ -240,30 +241,16 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF19B3F6).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                padding: EdgeInsets.all(8.w),
-                child: Icon(
-                  Icons.summarize,
-                  color: Color(0xFF19B3F6),
-                  size: 18.sp,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                "키워드 요약",
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-            ],
+          HistoryTitleWidget(
+            title: "키워드 요약",
+            icon: Icons.text_snippet_rounded,
+            lightPrimaryColor: Color(0xFFDCF1FF),
+            lightSecondaryColor: Color(0xFFBAE6FD),
+            darkPrimaryColor: Color(0xFF334155),
+            darkSecondaryColor: Color(0xFF475569),
+            lightIconBackground: Color(0xFF818CF8),
+            darkIconBackground: Color(0xFF6366F1),
+            // 기타 색상은 기존 유지
           ),
 
           SizedBox(height: 16.h),
@@ -367,30 +354,16 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF19B3F6).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                padding: EdgeInsets.all(8.w),
-                child: Icon(
-                  Icons.article,
-                  color: Color(0xFF19B3F6),
-                  size: 18.sp,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                "관련 뉴스",
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-            ],
+          // 관련 뉴스
+          HistoryTitleWidget(
+            title: "관련 뉴스",
+            icon: Icons.newspaper_rounded,
+            lightPrimaryColor: Color(0xFFDCF1FF),
+            lightSecondaryColor: Color(0xFFBAE6FD),
+            darkPrimaryColor: Color(0xFF334155),
+            darkSecondaryColor: Color(0xFF475569),
+            lightIconBackground: Color(0xFFFBBF24),
+            darkIconBackground: Color(0xFFF59E0B),
           ),
 
           SizedBox(height: 16.h),

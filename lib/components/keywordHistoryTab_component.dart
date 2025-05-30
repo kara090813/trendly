@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../app_theme.dart';
+import '../widgets/_widgets.dart';
 
 class KeywordHistoryTabComponent extends StatefulWidget {
   const KeywordHistoryTabComponent({Key? key}) : super(key: key);
@@ -227,52 +228,18 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF19B3F6).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                padding: EdgeInsets.all(8.w),
-                child: Icon(
-                  Icons.insert_chart,
-                  color: Color(0xFF19B3F6),
-                  size: 18.sp,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                "순위 변화 추이",
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-              Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(
-                    color: AppTheme.isDark(context)
-                        ? Colors.grey[700]!
-                        : Colors.grey[300]!,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  "낮을수록 상위권",
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-              ),
-            ],
+          HistoryTitleWidget(
+            title: "순위 변화 그래프",
+            icon: Icons.trending_up,
+            lightPrimaryColor: Color(0xFFDCF1FF),
+            lightSecondaryColor: Color(0xFFBAE6FD),
+            darkPrimaryColor: Color(0xFF334155),
+            darkSecondaryColor: Color(0xFF475569),
+            lightIconBackground: Color(0xFF10B981),  // 에메랄드 (긍정적 변화)
+            darkIconBackground: Color(0xFF22C55E),
           ),
+
+
 
           SizedBox(height: 16.h),
 

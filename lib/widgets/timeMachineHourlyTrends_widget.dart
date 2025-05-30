@@ -7,7 +7,7 @@ import '_widgets.dart';
 class TimeMachineHourlyTrendsWidget extends StatefulWidget {
   final Map<String, Color> categoryColors;
   final Function(int) getKeywordsForHour;
-  final List<DateTime> availableTimes; // API에서 받아온 시간 리스트
+  final List<DateTime> availableTimes;
 
   const TimeMachineHourlyTrendsWidget({
     Key? key,
@@ -20,58 +20,69 @@ class TimeMachineHourlyTrendsWidget extends StatefulWidget {
   State<TimeMachineHourlyTrendsWidget> createState() => _TimeMachineHourlyTrendsWidgetState();
 }
 
-class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsWidget> {
-  int _selectedTimeIndex = 0; // 현재 선택된 시간의 인덱스
+class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsWidget>
+    with SingleTickerProviderStateMixin {
+  late PageController _pageController;
+  int _currentTimeIndex = 0;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    // 시간 리스트가 비어있지 않다면 첫 번째 시간을 기본값으로
-    if (widget.availableTimes.isNotEmpty) {
-      _selectedTimeIndex = 0;
-    }
+    _pageController = PageController();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
   }
 
   // 시간대별 아이콘과 색상을 반환하는 메서드
   Map<String, dynamic> _getTimeTheme(int hour) {
     if (hour >= 0 && hour < 6) {
-      // 새벽 (0-5시)
       return {
         'icon': Icons.nightlight_round,
         'colors': [Color(0xFF1A237E), Color(0xFF3949AB)],
         'label': '새벽',
-        'iconColor': Color(0xFF7986CB),
+        'gradient': [Color(0xFF0F0C29), Color(0xFF24243e)],
       };
     } else if (hour >= 6 && hour < 12) {
-      // 아침 (6-11시)
       return {
         'icon': Icons.wb_sunny_outlined,
         'colors': [Color(0xFFFF6F00), Color(0xFFFFB74D)],
         'label': '아침',
-        'iconColor': Color(0xFFFF9800),
+        'gradient': [Color(0xFFf093fb), Color(0xFFf5576c)],
       };
     } else if (hour >= 12 && hour < 18) {
-      // 오후 (12-17시)
       return {
         'icon': Icons.sunny,
         'colors': [Color(0xFF1976D2), Color(0xFF42A5F5)],
         'label': '오후',
-        'iconColor': Color(0xFF2196F3),
+        'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)],
       };
     } else {
-      // 저녁 (18-23시)
       return {
         'icon': Icons.nights_stay,
         'colors': [Color(0xFF4A148C), Color(0xFF7B1FA2)],
         'label': '저녁',
-        'iconColor': Color(0xFFAB47BC),
+        'gradient': [Color(0xFF667eea), Color(0xFF764ba2)],
       };
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 시간 데이터가 없으면 빈 컨테이너 반환
     if (widget.availableTimes.isEmpty) {
       return Container();
     }
@@ -79,20 +90,14 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     return _buildContainer(
       context: context,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
           _buildHeader(),
-
           SizedBox(height: 20.h),
-
-          // 키워드 섹션 (위로 이동)
-          _buildKeywordSection(),
-
-          SizedBox(height: 24.h),
-
-          // 시간 선택기
-          _buildEnhancedTimeSelector(),
+          _buildTimeNavigator(),
+          SizedBox(height: 16.h),
+          _buildKeywordsList(),
+          SizedBox(height: 16.h),
+          _buildPageIndicator(),
         ],
       ),
     ).animate()
@@ -110,13 +115,19 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
         borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: AppTheme.isDark(context)
+              ? Colors.grey[800]!.withOpacity(0.3)
+              : Colors.grey[300]!.withOpacity(0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppTheme.isDark(context)
-                ? Colors.black.withOpacity(0.5)
-                : Colors.black.withOpacity(0.15),
-            blurRadius: 12,
-            spreadRadius: 1,
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            spreadRadius: 0,
             offset: Offset(0, 4),
           ),
         ],
@@ -127,7 +138,7 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
 
   Widget _buildHeader() {
     return HistoryTitleWidget(
-      title: "시간별 트렌드",
+      title: "시간별 실시간 검색어",
       icon: Icons.schedule_rounded,
       lightPrimaryColor: Color(0xFFDCF1FF),
       lightSecondaryColor: Color(0xFFBAE6FD),
@@ -138,460 +149,386 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     );
   }
 
-  Widget _buildKeywordSection() {
-    final DateTime currentTime = widget.availableTimes[_selectedTimeIndex];
-    final String timeString = _formatTime(currentTime);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 섹션 헤더 (현재 선택된 시간 표시)
-        Row(
-          children: [
-            Icon(
-              Icons.trending_up,
-              color: Color(0xFF19B3F6),
-              size: 20.sp,
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              "$timeString 키워드",
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.getTextColor(context),
-              ),
-            ),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Container(
-                height: 1.h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF19B3F6).withOpacity(0.5),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        SizedBox(height: 16.h),
-
-        // 키워드 칩들
-        _buildKeywordChips(),
-      ],
-    );
-  }
-
-  Widget _buildEnhancedTimeSelector() {
-    final DateTime currentTime = widget.availableTimes[_selectedTimeIndex];
-    final String timeString = _formatTime(currentTime);
+  Widget _buildTimeNavigator() {
+    final DateTime currentTime = widget.availableTimes[_currentTimeIndex];
     final Map<String, dynamic> timeTheme = _getTimeTheme(currentTime.hour);
+    final String timeString = _formatTime(currentTime);
 
     return Container(
+      height: 60.h,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            (timeTheme['colors'][0] as Color).withOpacity(0.1),
-            (timeTheme['colors'][1] as Color).withOpacity(0.05),
-          ],
+          colors: timeTheme['gradient'],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: (timeTheme['colors'][0] as Color).withOpacity(0.2),
-          width: 1.5,
-        ),
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: (timeTheme['colors'][0] as Color).withOpacity(0.3),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
-      child: Container(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          children: [
-            // 시간대 표시 섹션
-            _buildTimeDisplaySection(timeTheme, timeString),
+      child: Row(
+        children: [
+          // 이전 버튼
+          _buildNavButton(
+            icon: Icons.chevron_left,
+            onTap: _currentTimeIndex > 0 ? _goToPreviousTime : null,
+            isLeft: true,
+          ),
 
-            SizedBox(height: 20.h),
-
-            // 네비게이션 컨트롤
-            _buildNavigationControls(timeTheme),
-          ],
-        ),
-      ),
-    ).animate()
-        .fadeIn(duration: 500.ms)
-        .slideY(begin: 0.1, end: 0, duration: 500.ms, curve: Curves.easeOutCubic);
-  }
-
-  Widget _buildTimeDisplaySection(Map<String, dynamic> timeTheme, String timeString) {
-    return Column(
-      children: [
-        // 시간대 아이콘과 라벨
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: timeTheme['colors'],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: (timeTheme['colors'][0] as Color).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+          // 중앙 시간 표시
+          Expanded(
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      timeTheme['icon'],
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        timeString,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        timeTheme['label'],
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              child: Icon(
-                timeTheme['icon'],
-                color: Colors.white,
-                size: 24.sp,
-              ),
-            ).animate()
-                .rotate(duration: 2.seconds, curve: Curves.easeInOut)
-                .then()
-                .rotate(begin: 0, end: 0.1, duration: 200.ms)
-                .then()
-                .rotate(begin: 0.1, end: 0, duration: 200.ms),
-
-            SizedBox(width: 12.w),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  timeTheme['label'],
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.isDark(context)
-                        ? Colors.grey[400]
-                        : Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  timeString,
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.getTextColor(context),
-                    letterSpacing: 2,
-                  ),
-                ),
-              ],
             ),
-          ],
-        ),
+          ),
 
-        SizedBox(height: 16.h),
-
-        // 프로그레스 인디케이터
-        _buildProgressIndicator(timeTheme),
-      ],
+          // 다음 버튼
+          _buildNavButton(
+            icon: Icons.chevron_right,
+            onTap: _currentTimeIndex < widget.availableTimes.length - 1
+                ? _goToNextTime
+                : null,
+            isLeft: false,
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildProgressIndicator(Map<String, dynamic> timeTheme) {
-    final double progress = (_selectedTimeIndex + 1) / widget.availableTimes.length;
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${_selectedTimeIndex + 1} / ${widget.availableTimes.length}',
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.isDark(context)
-                    ? Colors.grey[400]
-                    : Colors.grey[600],
-              ),
-            ),
-            Text(
-              _formatDate(widget.availableTimes[_selectedTimeIndex]),
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.isDark(context)
-                    ? Colors.grey[400]
-                    : Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-
-        SizedBox(height: 8.h),
-
-        Container(
-          height: 4.h,
-          decoration: BoxDecoration(
-            color: AppTheme.isDark(context)
-                ? Colors.grey[800]
-                : Colors.grey[200],
-            borderRadius: BorderRadius.circular(2.r),
-          ),
-          child: Stack(
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width * 0.8 * progress,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: timeTheme['colors'],
-                  ),
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ).animate()
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNavigationControls(Map<String, dynamic> timeTheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildModernNavButton(
-          icon: Icons.keyboard_arrow_left_rounded,
-          onTap: _selectedTimeIndex > 0 ? _goToPreviousTime : null,
-          timeTheme: timeTheme,
-          isLeft: true,
-        ),
-
-        // 중앙 시간 점프 버튼들
-        _buildTimeJumpButtons(timeTheme),
-
-        _buildModernNavButton(
-          icon: Icons.keyboard_arrow_right_rounded,
-          onTap: _selectedTimeIndex < widget.availableTimes.length - 1
-              ? _goToNextTime
-              : null,
-          timeTheme: timeTheme,
-          isLeft: false,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimeJumpButtons(Map<String, dynamic> timeTheme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 처음으로
-        if (_selectedTimeIndex > 2)
-          _buildSmallNavButton(
-            icon: Icons.first_page,
-            onTap: () => setState(() => _selectedTimeIndex = 0),
-            timeTheme: timeTheme,
-          ),
-
-        SizedBox(width: 8.w),
-
-        // 끝으로
-        if (_selectedTimeIndex < widget.availableTimes.length - 3)
-          _buildSmallNavButton(
-            icon: Icons.last_page,
-            onTap: () => setState(() => _selectedTimeIndex = widget.availableTimes.length - 1),
-            timeTheme: timeTheme,
-          ),
-      ],
-    );
-  }
-
-  Widget _buildModernNavButton({
+  Widget _buildNavButton({
     required IconData icon,
     required VoidCallback? onTap,
-    required Map<String, dynamic> timeTheme,
     required bool isLeft,
   }) {
     final bool isEnabled = onTap != null;
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        width: 50.w,
-        height: 50.w,
-        decoration: BoxDecoration(
-          gradient: isEnabled
-              ? LinearGradient(
-            colors: [
-              (timeTheme['colors'][0] as Color).withOpacity(0.8),
-              (timeTheme['colors'][1] as Color).withOpacity(0.6),
-            ],
-            begin: isLeft ? Alignment.centerLeft : Alignment.centerRight,
-            end: isLeft ? Alignment.centerRight : Alignment.centerLeft,
-          )
-              : null,
-          color: !isEnabled
-              ? (AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[300])
-              : null,
-          borderRadius: BorderRadius.circular(25.r),
-          boxShadow: isEnabled ? [
-            BoxShadow(
-              color: (timeTheme['colors'][0] as Color).withOpacity(0.3),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ] : null,
-        ),
-        child: Icon(
-          icon,
-          color: isEnabled ? Colors.white : Colors.grey[500],
-          size: 24.sp,
-        ),
-      ),
-    ).animate(target: isEnabled ? 1 : 0)
-        .scale(duration: 200.ms, curve: Curves.easeOutCubic);
-  }
-
-  Widget _buildSmallNavButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    required Map<String, dynamic> timeTheme,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
       child: Container(
-        width: 32.w,
-        height: 32.w,
+        width: 50.w,
+        height: 60.h,
         decoration: BoxDecoration(
-          border: Border.all(
-            color: (timeTheme['colors'][0] as Color).withOpacity(0.5),
-            width: 1.5,
+          color: isEnabled
+              ? Colors.white.withOpacity(0.1)
+              : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(isLeft ? 12.r : 0),
+            bottomLeft: Radius.circular(isLeft ? 12.r : 0),
+            topRight: Radius.circular(isLeft ? 0 : 12.r),
+            bottomRight: Radius.circular(isLeft ? 0 : 12.r),
           ),
-          borderRadius: BorderRadius.circular(16.r),
-          color: (timeTheme['colors'][0] as Color).withOpacity(0.1),
         ),
-        child: Icon(
-          icon,
-          color: timeTheme['iconColor'],
-          size: 18.sp,
+        child: Center(
+          child: Icon(
+            icon,
+            color: isEnabled
+                ? Colors.white
+                : Colors.white.withOpacity(0.3),
+            size: 24.sp,
+          ),
         ),
       ),
-    ).animate()
-        .fadeIn(duration: 300.ms)
-        .scale(duration: 300.ms, curve: Curves.easeOutBack);
+    );
   }
 
-  Widget _buildKeywordChips() {
-    // 현재 선택된 시간의 hour 값을 전달 (기존 로직과 호환)
-    final int currentHour = widget.availableTimes[_selectedTimeIndex].hour;
-    final keywords = widget.getKeywordsForHour(currentHour);
-    final displayKeywords = keywords.take(8).toList();
+  Widget _buildKeywordsList() {
+    return Container(
+      height: 420.h, // 10개 키워드 * 42h = 420h
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (index) {
+          if (mounted && index >= 0 && index < widget.availableTimes.length) {
+            setState(() {
+              _currentTimeIndex = index;
+            });
+            _animationController.reset();
+            _animationController.forward();
+          }
+        },
+        itemCount: widget.availableTimes.length,
+        itemBuilder: (context, index) {
+          if (index < 0 || index >= widget.availableTimes.length) {
+            return Container();
+          }
+          return AnimatedBuilder(
+            animation: _fadeAnimation,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _fadeAnimation.value,
+                child: _buildKeywordPage(index),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
 
-    return Wrap(
-      spacing: 8.w,
-      runSpacing: 10.h,
-      children: displayKeywords.asMap().entries.map<Widget>((entry) {
-        final index = entry.key;
-        final keyword = entry.value;
-        return _buildKeywordChip(keyword, index + 1);
+  Widget _buildKeywordPage(int timeIndex) {
+    if (timeIndex < 0 || timeIndex >= widget.availableTimes.length) {
+      return Container();
+    }
+
+    final int hour = widget.availableTimes[timeIndex].hour;
+    final dynamic keywordsData = widget.getKeywordsForHour(hour);
+
+    List<Map<String, dynamic>> displayKeywords = [];
+
+    if (keywordsData is List) {
+      displayKeywords = keywordsData
+          .cast<Map<String, dynamic>>()
+          .take(10)
+          .toList();
+    }
+
+    // 키워드가 10개 미만이면 빈 공간으로 채우기
+    while (displayKeywords.length < 10) {
+      displayKeywords.add({
+        'keyword': '키워드 ${displayKeywords.length + 1}',
+        'category': '기타',
+        'change': 0,
+      });
+    }
+
+    return Column(
+      children: displayKeywords.asMap().entries.map((entry) {
+        final int index = entry.key;
+        final Map<String, dynamic> keyword = entry.value;
+        return _buildCompactKeywordItem(keyword, index + 1, index);
       }).toList(),
     );
   }
 
-  Widget _buildKeywordChip(Map<String, dynamic> keyword, int rank) {
-    Color chipColor;
-    Color textColor;
-
-    if (rank == 1) {
-      chipColor = Color(0xFF1E88E5);
-      textColor = Colors.white;
-    } else if (rank == 2) {
-      chipColor = Color(0xFF42A5F5);
-      textColor = Colors.white;
-    } else if (rank == 3) {
-      chipColor = Color(0xFF64B5F6);
-      textColor = Colors.white;
+  Widget _buildCompactKeywordItem(Map<String, dynamic> keyword, int rank, int index) {
+    // 안전한 변화 수치 계산
+    int change = 0;
+    if (keyword.containsKey('change') && keyword['change'] != null) {
+      change = keyword['change'] as int? ?? 0;
     } else {
-      chipColor = AppTheme.isDark(context)
-          ? Color(0xFF424242)
-          : Color(0xFFE0E0E0);
-      textColor = AppTheme.isDark(context)
-          ? Colors.grey[300]!
-          : Colors.grey[700]!;
+      // 기본 로직
+      if (rank % 3 == 0) {
+        change = rank % 50;
+      } else if (rank % 3 == 1) {
+        change = -(rank % 30);
+      } else {
+        change = rank % 100;
+      }
     }
 
+    String changeText = '';
+    Color changeColor = Colors.grey;
+
+    if (change > 0) {
+      changeText = '+$change';
+      changeColor = Colors.red;
+    } else if (change < 0) {
+      changeText = '$change';
+      changeColor = Colors.blue;
+    } else {
+      changeText = '0';
+    }
+
+    final String keywordText = keyword['keyword']?.toString() ?? '키워드 $rank';
+    final String categoryText = keyword['category']?.toString() ?? '기타';
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      height: 42.h,
+      margin: EdgeInsets.only(bottom: rank == 10 ? 0 : 0),
       decoration: BoxDecoration(
-        color: chipColor,
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: rank <= 3 ? [
-          BoxShadow(
-            color: chipColor.withOpacity(0.4),
-            blurRadius: 6,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ] : [
-          BoxShadow(
+        color: Colors.transparent,
+        border: rank == 10 ? null : Border(
+          bottom: BorderSide(
             color: AppTheme.isDark(context)
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
+                ? Colors.grey.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.15),
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // 순위 뱃지
+          // 순위
           Container(
-            width: 20.w,
-            height: 20.w,
-            decoration: BoxDecoration(
-              color: rank <= 3
-                  ? Colors.white.withOpacity(0.2)
-                  : (AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[500]),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                rank.toString(),
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.bold,
-                  color: rank <= 3
-                      ? Colors.white
-                      : (AppTheme.isDark(context) ? Colors.white : Colors.grey[700]),
+            width: 32.w,
+            alignment: Alignment.center,
+            child: Container(
+              width: 24.w,
+              height: 24.w,
+              decoration: BoxDecoration(
+                color: rank <= 3
+                    ? Color(0xFF19B3F6)
+                    : (AppTheme.isDark(context)
+                    ? Colors.grey[700]
+                    : Colors.grey[300]),
+                borderRadius: BorderRadius.circular(6.r),
+              ),
+              child: Center(
+                child: Text(
+                  rank.toString(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                    color: rank <= 3
+                        ? Colors.white
+                        : (AppTheme.isDark(context)
+                        ? Colors.grey[300]
+                        : Colors.grey[600]),
+                  ),
                 ),
               ),
             ),
           ),
 
-          SizedBox(width: 8.w),
+          SizedBox(width: 12.w),
 
-          // 키워드명
-          Text(
-            keyword['keyword'],
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          // 키워드
+          Expanded(
+            child: Text(
+              keywordText,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.getTextColor(context),
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
+          ),
+
+          // 변화 수치 및 카테고리
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                width: 50.w,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  changeText,
+                  style: TextStyle(
+                    color: changeColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.sp,
+                  ),
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Container(
+                width: 50.w,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  categoryText,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[500]
+                        : Colors.grey[600],
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 300.ms, delay: Duration(milliseconds: rank * 50))
+    ).animate(delay: Duration(milliseconds: index * 50))
+        .fadeIn(duration: 300.ms)
         .slideX(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic);
+  }
+
+  Widget _buildPageIndicator() {
+    final int totalTimes = widget.availableTimes.length;
+    final int maxDots = 7;
+    final int dotsToShow = totalTimes < maxDots ? totalTimes : maxDots;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // 페이지 도트 인디케이터
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(
+            dotsToShow,
+                (index) {
+              int realIndex;
+
+              if (totalTimes <= maxDots) {
+                // 전체 항목이 maxDots 이하면 그대로 표시
+                realIndex = index;
+              } else {
+                // 현재 페이지 근처의 인덱스만 표시
+                final int halfDots = maxDots ~/ 2;
+                final int startIndex = (_currentTimeIndex - halfDots).clamp(0, totalTimes - maxDots);
+                realIndex = startIndex + index;
+              }
+
+              final bool isActive = realIndex == _currentTimeIndex;
+
+              return GestureDetector(
+                onTap: () => _goToTimeIndex(realIndex),
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  margin: EdgeInsets.symmetric(horizontal: 3.w),
+                  width: isActive ? 20.w : 8.w,
+                  height: 8.w,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? Color(0xFF19B3F6)
+                        : (AppTheme.isDark(context)
+                        ? Colors.grey[600]
+                        : Colors.grey[400]),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   // 시간 포맷팅 함수
@@ -601,26 +538,34 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     return '$hour:$minute';
   }
 
-  // 날짜 포맷팅 함수
-  String _formatDate(DateTime dateTime) {
-    return '${dateTime.month}/${dateTime.day}';
-  }
-
   // 이전 시간으로 이동
   void _goToPreviousTime() {
-    if (_selectedTimeIndex > 0) {
-      setState(() {
-        _selectedTimeIndex--;
-      });
+    if (_currentTimeIndex > 0) {
+      _pageController.previousPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
   // 다음 시간으로 이동
   void _goToNextTime() {
-    if (_selectedTimeIndex < widget.availableTimes.length - 1) {
-      setState(() {
-        _selectedTimeIndex++;
-      });
+    if (_currentTimeIndex < widget.availableTimes.length - 1) {
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  // 특정 시간 인덱스로 이동
+  void _goToTimeIndex(int index) {
+    if (index >= 0 && index < widget.availableTimes.length && mounted) {
+      _pageController.animateToPage(
+        index,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 }
