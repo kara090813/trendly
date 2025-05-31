@@ -25,6 +25,34 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
   // 현재 선택된 랜덤 키워드 인덱스
   int _currentRandomIndex = 0;
 
+  // 뉴스 데이터 (썸네일 정보 포함)
+  final List<Map<String, dynamic>> _newsData = [
+    {
+      "source": "중앙일보",
+      "type": "뉴스",
+      "title": "무표정 고양이 짤, 이틀 만에 30만 뷰 돌파",
+      "date": "2022-11-03",
+      "thumbnail": "https://example.com/news1.jpg", // 실제 썸네일 URL
+      "hasImage": true,
+    },
+    {
+      "source": "인사이트",
+      "type": "커뮤니티",
+      "title": "'짤줍'의 시작은 이 고양이였다?",
+      "date": "2022-11-04",
+      "thumbnail": null, // 썸네일 없음
+      "hasImage": false,
+    },
+    {
+      "source": "위키트렌드",
+      "type": "뉴스",
+      "title": "트위터 밈 급부상 키워드 분석",
+      "date": "2022-11-05",
+      "thumbnail": "https://example.com/news3.jpg",
+      "hasImage": true,
+    },
+  ];
+
   // 랜덤 키워드 기능
   void _randomizeKeyword() {
     setState(() {
@@ -250,7 +278,6 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
             darkSecondaryColor: Color(0xFF475569),
             lightIconBackground: Color(0xFF818CF8),
             darkIconBackground: Color(0xFF6366F1),
-            // 기타 색상은 기존 유지
           ),
 
           SizedBox(height: 16.h),
@@ -354,7 +381,6 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 관련 뉴스
           HistoryTitleWidget(
             title: "관련 뉴스",
             icon: Icons.newspaper_rounded,
@@ -369,30 +395,14 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
           SizedBox(height: 16.h),
 
           // 뉴스 카드 목록
-          _buildNewsCard(
-            "중앙일보",
-            "무표정 고양이 짤, 이틀 만에 30만 뷰 돌파",
-            "2022-11-03",
-            0,
-          ),
-
-          SizedBox(height: 12.h),
-
-          _buildNewsCard(
-            "인사이트",
-            "'짤줍'의 시작은 이 고양이였다?",
-            "2022-11-04",
-            100,
-          ),
-
-          SizedBox(height: 12.h),
-
-          _buildNewsCard(
-            "위키트렌드",
-            "트위터 밈 급부상 키워드 분석",
-            "2022-11-05",
-            200,
-          ),
+          ..._newsData.asMap().entries.map((entry) {
+            final int index = entry.key;
+            final Map<String, dynamic> newsItem = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(bottom: index == _newsData.length - 1 ? 0 : 12.h),
+              child: _buildNewsCard(newsItem, index * 100),
+            );
+          }).toList(),
         ],
       ),
     ).animate()
@@ -400,8 +410,8 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
         .slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 
-  // 뉴스 카드
-  Widget _buildNewsCard(String source, String title, String date, int delay) {
+  // 개선된 뉴스 카드
+  Widget _buildNewsCard(Map<String, dynamic> newsItem, int delay) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.isDark(context)
@@ -429,20 +439,33 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 미디어 아이콘
+          // 썸네일 이미지 또는 기본 이미지
           Container(
-            width: 40.w,
-            height: 40.w,
+            width: 60.w,
+            height: 60.w,
             decoration: BoxDecoration(
-              color: Color(0xFF19B3F6).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.article,
-                color: Color(0xFF19B3F6),
-                size: 20.sp,
+              color: AppTheme.isDark(context)
+                  ? Color(0xFF2A2A36)
+                  : Colors.grey[200],
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(
+                color: AppTheme.isDark(context)
+                    ? Colors.grey[600]!
+                    : Colors.grey[300]!,
+                width: 1,
               ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(7.r),
+              child: newsItem['hasImage'] == true && newsItem['thumbnail'] != null
+                  ? Image.network(
+                newsItem['thumbnail'],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildDefaultThumbnail(newsItem['type']);
+                },
+              )
+                  : _buildDefaultThumbnail(newsItem['type']),
             ),
           ),
 
@@ -453,37 +476,68 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 상단: 뉴스사명과 타입, 날짜
                 Row(
                   children: [
+                    // 뉴스사명
+                    Text(
+                      newsItem['source'],
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[300]
+                            : Colors.grey[700],
+                      ),
+                    ),
+
+                    SizedBox(width: 6.w),
+
+                    // 구분점
+                    Container(
+                      width: 3.w,
+                      height: 3.w,
+                      decoration: BoxDecoration(
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[500]
+                            : Colors.grey[400],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+
+                    SizedBox(width: 6.w),
+
+                    // 커뮤니티/뉴스 타입 태그
                     Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 6.w,
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFF19B3F6).withOpacity(0.1),
+                        color: _getTypeColor(newsItem['type']).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4.r),
                         border: Border.all(
-                          color: Color(0xFF19B3F6).withOpacity(0.2),
+                          color: _getTypeColor(newsItem['type']).withOpacity(0.3),
                           width: 1,
                         ),
                       ),
                       child: Text(
-                        source,
+                        newsItem['type'],
                         style: TextStyle(
-                          fontSize: 11.sp,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF19B3F6),
+                          color: _getTypeColor(newsItem['type']),
                         ),
                       ),
                     ),
 
                     Spacer(),
 
+                    // 날짜
                     Text(
-                      date,
+                      newsItem['date'],
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 11.sp,
                         color: AppTheme.isDark(context)
                             ? Colors.grey[500]
                             : Colors.grey[600],
@@ -492,16 +546,19 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
                   ],
                 ),
 
-                SizedBox(height: 6.h),
+                SizedBox(height: 8.h),
 
+                // 제목
                 Text(
-                  title,
+                  newsItem['title'],
                   style: TextStyle(
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: AppTheme.getTextColor(context),
-                    height: 1.4,
+                    height: 1.3,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -511,6 +568,60 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
     ).animate()
         .fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay))
         .slideX(begin: 0.05, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
+  }
+
+  // 기본 썸네일 (썸네일이 없을 때)
+  Widget _buildDefaultThumbnail(String type) {
+    IconData iconData;
+    Color iconColor;
+
+    switch (type) {
+      case '뉴스':
+        iconData = Icons.newspaper;
+        iconColor = Color(0xFF19B3F6);
+        break;
+      case '커뮤니티':
+        iconData = Icons.forum;
+        iconColor = Color(0xFF9B59B6);
+        break;
+      default:
+        iconData = Icons.article;
+        iconColor = Color(0xFF6C757D);
+    }
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            iconColor.withOpacity(0.1),
+            iconColor.withOpacity(0.05),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          iconData,
+          color: iconColor.withOpacity(0.6),
+          size: 24.sp,
+        ),
+      ),
+    );
+  }
+
+  // 타입에 따른 색상 반환
+  Color _getTypeColor(String type) {
+    switch (type) {
+      case '뉴스':
+        return Color(0xFF19B3F6);
+      case '커뮤니티':
+        return Color(0xFF9B59B6);
+      default:
+        return AppTheme.isDark(context) ? Colors.grey[400]! : Colors.grey[600]!;
+    }
   }
 
   // 버튼

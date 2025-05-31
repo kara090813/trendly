@@ -122,27 +122,46 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
     required String subtitle,
     required List<Color> colors,
   }) {
+    final bool isDark = AppTheme.isDark(context);
+
     return Container(
-      height: 140.h, // 직사각형으로 높이 증가
+      height: 140.h,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
+        // 라이트모드에서 더 명확한 배경색 사용
+        color: isDark
+            ? Color(0xFF2A2A36)
+            : Color(0xFFFBFBFB), // 순백색 대신 약간 회색빛 흰색
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: colors[0].withOpacity(0.3),
-          width: 1,
+          // 라이트모드에서 더 진한 테두리
+          color: isDark
+              ? colors[0].withOpacity(0.3)
+              : colors[0].withOpacity(0.6), // 0.3 -> 0.6으로 증가
+          width: 1.2, // 1 -> 1.2로 증가
         ),
         boxShadow: [
           BoxShadow(
-            color: colors[0].withOpacity(0.1),
-            blurRadius: 4,
+            // 라이트모드에서 더 진한 그림자
+            color: isDark
+                ? colors[0].withOpacity(0.1)
+                : colors[0].withOpacity(0.15), // 0.1 -> 0.15로 증가
+            blurRadius: isDark ? 4 : 6, // 라이트모드에서 블러 증가
             spreadRadius: 0,
-            offset: Offset(0, 1),
+            offset: Offset(0, isDark ? 1 : 2), // 라이트모드에서 오프셋 증가
           ),
+          // 라이트모드에서 추가 그림자 효과
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 2,
+              spreadRadius: 1,
+              offset: Offset(0, 1),
+            ),
         ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, // 공간 균등 분배
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // 상단: 아이콘 + 라벨
           Column(
@@ -158,10 +177,11 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8.r),
                   boxShadow: [
                     BoxShadow(
-                      color: colors[0].withOpacity(0.25),
-                      blurRadius: 3,
+                      // 아이콘 컨테이너 그림자도 개선
+                      color: colors[0].withOpacity(isDark ? 0.25 : 0.35),
+                      blurRadius: isDark ? 3 : 4,
                       spreadRadius: 0,
-                      offset: Offset(0, 1),
+                      offset: Offset(0, isDark ? 1 : 2),
                     ),
                   ],
                 ),
@@ -174,14 +194,14 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
 
               SizedBox(height: 6.h),
 
-              // 라벨
+              // 라벨 - 색상 개선
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 10.sp,
-                  color: AppTheme.isDark(context)
+                  color: isDark
                       ? Colors.grey[400]
-                      : Colors.grey[600],
+                      : Colors.grey[700], // 600 -> 700으로 더 진하게
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -190,10 +210,10 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(
-            height: 2.h,
-          ),
-          // 중간: 메인 값 (키워드명) - 2줄 가능
+
+          SizedBox(height: 2.h),
+
+          // 중간: 메인 값 (키워드명) - 색상 개선
           Expanded(
             child: Center(
               child: Text(
@@ -201,24 +221,30 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                  height: 1.2, // 줄 간격 조정
+                  // 라이트모드에서 더 진한 텍스트
+                  color: isDark
+                      ? AppTheme.getTextColor(context)
+                      : Color(0xFF1A1A1A), // 검은색에 가깝게
+                  height: 1.2,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 2, // 2줄까지 허용
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
-          SizedBox(
-            height: 2.h,
-          ),
-          // 하단: 서브 정보
+
+          SizedBox(height: 2.h),
+
+          // 하단: 서브 정보 - 색상 개선
           Text(
             subtitle,
             style: TextStyle(
               fontSize: 10.sp,
-              color: colors[0],
+              // 액센트 색상도 라이트모드에서 더 진하게
+              color: isDark
+                  ? colors[0]
+                  : Color.lerp(colors[0], Colors.black, 0.3)!, // 원색에 검은색 30% 혼합
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
