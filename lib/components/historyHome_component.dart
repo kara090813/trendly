@@ -48,99 +48,81 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
 
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(context),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // 앱바와 탭바 통합
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: AppTheme.getContainerColor(context),
-            elevation: 0,
-            expandedHeight: 0,
-            toolbarHeight: 130.h, // 뉴모픽 탭바를 위해 높이 약간 증가
-            automaticallyImplyLeading: false,
-            shape: const RoundedRectangleBorder(
+      body: Column(  // CustomScrollView 대신 Column 사용
+        children: [
+          // 고정 헤더
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.getContainerColor(context),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(15),
-                bottomRight: Radius.circular(15),
+                bottomLeft: Radius.circular(15.r),
+                bottomRight: Radius.circular(15.r),
               ),
-            ),
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.getContainerColor(context),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(15.r),
-                  bottomRight: Radius.circular(15.r),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withOpacity(0.35)
+                      : Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black.withOpacity(0.35)
-                        : Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    // 헤더 타이틀 (중앙 정렬)
-                    Padding(
-                      padding: EdgeInsets.only(top: 16.h, bottom: 18.h),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "트렌드 히스토리",
-                              style: TextStyle(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.getTextColor(context),
-                              ),
+              ],
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 헤더 타이틀
+                  Padding(
+                    padding: EdgeInsets.only(top: 16.h, bottom: 18.h),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "트렌드 히스토리",
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.getTextColor(context),
                             ),
-                            CircleButtonWidget(
-                              context: context,
-                              onTap: () {
-                                Provider.of<UserPreferenceProvider>(context, listen: false).toggleThemeMode();
-                              },
-                              assetImagePath: 'assets/img/items/dark.png',
-                              color: Colors.blue,
-                              iconSize: 30.w,
-                              containerSize: 42.w,
-                              imagePadding: EdgeInsets.all(8.w),
-                            )
-                          ],
-                        ),
+                          ),
+                          CircleButtonWidget(
+                            context: context,
+                            onTap: () {
+                              Provider.of<UserPreferenceProvider>(context, listen: false).toggleThemeMode();
+                            },
+                            assetImagePath: 'assets/img/items/dark.png',
+                            color: Colors.blue,
+                            iconSize: 30.w,
+                            containerSize: 42.w,
+                            imagePadding: EdgeInsets.all(8.w),
+                          )
+                        ],
                       ),
                     ),
-                    // 뉴모픽 스타일 탭바
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
-                      child: _buildNeumorphicTabBar(),
-                    ),
-                  ],
-                ),
+                  ),
+                  // 뉴모픽 스타일 탭바
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: _buildNeumorphicTabBar(),
+                  ),
+                  SizedBox(height: 8.h),
+                ],
               ),
             ),
           ),
 
-          // 콘텐츠
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height - 140.h,
-              child: TabBarView(
-                controller: _tabController,
-                // 슬라이드 전환 비활성화 (터치로만 전환)
-                physics: NeverScrollableScrollPhysics(),
-                children: [
-                  TimeMachineTabComponent(),
-                  KeywordHistoryTabComponent(),
-                  RandomKeywordTabComponent(),
-                ],
-              ),
+          // 탭 콘텐츠 영역 - Expanded로 남은 공간 모두 사용
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              physics: NeverScrollableScrollPhysics(), // 좌우 스와이프 비활성화
+              children: [
+                TimeMachineTabComponent(),
+                KeywordHistoryTabComponent(),
+                RandomKeywordTabComponent(),
+              ],
             ),
           ),
         ],

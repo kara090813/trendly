@@ -59,7 +59,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.all(0),
-      physics: NeverScrollableScrollPhysics(),
+      physics: BouncingScrollPhysics(),
       children: [
         SizedBox(height: 16.h),
         _buildKeywordSelector(),
@@ -69,7 +69,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         _buildHistoryGraph(),
         SizedBox(height: 16.h),
         _buildRelatedKeywordsList(),
-        SizedBox(height: 100.h), // 짤림 방지를 위한 충분한 여백
+        SizedBox(height: 40.h),
       ],
     );
   }

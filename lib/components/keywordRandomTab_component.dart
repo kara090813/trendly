@@ -55,7 +55,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
 
     return ListView(
       padding: EdgeInsets.all(0),
-      physics: NeverScrollableScrollPhysics(),
+      physics: BouncingScrollPhysics(),
       children: [
         SizedBox(height: 16.h),
         _buildRandomKeywordHeader(currentKeyword),
@@ -63,7 +63,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
         _buildKeywordSummary(),
         SizedBox(height: 16.h),
         _buildRelatedNews(),
-        SizedBox(height: 16.h),
+        SizedBox(height: 40.h),
       ],
     );
   }

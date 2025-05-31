@@ -74,7 +74,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
           wordCloudImagePath: 'assets/img/items/word_cloud.png',
         ),
 
-        SizedBox(height: 200.h),
+        SizedBox(height: 40.h),
       ],
     );
   }
