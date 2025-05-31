@@ -56,7 +56,13 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
             DateTime(2025, 1, 15, 1, 30),
             DateTime(2025, 1, 15, 2, 1),
             DateTime(2025, 1, 15, 2, 1),
-            DateTime(2025, 1, 15, 8, 1) , DateTime(2025, 1, 15, 16, 1)
+            DateTime(2025, 1, 15, 8, 1),
+            DateTime(2025, 1, 15, 16, 1),
+            DateTime(2025, 1, 15, 18, 1),
+            DateTime(2025, 1, 15, 19, 1),
+            DateTime(2025, 1, 15, 20, 1),
+            DateTime(2025, 1, 15, 21, 1),
+            DateTime(2025, 1, 15, 23, 1)
             // API에서 받아온 DateTime 리스트들
           ],
         ),

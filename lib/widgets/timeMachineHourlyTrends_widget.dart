@@ -17,10 +17,12 @@ class TimeMachineHourlyTrendsWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<TimeMachineHourlyTrendsWidget> createState() => _TimeMachineHourlyTrendsWidgetState();
+  State<TimeMachineHourlyTrendsWidget> createState() =>
+      _TimeMachineHourlyTrendsWidgetState();
 }
 
-class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsWidget>
+class _TimeMachineHourlyTrendsWidgetState
+    extends State<TimeMachineHourlyTrendsWidget>
     with SingleTickerProviderStateMixin {
   late PageController _pageController;
   int _currentTimeIndex = 0;
@@ -53,30 +55,26 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     if (hour >= 0 && hour < 6) {
       return {
         'icon': Icons.nightlight_round,
-        'colors': [Color(0xFF1A237E), Color(0xFF3949AB)],
+        'color': Color(0xFF6366F1), // 밝은 보라색 (다크모드에서도 잘 보임)
         'label': '새벽',
-        'gradient': [Color(0xFF0F0C29), Color(0xFF24243e)],
       };
     } else if (hour >= 6 && hour < 12) {
       return {
         'icon': Icons.wb_sunny_outlined,
-        'colors': [Color(0xFFFF6F00), Color(0xFFFFB74D)],
+        'color': Color(0xFFEAB308), // 밝은 노란색
         'label': '아침',
-        'gradient': [Color(0xFFf093fb), Color(0xFFf5576c)],
       };
     } else if (hour >= 12 && hour < 18) {
       return {
         'icon': Icons.sunny,
-        'colors': [Color(0xFF1976D2), Color(0xFF42A5F5)],
+        'color': Color(0xFF3B82F6), // 밝은 파란색
         'label': '오후',
-        'gradient': [Color(0xFF4facfe), Color(0xFF00f2fe)],
       };
     } else {
       return {
         'icon': Icons.nights_stay,
-        'colors': [Color(0xFF4A148C), Color(0xFF7B1FA2)],
+        'color': Color(0xFF8B5CF6), // 밝은 퍼플
         'label': '저녁',
-        'gradient': [Color(0xFF667eea), Color(0xFF764ba2)],
       };
     }
   }
@@ -91,18 +89,26 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
       context: context,
       child: Column(
         children: [
-          _buildHeader(),
-          SizedBox(height: 20.h),
-          _buildTimeNavigator(),
-          SizedBox(height: 16.h),
-          _buildKeywordsList(),
+          _buildHeaderWithTime(),
+          SizedBox(height: 2.h),
+          Padding(
+            padding:EdgeInsets.symmetric(horizontal: 4.w),
+            child: Divider(
+              color: AppTheme.isDark(context)? Color(0xFF515151) : Color(0xFFDDDDDD),
+              thickness: 1.2,
+              indent: 4,
+            ),
+          ),
+          Padding(
+            padding:EdgeInsets.symmetric(horizontal: 4.w),
+            child: _buildKeywordsList(),
+          ),
           SizedBox(height: 16.h),
           _buildPageIndicator(),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 400.ms, delay: 300.ms)
-        .slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutQuad);
+    ).animate().fadeIn(duration: 400.ms, delay: 300.ms).slideY(
+        begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 
   Widget _buildContainer({
@@ -136,142 +142,93 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     );
   }
 
-  Widget _buildHeader() {
-    return HistoryTitleWidget(
-      title: "시간별 실시간 검색어",
-      icon: Icons.schedule_rounded,
-      lightPrimaryColor: Color(0xFFDCF1FF),
-      lightSecondaryColor: Color(0xFFBAE6FD),
-      darkPrimaryColor: Color(0xFF334155),
-      darkSecondaryColor: Color(0xFF475569),
-      lightIconBackground: Color(0xFF81C784),
-      darkIconBackground: Color(0xFF4CAF50),
-    );
-  }
-
-  Widget _buildTimeNavigator() {
+  // 타이틀과 시간을 하나로 통합
+  Widget _buildHeaderWithTime() {
     final DateTime currentTime = widget.availableTimes[_currentTimeIndex];
     final Map<String, dynamic> timeTheme = _getTimeTheme(currentTime.hour);
     final String timeString = _formatTime(currentTime);
 
-    return Container(
-      height: 60.h,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: timeTheme['gradient'],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 기존 타이틀
+        HistoryTitleWidget(
+          title: "시간별 실시간 검색어",
+          icon: Icons.schedule_rounded,
+          lightPrimaryColor: Color(0xFFDCF1FF),
+          lightSecondaryColor: Color(0xFFBAE6FD),
+          darkPrimaryColor: Color(0xFF334155),
+          darkSecondaryColor: Color(0xFF475569),
+          lightIconBackground: Color(0xFF81C784),
+          darkIconBackground: Color(0xFF4CAF50),
         ),
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: (timeTheme['colors'][0] as Color).withOpacity(0.3),
-            blurRadius: 8,
-            spreadRadius: 0,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 이전 버튼
-          _buildNavButton(
-            icon: Icons.chevron_left,
-            onTap: _currentTimeIndex > 0 ? _goToPreviousTime : null,
-            isLeft: true,
-          ),
 
-          // 중앙 시간 표시
-          Expanded(
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        SizedBox(height: 20.h),
+
+        // 시간 정보 (박스 없이 깔끔하게)
+        Row(
+          children: [
+            // 시간대 아이콘
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: timeTheme['color'].withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(
+                timeTheme['icon'],
+                color: timeTheme['color'],
+                size: 22.sp,
+              ),
+            ),
+
+            SizedBox(width: 14.w),
+
+            // 시간 정보
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Icon(
-                      timeTheme['icon'],
-                      color: Colors.white,
-                      size: 20.sp,
+                  Text(
+                    timeString,
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.getTextColor(context),
                     ),
                   ),
-                  SizedBox(width: 12.w),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        timeString,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        timeTheme['label'],
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '${timeTheme['label']} 시간대',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[300]
+                          : Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          // 다음 버튼
-          _buildNavButton(
-            icon: Icons.chevron_right,
-            onTap: _currentTimeIndex < widget.availableTimes.length - 1
-                ? _goToNextTime
-                : null,
-            isLeft: false,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavButton({
-    required IconData icon,
-    required VoidCallback? onTap,
-    required bool isLeft,
-  }) {
-    final bool isEnabled = onTap != null;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 50.w,
-        height: 60.h,
-        decoration: BoxDecoration(
-          color: isEnabled
-              ? Colors.white.withOpacity(0.1)
-              : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isLeft ? 12.r : 0),
-            bottomLeft: Radius.circular(isLeft ? 12.r : 0),
-            topRight: Radius.circular(isLeft ? 0 : 12.r),
-            bottomRight: Radius.circular(isLeft ? 0 : 12.r),
-          ),
+            // 페이지 정보
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: timeTheme['color'].withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Text(
+                '${_currentTimeIndex + 1}/${widget.availableTimes.length}',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: timeTheme['color'],
+                ),
+              ),
+            ),
+          ],
         ),
-        child: Center(
-          child: Icon(
-            icon,
-            color: isEnabled
-                ? Colors.white
-                : Colors.white.withOpacity(0.3),
-            size: 24.sp,
-          ),
-        ),
-      ),
+      ],
     );
   }
 
@@ -319,10 +276,8 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     List<Map<String, dynamic>> displayKeywords = [];
 
     if (keywordsData is List) {
-      displayKeywords = keywordsData
-          .cast<Map<String, dynamic>>()
-          .take(10)
-          .toList();
+      displayKeywords =
+          keywordsData.cast<Map<String, dynamic>>().take(10).toList();
     }
 
     // 키워드가 10개 미만이면 빈 공간으로 채우기
@@ -343,7 +298,8 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     );
   }
 
-  Widget _buildCompactKeywordItem(Map<String, dynamic> keyword, int rank, int index) {
+  Widget _buildCompactKeywordItem(
+      Map<String, dynamic> keyword, int rank, int index) {
     // 안전한 변화 수치 계산
     int change = 0;
     if (keyword.containsKey('change') && keyword['change'] != null) {
@@ -360,14 +316,19 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     }
 
     String changeText = '';
-    Color changeColor = Colors.grey;
+    Color changeColor =
+        AppTheme.isDark(context) ? Colors.grey[400]! : Colors.grey;
 
     if (change > 0) {
       changeText = '+$change';
-      changeColor = Colors.red;
+      changeColor = AppTheme.isDark(context)
+          ? Color(0xFFEF4444)
+          : Color(0xFFDC2626); // 더 밝은 빨강
     } else if (change < 0) {
       changeText = '$change';
-      changeColor = Colors.blue;
+      changeColor = AppTheme.isDark(context)
+          ? Color(0xFF3B82F6)
+          : Color(0xFF2563EB); // 더 밝은 파랑
     } else {
       changeText = '0';
     }
@@ -380,14 +341,16 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
       margin: EdgeInsets.only(bottom: rank == 10 ? 0 : 0),
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: rank == 10 ? null : Border(
-          bottom: BorderSide(
-            color: AppTheme.isDark(context)
-                ? Colors.grey.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.15),
-            width: 1,
-          ),
-        ),
+        border: rank == 10
+            ? null
+            : Border(
+                bottom: BorderSide(
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[700]!.withOpacity(0.3)
+                      : Colors.grey.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
       ),
       child: Row(
         children: [
@@ -402,8 +365,8 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
                 color: rank <= 3
                     ? Color(0xFF19B3F6)
                     : (AppTheme.isDark(context)
-                    ? Colors.grey[700]
-                    : Colors.grey[300]),
+                        ? Colors.grey[600]
+                        : Colors.grey[300]),
                 borderRadius: BorderRadius.circular(6.r),
               ),
               child: Center(
@@ -415,8 +378,8 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
                     color: rank <= 3
                         ? Colors.white
                         : (AppTheme.isDark(context)
-                        ? Colors.grey[300]
-                        : Colors.grey[600]),
+                            ? Colors.grey[300]
+                            : Colors.grey[600]),
                   ),
                 ),
               ),
@@ -464,7 +427,7 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: AppTheme.isDark(context)
-                        ? Colors.grey[500]
+                        ? Colors.grey[400]
                         : Colors.grey[600],
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -474,9 +437,11 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
           ),
         ],
       ),
-    ).animate(delay: Duration(milliseconds: index * 50))
+    )
+        .animate(delay: Duration(milliseconds: index * 50))
         .fadeIn(duration: 300.ms)
-        .slideX(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic);
+        .slideX(
+            begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic);
   }
 
   Widget _buildPageIndicator() {
@@ -492,7 +457,7 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
           mainAxisSize: MainAxisSize.min,
           children: List.generate(
             dotsToShow,
-                (index) {
+            (index) {
               int realIndex;
 
               if (totalTimes <= maxDots) {
@@ -501,7 +466,8 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
               } else {
                 // 현재 페이지 근처의 인덱스만 표시
                 final int halfDots = maxDots ~/ 2;
-                final int startIndex = (_currentTimeIndex - halfDots).clamp(0, totalTimes - maxDots);
+                final int startIndex = (_currentTimeIndex - halfDots)
+                    .clamp(0, totalTimes - maxDots);
                 realIndex = startIndex + index;
               }
 
@@ -518,8 +484,8 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
                     color: isActive
                         ? Color(0xFF19B3F6)
                         : (AppTheme.isDark(context)
-                        ? Colors.grey[600]
-                        : Colors.grey[400]),
+                            ? Colors.grey[500]
+                            : Colors.grey[400]),
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                 ),
@@ -538,27 +504,7 @@ class _TimeMachineHourlyTrendsWidgetState extends State<TimeMachineHourlyTrendsW
     return '$hour:$minute';
   }
 
-  // 이전 시간으로 이동
-  void _goToPreviousTime() {
-    if (_currentTimeIndex > 0) {
-      _pageController.previousPage(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  // 다음 시간으로 이동
-  void _goToNextTime() {
-    if (_currentTimeIndex < widget.availableTimes.length - 1) {
-      _pageController.nextPage(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  // 특정 시간 인덱스로 이동
+  // 특정 시간 인덱스로 이동 (도트 클릭시에만 사용)
   void _goToTimeIndex(int index) {
     if (index >= 0 && index < widget.availableTimes.length && mounted) {
       _pageController.animateToPage(
