@@ -282,8 +282,8 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           SizedBox(height: 16.h),
 
           Container(
-            height: 220.h,
-            padding: EdgeInsets.all(8.w),
+            height: 280.h, // 220.h -> 280.h로 높이 증가
+            padding: EdgeInsets.all(12.w), // 8.w -> 12.w로 패딩 증가
             decoration: BoxDecoration(
               color: AppTheme.isDark(context)
                   ? Color(0xFF21202C)
@@ -380,12 +380,12 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         children: [
           // HistoryTitleWidget 사용
           HistoryTitleWidget(
-            title: "주요 키워드",
+            title: "순위 리스트",
             icon: Icons.star_rounded,
-            lightPrimaryColor: Color(0xFFFFF3E0),
-            lightSecondaryColor: Color(0xFFFFE0B2),
-            darkPrimaryColor: Color(0xFF4A3728),
-            darkSecondaryColor: Color(0xFF5D4037),
+            lightPrimaryColor: Color(0xFFDCF1FF),
+            lightSecondaryColor: Color(0xFFBAE6FD),
+            darkPrimaryColor: Color(0xFF334155),
+            darkSecondaryColor: Color(0xFF475569),
             lightIconBackground: Color(0xFFFF9800),
             darkIconBackground: Color(0xFFFF6F00),
           ),
@@ -730,18 +730,19 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30,
+              reservedSize: 40, // 30 -> 40으로 증가
               getTitlesWidget: (value, meta) {
                 // 등록된 라벨이 있으면 표시
                 if (xAxisLabels.containsKey(value)) {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
+                    padding: EdgeInsets.only(top: 12.h), // 8.0 -> 12.h로 증가
                     child: Text(
                       xAxisLabels[value]!,
                       style: TextStyle(
                         color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                         fontSize: 12.sp,
                       ),
+                      textAlign: TextAlign.center, // 중앙 정렬 추가
                     ),
                   );
                 }
@@ -758,19 +759,20 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                 if (value == value.roundToDouble() && value >= 1 && value <= 10) {
                   final int actualRank = (11 - value).toInt();
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
+                    padding: EdgeInsets.only(right: 12.w), // 8.0 -> 12.w로 증가
                     child: Text(
                       actualRank.toString(),
                       style: TextStyle(
                         color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                         fontSize: 12.sp,
                       ),
+                      textAlign: TextAlign.center, // 중앙 정렬 추가
                     ),
                   );
                 }
                 return const SizedBox.shrink();
               },
-              reservedSize: 30,
+              reservedSize: 35, // 30 -> 35로 증가
             ),
           ),
         ),
