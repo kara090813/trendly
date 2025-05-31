@@ -37,7 +37,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
 
   String? _error;
   Keyword? _selectedKeyword;
+  int _selectedKeywordIndex = -1; // 선택된 키워드의 인덱스 추가
   final ScrollController _scrollController = ScrollController();
+  bool _isMovingForward = true; // 애니메이션 방향 제어
 
   // 리프레시 애니메이션을 위한 컨트롤러
   late AnimationController _refreshAnimationController;
@@ -122,6 +124,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
           // 새로운 실검 리스트가 로딩되면 1위 키워드를 자동 선택
           if (_keywords.isNotEmpty) {
             _selectedKeyword = _keywords.first;
+            _selectedKeywordIndex = 0; // 인덱스도 업데이트
+            _isMovingForward = true; // 초기 로딩은 forward
           }
 
           if (!isInitial) {
@@ -157,10 +161,57 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     }
   }
 
+  // 개선된 키워드 선택 메서드 - 자동 스크롤 기능 추가
   void _selectKeyword(Keyword keyword) {
-    setState(() {
-      _selectedKeyword = keyword;
-    });
+    final int newIndex = _keywords.indexWhere((k) => k.id == keyword.id);
+    if (newIndex != -1) {
+      setState(() {
+        _isMovingForward = newIndex > _selectedKeywordIndex; // 방향 결정
+        _selectedKeyword = keyword;
+        _selectedKeywordIndex = newIndex;
+      });
+
+      // 요약 영역으로 자동 스크롤
+      _scrollToSummary();
+    }
+  }
+
+  // 자동 스크롤 메서드
+  Future<void> _scrollToSummary() async {
+    await Future.delayed(Duration(milliseconds: 100)); // UI 업데이트 대기
+
+    if (_scrollController.hasClients) {
+      // 스크롤 가능한 최대 위치로 이동
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 800),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  // 이전 키워드로 이동
+  void _goToPreviousKeyword() {
+    if (_selectedKeywordIndex > 0) {
+      final newIndex = _selectedKeywordIndex - 1;
+      setState(() {
+        _isMovingForward = false; // 이전으로 이동
+        _selectedKeyword = _keywords[newIndex];
+        _selectedKeywordIndex = newIndex;
+      });
+    }
+  }
+
+  // 다음 키워드로 이동
+  void _goToNextKeyword() {
+    if (_selectedKeywordIndex < _keywords.length - 1) {
+      final newIndex = _selectedKeywordIndex + 1;
+      setState(() {
+        _isMovingForward = true; // 다음으로 이동
+        _selectedKeyword = _keywords[newIndex];
+        _selectedKeywordIndex = newIndex;
+      });
+    }
   }
 
   // 랜덤 로딩 애니메이션 위젯 생성
@@ -244,7 +295,6 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
         );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -395,37 +445,37 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: AppTheme.isDark(context)
                                   ? [
-                                    ]
+                              ]
                                   : [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        offset: Offset(2, 2),
-                                        blurRadius: 4,
-                                        spreadRadius: 0.5,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(0.9),
-                                        offset: Offset(-2, -2),
-                                        blurRadius: 4,
-                                        spreadRadius: 0.5,
-                                      ),
-                                    ],
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  offset: Offset(2, 2),
+                                  blurRadius: 4,
+                                  spreadRadius: 0.5,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.9),
+                                  offset: Offset(-2, -2),
+                                  blurRadius: 4,
+                                  spreadRadius: 0.5,
+                                ),
+                              ],
                             ),
                             child: Row(
                               children: [
                                 // 로딩 중에는 회전하는 새로고침 아이콘 표시
                                 _isRefreshing
                                     ? RotationTransition(
-                                        turns: _refreshAnimation,
-                                        child: Icon(Icons.refresh,
-                                            size: 18.sp,
-                                            color: Color(0xFF19B3F6)),
-                                      )
+                                  turns: _refreshAnimation,
+                                  child: Icon(Icons.refresh,
+                                      size: 18.sp,
+                                      color: Color(0xFF19B3F6)),
+                                )
                                     : Icon(Icons.refresh,
-                                        size: 18.sp,
-                                        color: AppTheme.isDark(context)
-                                            ? Colors.white
-                                            : Color(0xFF4A4A4A)),
+                                    size: 18.sp,
+                                    color: AppTheme.isDark(context)
+                                        ? Colors.white
+                                        : Color(0xFF4A4A4A)),
                                 SizedBox(width: 4.w),
                                 Text(
                                   _getFormattedTime(),
@@ -460,7 +510,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                     opacity: _isRefreshing ? 0.3 : 1.0, // 로딩 중에는 흐리게 표시
                     child: _showShimmerEffect
                         ? _buildShimmerKeywordList(
-                            displayKeywords) // Shimmer 효과 적용된 리스트
+                        displayKeywords) // Shimmer 효과 적용된 리스트
                         : _buildKeywordList(displayKeywords), // 일반 리스트
                   ),
 
@@ -530,14 +580,172 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
             ),
           ),
 
-          // 선택된 키워드 요약
-          if (_selectedKeyword != null)
+          // 선택된 키워드 요약 - PageView로 감싸서 스와이프 기능 추가
+          if (_selectedKeyword != null && _keywords.isNotEmpty)
             SliverToBoxAdapter(
               child: RepaintBoundary(
-                child: SummaryBoxWidget(keyword: _selectedKeyword!),
+                child: _buildEnhancedSummarySection(),
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  // 향상된 요약 섹션 - 페이지뷰와 네비게이션 포함
+  Widget _buildEnhancedSummarySection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.getContainerColor(context),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(30),
+            blurRadius: 7,
+            spreadRadius: 3,
+            offset: const Offset(0, -1),
+          ),
+        ],
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28.r),
+          topRight: Radius.circular(28.r),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 음악 앱 스타일 네비게이션 헤더
+          _buildNavigationHeader(),
+
+          // 스와이프 가능한 요약 영역
+          GestureDetector(
+            onHorizontalDragEnd: (details) {
+              // 스와이프 감지
+              if (details.primaryVelocity! > 0) {
+                // 오른쪽으로 스와이프 (이전 키워드)
+                if (_selectedKeywordIndex > 0) {
+                  _goToPreviousKeyword();
+                }
+              } else if (details.primaryVelocity! < 0) {
+                // 왼쪽으로 스와이프 (다음 키워드)
+                if (_selectedKeywordIndex < _keywords.length - 1) {
+                  _goToNextKeyword();
+                }
+              }
+            },
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: _isMovingForward ? Offset(1.0, 0.0) : Offset(-1.0, 0.0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+              child: Container(
+                key: ValueKey(_selectedKeywordIndex),
+                child: SummaryBoxWidget(keyword: _selectedKeyword!),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 음악 앱 스타일 네비게이션 헤더
+  Widget _buildNavigationHeader() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+      child: Row(
+        children: [
+          // 이전 버튼
+          _buildNavigationButton(
+            icon: Icons.keyboard_arrow_left,
+            onTap: _selectedKeywordIndex > 0 ? _goToPreviousKeyword : null,
+            isEnabled: _selectedKeywordIndex > 0,
+          ),
+
+          Expanded(
+            child: Column(
+              children: [
+                // 현재 순위만 표시
+                Text(
+                  '${_selectedKeywordIndex + 1}위',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF19B3F6),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                // 프로그레스 인디케이터
+                _buildProgressIndicator(),
+              ],
+            ),
+          ),
+
+          // 다음 버튼
+          _buildNavigationButton(
+            icon: Icons.keyboard_arrow_right,
+            onTap: _selectedKeywordIndex < _keywords.length - 1 ? _goToNextKeyword : null,
+            isEnabled: _selectedKeywordIndex < _keywords.length - 1,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 네비게이션 버튼
+  Widget _buildNavigationButton({
+    required IconData icon,
+    required VoidCallback? onTap,
+    required bool isEnabled,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44.w,
+        height: 44.w,
+        decoration: BoxDecoration(
+          color: isEnabled
+              ? AppTheme.getButtonColor(context)
+              : AppTheme.getButtonColor(context).withOpacity(0.3),
+          borderRadius: BorderRadius.circular(22.r),
+          boxShadow: isEnabled ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              spreadRadius: 0,
+              offset: Offset(0, 2),
+            ),
+          ] : [],
+        ),
+        child: Icon(
+          icon,
+          size: 24.sp,
+          color: isEnabled
+              ? Color(0xFF19B3F6)
+              : Color(0xFF19B3F6).withOpacity(0.3),
+        ),
+      ),
+    );
+  }
+
+  // 프로그레스 인디케이터 (현재 위치 표시)
+  Widget _buildProgressIndicator() {
+    return Container(
+      height: 4.h,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2.r),
+        child: LinearProgressIndicator(
+          value: (_selectedKeywordIndex + 1) / _keywords.length,
+          backgroundColor: AppTheme.isDark(context)
+              ? Colors.grey[700]
+              : Colors.grey[300],
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF19B3F6)),
+        ),
       ),
     );
   }
@@ -550,7 +758,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
       mainAxisSize: MainAxisSize.min,
       children: List.generate(
         keywords.length,
-        (index) {
+            (index) {
           return Shimmer.fromColors(
             baseColor: Colors.white,
             highlightColor: Color(0xFF19B3F6).withOpacity(0.3),
@@ -580,7 +788,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
         mainAxisSize: MainAxisSize.min, // 필요한 높이만 사용
         children: List.generate(
           keywords.length,
-          (index) {
+              (index) {
             final Widget keywordWidget = RepaintBoundary(
               child: KeywordBoxWidget(
                 keyword: keywords[index],

@@ -416,6 +416,30 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         .slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutQuad);
   }
 
+  // 날짜 포맷팅 함수
+  String _formatDate(String dateString) {
+    try {
+      final parts = dateString.split('.');
+      if (parts.length >= 3) {
+        final year = parts[0];
+        final month = parts[1];
+        final day = parts[2];
+
+        if (_selectedTimePeriod == '주간') {
+          // 주간에서는 연도 생략
+          return '$month.$day';
+        } else {
+          // 다른 기간에서는 연도를 축약 형태로
+          final shortYear = year.substring(2); // 2025 -> 25
+          return "'$shortYear.$month.$day";
+        }
+      }
+      return dateString;
+    } catch (e) {
+      return dateString;
+    }
+  }
+
   // 개별 스냅샷 카드
   Widget _buildSnapshotCard(Map<String, dynamic> snapshot, int index) {
     final Color rankColor = _getRankColor(snapshot['rank']);
@@ -465,10 +489,11 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 상단: 순위, 날짜/시간, 카테고리, 피크 (심플한 디자인)
+              // 상단: 순위, 날짜/시간, 피크
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 순위 뱃지 (유일한 강조 요소)
+                  // 순위 뱃지
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
@@ -487,7 +512,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
 
                   SizedBox(width: 12.w),
 
-                  // 날짜 또는 시간 (일반 텍스트)
+                  // 일간: 시간만 텍스트로 표시
                   if (isDaily)
                     Text(
                       snapshot['peakTime'],
@@ -497,56 +522,42 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         color: AppTheme.getTextColor(context),
                       ),
                     )
-                  else
+                  // 주간/월간/전체: 날짜(텍스트) + 시간(태그)
+                  else ...[
                     Text(
-                      snapshot['date'],
+                      _formatDate(snapshot['date']),
                       style: TextStyle(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.getTextColor(context),
                       ),
                     ),
-
-                  // 일간이 아닐 때만 시간 추가 표시 (일반 텍스트)
-                  if (!isDaily) ...[
                     SizedBox(width: 8.w),
-                    Text(
-                      snapshot['peakTime'],
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[400]
-                            : Colors.grey[600],
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF19B3F6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(5.r),
+                        border: Border.all(
+                          color: Color(0xFF19B3F6).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        snapshot['peakTime'],
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF19B3F6),
+                        ),
                       ),
                     ),
                   ],
 
                   Spacer(),
 
-                  // 카테고리 (작은 태그)
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: AppTheme.isDark(context)
-                          ? Colors.grey[700]!.withOpacity(0.5)
-                          : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                    child: Text(
-                      snapshot['category'],
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[300]
-                            : Colors.grey[700],
-                      ),
-                    ),
-                  ),
-
-                  // 주간 피크 표시 (작은 뱃지)
+                  // 주간 피크 표시
                   if (isWeekPeak) ...[
-                    SizedBox(width: 6.w),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                       decoration: BoxDecoration(
@@ -562,9 +573,8 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         ),
                       ),
                     ),
+                    SizedBox(width: 8.w),
                   ],
-
-                  SizedBox(width: 8.w),
 
                   // 화살표 아이콘
                   Icon(
@@ -579,7 +589,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
 
               SizedBox(height: 12.h),
 
-              // 하단: 요약 정보 (일반 텍스트)
+              // 하단: 요약 정보
               Text(
                 snapshot['summary'],
                 style: TextStyle(
@@ -599,50 +609,12 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         .slideX(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic);
   }
 
-  // 정보 칩 위젯 (컴팩트 버전)
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4.r),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 10.sp,
-            color: color,
-          ),
-          SizedBox(width: 3.w),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 순위에 따른 색상 반환
+  // 순위에 따른 색상 반환 (1,2,3위 외 통일)
   Color _getRankColor(int rank) {
     if (rank == 1) return Color(0xFFFF2D55); // 1위는 빨간색
-    if (rank <= 3) return Color(0xFFFF6B35); // 2-3위는 주황색
-    if (rank <= 5) return Color(0xFF19B3F6); // 4-5위는 파란색
-    return AppTheme.isDark(context) ? Colors.grey[500]! : Colors.grey[600]!; // 나머지는 회색
+    if (rank == 2) return Color(0xFFFF6B35); // 2위는 주황색
+    if (rank == 3) return Color(0xFF19B3F6); // 3위는 파란색
+    return AppTheme.isDark(context) ? Colors.grey[600]! : Colors.grey[500]!; // 4위 이상은 통일된 회색
   }
 
   // 버튼

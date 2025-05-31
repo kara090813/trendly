@@ -76,29 +76,13 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
                   Padding(
                     padding: EdgeInsets.only(top: 16.h, bottom: 18.h),
                     child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "트렌드 히스토리",
-                            style: TextStyle(
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.getTextColor(context),
-                            ),
-                          ),
-                          CircleButtonWidget(
-                            context: context,
-                            onTap: () {
-                              Provider.of<UserPreferenceProvider>(context, listen: false).toggleThemeMode();
-                            },
-                            assetImagePath: 'assets/img/items/dark.png',
-                            color: Colors.blue,
-                            iconSize: 30.w,
-                            containerSize: 42.w,
-                            imagePadding: EdgeInsets.all(8.w),
-                          )
-                        ],
+                      child: Text(
+                        "트렌드 히스토리",
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.getTextColor(context),
+                        ),
                       ),
                     ),
                   ),
@@ -107,7 +91,6 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
                     child: _buildNeumorphicTabBar(),
                   ),
-                  SizedBox(height: 8.h),
                 ],
               ),
             ),
