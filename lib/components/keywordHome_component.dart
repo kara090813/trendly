@@ -37,7 +37,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
 
   String? _error;
   Keyword? _selectedKeyword;
+  int _selectedKeywordIndex = 0; // 선택된 키워드의 인덱스 추가
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey _summaryBoxKey = GlobalKey(); // SummaryBox 위치 추적용
 
   // 리프레시 애니메이션을 위한 컨트롤러
   late AnimationController _refreshAnimationController;
@@ -122,6 +124,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
           // 새로운 실검 리스트가 로딩되면 1위 키워드를 자동 선택
           if (_keywords.isNotEmpty) {
             _selectedKeyword = _keywords.first;
+            _selectedKeywordIndex = 0;
           }
 
           if (!isInitial) {
@@ -158,9 +161,56 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
   }
 
   void _selectKeyword(Keyword keyword) {
-    setState(() {
-      _selectedKeyword = keyword;
-    });
+    final index = _keywords.indexWhere((k) => k.id == keyword.id);
+    if (index != -1) {
+      setState(() {
+        _selectedKeyword = keyword;
+        _selectedKeywordIndex = index;
+      });
+
+      // 요약 영역으로 자동 스크롤
+      _scrollToSummary();
+    }
+  }
+
+  // 요약 영역으로 스크롤하는 함수
+  void _scrollToSummary() {
+    if (_summaryBoxKey.currentContext != null) {
+      Future.delayed(Duration(milliseconds: 50), () {
+        final RenderBox? renderBox = _summaryBoxKey.currentContext?.findRenderObject() as RenderBox?;
+        if (renderBox != null) {
+          final position = renderBox.localToGlobal(Offset.zero);
+          // 단순하게 SummaryBox 상단이 화면 상단에 오도록 (여백 80픽셀)
+          final targetOffset = _scrollController.offset + position.dy - 80.h;
+
+          _scrollController.animateTo(
+            targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+            duration: Duration(milliseconds: 600),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
+  }
+
+  // 이전 키워드로 이동
+  void _goToPreviousKeyword() {
+    if (_keywords.isNotEmpty && _selectedKeywordIndex > 0) {
+      setState(() {
+        _selectedKeywordIndex--;
+        _selectedKeyword = _keywords[_selectedKeywordIndex];
+      });
+    }
+  }
+
+  // 다음 키워드로 이동
+  void _goToNextKeyword() {
+    if (_keywords.isNotEmpty && _selectedKeywordIndex < _keywords.length - 1) {
+      setState(() {
+        _selectedKeywordIndex++;
+        _selectedKeyword = _keywords[_selectedKeywordIndex];
+      });
+    }
   }
 
   // 랜덤 로딩 애니메이션 위젯 생성
@@ -244,7 +294,6 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
         );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -395,37 +444,37 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: AppTheme.isDark(context)
                                   ? [
-                                    ]
+                              ]
                                   : [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        offset: Offset(2, 2),
-                                        blurRadius: 4,
-                                        spreadRadius: 0.5,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(0.9),
-                                        offset: Offset(-2, -2),
-                                        blurRadius: 4,
-                                        spreadRadius: 0.5,
-                                      ),
-                                    ],
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  offset: Offset(2, 2),
+                                  blurRadius: 4,
+                                  spreadRadius: 0.5,
+                                ),
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.9),
+                                  offset: Offset(-2, -2),
+                                  blurRadius: 4,
+                                  spreadRadius: 0.5,
+                                ),
+                              ],
                             ),
                             child: Row(
                               children: [
                                 // 로딩 중에는 회전하는 새로고침 아이콘 표시
                                 _isRefreshing
                                     ? RotationTransition(
-                                        turns: _refreshAnimation,
-                                        child: Icon(Icons.refresh,
-                                            size: 18.sp,
-                                            color: Color(0xFF19B3F6)),
-                                      )
+                                  turns: _refreshAnimation,
+                                  child: Icon(Icons.refresh,
+                                      size: 18.sp,
+                                      color: Color(0xFF19B3F6)),
+                                )
                                     : Icon(Icons.refresh,
-                                        size: 18.sp,
-                                        color: AppTheme.isDark(context)
-                                            ? Colors.white
-                                            : Color(0xFF4A4A4A)),
+                                    size: 18.sp,
+                                    color: AppTheme.isDark(context)
+                                        ? Colors.white
+                                        : Color(0xFF4A4A4A)),
                                 SizedBox(width: 4.w),
                                 Text(
                                   _getFormattedTime(),
@@ -460,7 +509,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                     opacity: _isRefreshing ? 0.3 : 1.0, // 로딩 중에는 흐리게 표시
                     child: _showShimmerEffect
                         ? _buildShimmerKeywordList(
-                            displayKeywords) // Shimmer 효과 적용된 리스트
+                        displayKeywords) // Shimmer 효과 적용된 리스트
                         : _buildKeywordList(displayKeywords), // 일반 리스트
                   ),
 
@@ -534,7 +583,16 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
           if (_selectedKeyword != null)
             SliverToBoxAdapter(
               child: RepaintBoundary(
-                child: SummaryBoxWidget(keyword: _selectedKeyword!),
+                key: _summaryBoxKey,
+                child: EnhancedSummaryBoxWidget(
+                  keyword: _selectedKeyword!,
+                  currentIndex: _selectedKeywordIndex,
+                  totalKeywords: _keywords.length,
+                  onPrevious: _goToPreviousKeyword,
+                  onNext: _goToNextKeyword,
+                  canGoPrevious: _selectedKeywordIndex > 0,
+                  canGoNext: _selectedKeywordIndex < _keywords.length - 1,
+                ),
               ),
             ),
         ],
@@ -550,7 +608,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
       mainAxisSize: MainAxisSize.min,
       children: List.generate(
         keywords.length,
-        (index) {
+            (index) {
           return Shimmer.fromColors(
             baseColor: Colors.white,
             highlightColor: Color(0xFF19B3F6).withOpacity(0.3),
@@ -580,7 +638,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
         mainAxisSize: MainAxisSize.min, // 필요한 높이만 사용
         children: List.generate(
           keywords.length,
-          (index) {
+              (index) {
             final Widget keywordWidget = RepaintBoundary(
               child: KeywordBoxWidget(
                 keyword: keywords[index],
