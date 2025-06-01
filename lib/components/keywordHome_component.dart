@@ -580,18 +580,23 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
           ),
 
           // 선택된 키워드 요약
-          if (_selectedKeyword != null)
+          if (_keywords.isNotEmpty)
             SliverToBoxAdapter(
               child: RepaintBoundary(
                 key: _summaryBoxKey,
                 child: EnhancedSummaryBoxWidget(
-                  keyword: _selectedKeyword!,
+                  keywords: _keywords,
                   currentIndex: _selectedKeywordIndex,
-                  totalKeywords: _keywords.length,
                   onPrevious: _goToPreviousKeyword,
                   onNext: _goToNextKeyword,
                   canGoPrevious: _selectedKeywordIndex > 0,
                   canGoNext: _selectedKeywordIndex < _keywords.length - 1,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _selectedKeywordIndex = index;
+                      _selectedKeyword = _keywords[index];
+                    });
+                  },
                 ),
               ),
             ),
