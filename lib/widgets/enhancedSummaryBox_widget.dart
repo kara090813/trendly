@@ -42,6 +42,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
   late PageController _pageController;
 
   bool _showSwipeHint = true;
+  bool _isAnimatingToPage = false; // 프로그래밍적 페이지 변경 플래그
 
   @override
   void initState() {
@@ -103,11 +104,14 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
       if (_pageController.hasClients) {
+        _isAnimatingToPage = true; // 프로그래밍적 변경 시작
         _pageController.animateToPage(
           widget.currentIndex,
           duration: Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
-        );
+        ).then((_) {
+          _isAnimatingToPage = false; // 프로그래밍적 변경 완료
+        });
       }
       // 사용자가 스와이프하면 힌트 숨기기
       if (_showSwipeHint) {
@@ -335,7 +339,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                       PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {
-                          if (widget.onPageChanged != null) {
+                          // 프로그래밍적 변경이 아닌 사용자 스와이프일 때만 콜백 호출
+                          if (!_isAnimatingToPage && widget.onPageChanged != null) {
                             widget.onPageChanged!(index);
                           }
                         },

@@ -267,6 +267,94 @@ class ApiService {
     }
   }
 
+  /// 키워드 간략 히스토리 가져오기
+  /// POST /keyword/history_simple/
+  Future<Map<String, dynamic>> getKeywordHistorySimple(String keyword, String period) async {
+    final String url = '$_baseUrl/keyword/history_simple/';
+    final Map<String, dynamic> requestData = {
+      'keyword': keyword,
+      'period': period, // daily, weekly, monthly, all
+    };
+
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestData),
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        print('요청 데이터: $requestData');
+        throw Exception('키워드 간략 히스토리 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('키워드 간략 히스토리 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 데이터: $requestData');
+      rethrow;
+    }
+  }
+
+  /// 특정 날짜의 키워드 그룹 가져오기
+  /// GET /keyword/date_groups/<str:datestr>/
+  Future<Map<String, dynamic>> getKeywordDateGroups(String dateStr) async {
+    final String url = '$_baseUrl/keyword/date_groups/$dateStr/';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('키워드 날짜 그룹 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('키워드 날짜 그룹 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: dateStr=$dateStr');
+      rethrow;
+    }
+  }
+
+  /// 특정 날짜의 일일 요약 가져오기
+  /// GET /keyword/daily_summary/<str:datestr>/
+  Future<Map<String, dynamic>> getKeywordDailySummary(String dateStr) async {
+    final String url = '$_baseUrl/keyword/daily_summary/$dateStr/';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('일일 요약 로딩 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('일일 요약 가져오기 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: dateStr=$dateStr');
+      rethrow;
+    }
+  }
+
   /// 현재 인기 키워드와 관련된 토론방 목록 가져오기
   /// GET /discussion/now/
   Future<List<DiscussionRoom>> getCurrentDiscussionRooms() async {
