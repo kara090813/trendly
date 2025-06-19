@@ -30,9 +30,9 @@ class _SummaryToggleWidgetState extends State<SummaryToggleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final double totalWidth = 210.w;
+    final double totalWidth = 230.w;
     final double buttonWidth = totalWidth / 3;
-    final double buttonHeight = 31.h;
+    final double buttonHeight = 36.h;
 
     return SizedBox(
       width: totalWidth,
@@ -113,12 +113,12 @@ class _SummaryToggleWidgetState extends State<SummaryToggleWidget> {
                         child: Text(
                           options[index],
                           style: AppTheme.isDark(context) ? TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.normal,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
                             color: index == selectedIndex ? Colors.white : Colors.black ,
                           ) :  TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.normal,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
                             color: index == selectedIndex ? Colors.black : Colors.white,
                           ),
                         ),

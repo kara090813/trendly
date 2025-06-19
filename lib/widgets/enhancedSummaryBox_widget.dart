@@ -40,17 +40,21 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
   late Animation<double> _cardScaleAnimation;
   late Animation<double> _swipeHintAnimation;
   late PageController _pageController;
-
+  final Map<int, ScrollController> _scrollControllers = {}; // 각 카드별 스크롤 컨트롤러
   bool _showSwipeHint = true;
-  bool _isAnimatingToPage = false; // 프로그래밍적 페이지 변경 플래그
+  bool _isAnimatingToPage = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(
       initialPage: widget.currentIndex,
-      viewportFraction: 0.92, // 양옆 카드가 살짝 보이도록
+      viewportFraction: 1.0, // 전체 화면 사용
     );
+    // 각 키워드별 스크롤 컨트롤러 초기화 (최상단부터 시작)
+    for (int i = 0; i < widget.keywords.length; i++) {
+      _scrollControllers[i] = ScrollController(initialScrollOffset: 0.0);
+    }
 
     _cardAnimationController = AnimationController(
       duration: Duration(milliseconds: 800),
@@ -81,18 +85,22 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     // 애니메이션 시작
     _cardAnimationController.forward();
 
-    // 스와이프 힌트 애니메이션 (3초 후 시작하여 반복)
-    Future.delayed(Duration(milliseconds: 1500), () {
-      if (mounted && widget.keywords.length > 1) {
-        _swipeHintController.repeat(reverse: true);
+    // 스와이프 힌트 애니메이션 (카드 애니메이션 완료 후 시작)
+    _cardAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(Duration(milliseconds: 1000), () {
+          if (mounted && widget.keywords.length > 1) {
+            _swipeHintController.repeat(reverse: true);
 
-        // 6초 후 힌트 숨기기
-        Future.delayed(Duration(seconds: 6), () {
-          if (mounted) {
-            setState(() {
-              _showSwipeHint = false;
+            // 5초 후 힌트 숨기기
+            Future.delayed(Duration(seconds: 5), () {
+              if (mounted) {
+                setState(() {
+                  _showSwipeHint = false;
+                });
+                _swipeHintController.stop();
+              }
             });
-            _swipeHintController.stop();
           }
         });
       }
@@ -103,16 +111,18 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
   void didUpdateWidget(EnhancedSummaryBoxWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      if (_pageController.hasClients) {
-        _isAnimatingToPage = true; // 프로그래밍적 변경 시작
+      // PageController 업데이트
+      if (_pageController.hasClients && !_isAnimatingToPage) {
+        _isAnimatingToPage = true;
         _pageController.animateToPage(
           widget.currentIndex,
           duration: Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
         ).then((_) {
-          _isAnimatingToPage = false; // 프로그래밍적 변경 완료
+          _isAnimatingToPage = false;
         });
       }
+      
       // 사용자가 스와이프하면 힌트 숨기기
       if (_showSwipeHint) {
         setState(() {
@@ -121,6 +131,17 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
         _swipeHintController.stop();
       }
     }
+    
+    // 요약 타입 변경시 스크롤 위치 초기화
+    if (oldWidget.keywords != widget.keywords) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final controller in _scrollControllers.values) {
+          if (controller.hasClients) {
+            controller.jumpTo(0.0);
+          }
+        }
+      });
+    }
   }
 
   @override
@@ -128,12 +149,33 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     _cardAnimationController.dispose();
     _swipeHintController.dispose();
     _pageController.dispose();
+    // 모든 스크롤 컨트롤러 해제
+    for (final controller in _scrollControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _onSummaryTypeChanged(String type) {
     setState(() {
       _selectedSummaryType = type;
+    });
+    
+    // 요약 타입 변경시 스크롤 위치 초기화 및 상태 업데이트
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final controller in _scrollControllers.values) {
+        if (controller.hasClients) {
+          controller.animateTo(
+            0.0,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      }
+      // 스크롤바 상태 업데이트를 위해 rebuild 강제
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -160,17 +202,20 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     keywordTokens.sort((a, b) => b.length.compareTo(a.length));
 
     final List<String> paragraphs = summaryText.split('\n\n');
-    final List<TextSpan> spans = [];
+    final List<Widget> paragraphWidgets = [];
 
     for (int i = 0; i < paragraphs.length; i++) {
       if (i > 0) {
-        spans.add(TextSpan(text: '\n\n'));
+        paragraphWidgets.add(SizedBox(height: 16.h));
       }
 
       String paragraph = paragraphs[i];
       List<TextSpan> paragraphSpans = [];
       int currentPos = 0;
       final int paragraphLength = paragraph.length;
+
+      // 3줄 요약의 경우만 숫자와 함께 처리
+      bool is3LineType = _selectedSummaryType == '3줄' && i < 3;
 
       while (currentPos < paragraphLength) {
         bool foundMatch = false;
@@ -182,10 +227,11 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
             paragraphSpans.add(TextSpan(
               text: paragraph.substring(currentPos, currentPos + token.length),
               style: TextStyle(
-                fontSize: 15.sp,
-                height: 1.5,
-                fontWeight: FontWeight.bold,
+                fontSize: 18.sp,
+                height: 1.7,
+                fontWeight: FontWeight.w700,
                 color: Color(0xFF19B3F6),
+                backgroundColor: Color(0xFF19B3F6).withOpacity(0.1),
               ),
             ));
 
@@ -208,9 +254,12 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
           paragraphSpans.add(TextSpan(
             text: paragraph.substring(currentPos, nextMatchPos),
             style: TextStyle(
-              fontSize: 15.sp,
-              height: 1.5,
-              color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[700],
+              fontSize: 18.sp,
+              height: 1.7,
+              fontWeight: FontWeight.w400,
+              color: AppTheme.isDark(context) 
+                  ? Colors.white.withOpacity(0.9)
+                  : Colors.black87,
             ),
           ));
 
@@ -218,12 +267,67 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
         }
       }
 
-      spans.addAll(paragraphSpans);
+      // 위젯 추가
+      if (is3LineType) {
+        // 3줄 요약은 숫자와 함께 Row로 표시
+        paragraphWidgets.add(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 24.w,
+                height: 24.w,
+                margin: EdgeInsets.only(right: 8.w, top: 6.h),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF19B3F6), Color(0xFF0EA5E9)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF19B3F6).withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(children: paragraphSpans),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // 일반 텍스트 표시
+        paragraphWidgets.add(
+          Container(
+            width: double.infinity,
+            child: RichText(
+              text: TextSpan(children: paragraphSpans),
+              textAlign: TextAlign.left,
+            ),
+          ),
+        );
+      }
     }
 
-    return RichText(
-      text: TextSpan(children: spans),
-      textAlign: TextAlign.left,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: paragraphWidgets,
     );
   }
 
@@ -262,6 +366,168 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
 
   String _getLongSummary(Keyword keyword) {
     return keyword.type3.isNotEmpty ? keyword.type3 : '오류가 발생했습니다.';
+  }
+
+  // 안전한 글래스모피즘 스크롤바
+  Widget _buildCustomScrollbar(int index) {
+    final controller = _scrollControllers[index]!;
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return AnimatedBuilder(
+          animation: controller,
+          builder: (context, child) {
+            // 컨트롤러가 준비되지 않았으면 빈 위젯 반환
+            if (!controller.hasClients) {
+              // 컨트롤러가 연결될 때까지 잠시 기다린 후 다시 빌드
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && controller.hasClients) {
+                  setState(() {});
+                }
+              });
+              return SizedBox.shrink();
+            }
+
+            // 안전한 방식으로 스크롤 정보 접근
+            try {
+              final scrollPosition = controller.position;
+              final maxScrollExtent = scrollPosition.maxScrollExtent;
+              final currentScroll = scrollPosition.pixels;
+              final containerHeight = scrollPosition.viewportDimension;
+              
+              // 스크롤할 내용이 없으면 스크롤바 숨김
+              if (maxScrollExtent <= 0) {
+                return SizedBox.shrink();
+              }
+
+              final scrollRatio = (currentScroll / maxScrollExtent).clamp(0.0, 1.0);
+              final thumbHeight = (containerHeight * 0.25).clamp(40.h, containerHeight * 0.7);
+              final trackHeight = containerHeight - 16.h;
+              final thumbPosition = (trackHeight - thumbHeight) * scrollRatio + 8.h;
+
+              return Container(
+                width: 12.w,
+                height: containerHeight,
+                child: Stack(
+                  children: [
+                    // 글래스모피즘 트랙
+                    Positioned(
+                      right: 2.w,
+                      top: 8.h,
+                      bottom: 8.h,
+                      child: Container(
+                        width: 8.w,
+                        decoration: BoxDecoration(
+                          color: AppTheme.isDark(context)
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.white.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(6.r),
+                          border: Border.all(
+                            color: AppTheme.isDark(context)
+                                ? Colors.white.withOpacity(0.15)
+                                : Colors.white.withOpacity(0.6),
+                            width: 0.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.isDark(context)
+                                  ? Colors.black.withOpacity(0.2)
+                                  : Colors.grey[300]!.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // 글래스모피즘 썸
+                    AnimatedPositioned(
+                      duration: Duration(milliseconds: 80),
+                      top: thumbPosition,
+                      right: 0.w,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          try {
+                            final delta = details.delta.dy;
+                            final scrollSensitivity = maxScrollExtent / trackHeight;
+                            final newPosition = currentScroll + (delta * scrollSensitivity);
+                            controller.jumpTo(newPosition.clamp(0.0, maxScrollExtent));
+                          } catch (e) {
+                            // 드래그 중 에러 무시
+                          }
+                        },
+                        child: Container(
+                          width: 12.w,
+                          height: thumbHeight,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: AppTheme.isDark(context)
+                                  ? [
+                                      Colors.white.withOpacity(0.25),
+                                      Colors.white.withOpacity(0.15),
+                                      Colors.white.withOpacity(0.25),
+                                    ]
+                                  : [
+                                      Colors.white.withOpacity(0.9),
+                                      Colors.white.withOpacity(0.6),
+                                      Colors.white.withOpacity(0.9),
+                                    ],
+                            ),
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                              color: AppTheme.isDark(context)
+                                  ? Colors.white.withOpacity(0.3)
+                                  : Color(0xFF19B3F6).withOpacity(0.2),
+                              width: 0.8,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.isDark(context)
+                                    ? Colors.black.withOpacity(0.3)
+                                    : Color(0xFF19B3F6).withOpacity(0.2),
+                                blurRadius: 6,
+                                spreadRadius: 0,
+                                offset: Offset(0, 3),
+                              ),
+                              // 상단 하이라이트
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.6),
+                                blurRadius: 2,
+                                spreadRadius: 0,
+                                offset: Offset(0, -1),
+                              ),
+                            ],
+                          ),
+                          child: Container(
+                            margin: EdgeInsets.all(1.5.w),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withOpacity(0.4),
+                                  Colors.white.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(6.r),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } catch (e) {
+              // 에러 발생시 빈 위젯 반환
+              return SizedBox.shrink();
+            }
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -325,95 +591,101 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
               ),
             ),
 
-          // 메인 카드 영역 - 고정 높이 제거하고 컨텐츠에 맞게 조정
+          // 메인 카드 영역 - 요약 타입별 동적 높이
           AnimatedBuilder(
             animation: _cardScaleAnimation,
             builder: (context, child) {
               return Transform.scale(
                 scale: _cardScaleAnimation.value,
-                child: Container(
-                  height: _calculateCardHeight(), // 동적 높이 계산
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  height: _getCardHeightBySummaryType(), // 요약 타입별 높이
                   child: Stack(
                     children: [
-                      // 메인 PageView
+                      // 부드러운 PageView
                       PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {
-                          // 프로그래밍적 변경이 아닌 사용자 스와이프일 때만 콜백 호출
                           if (!_isAnimatingToPage && widget.onPageChanged != null) {
                             widget.onPageChanged!(index);
                           }
                         },
                         itemCount: widget.keywords.length,
                         itemBuilder: (context, index) {
-                          return _buildStreamlinedCard(widget.keywords[index], index);
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4.w),
+                            child: _buildStreamlinedCard(widget.keywords[index], index),
+                          );
                         },
                       ),
 
-                      // 스와이프 힌트 애니메이션 (좌우 화살표)
-                      if (_showSwipeHint && widget.keywords.length > 1)
+                      // 스와이프 힌트 애니메이션
+                      if (_showSwipeHint && widget.keywords.length > 1 && _cardAnimationController.isCompleted)
                         AnimatedBuilder(
                           animation: _swipeHintAnimation,
                           builder: (context, child) {
-                            return Positioned.fill(
-                              child: IgnorePointer(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    // 좌측 화살표
-                                    if (widget.canGoPrevious)
-                                      Transform.translate(
-                                        offset: Offset(-10 + (20 * _swipeHintAnimation.value), 0),
-                                        child: Container(
-                                          margin: EdgeInsets.only(left: 20.w),
-                                          padding: EdgeInsets.all(8.w),
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF19B3F6).withOpacity(0.8),
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Color(0xFF19B3F6).withOpacity(0.3),
-                                                blurRadius: 8,
-                                                offset: Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Icon(
-                                            Icons.chevron_left,
-                                            color: Colors.white,
-                                            size: 20.sp,
-                                          ),
+                            return Stack(
+                              children: [
+                                // 좌측 화살표
+                                Positioned(
+                                  left: -5.w + (10 * _swipeHintAnimation.value),
+                                  top: 0,
+                                  bottom: 0,
+                                  child: IgnorePointer(
+                                    child: Center(
+                                      child: Container(
+                                        padding: EdgeInsets.all(8.w),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF19B3F6).withOpacity(0.9),
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0xFF19B3F6).withOpacity(0.4),
+                                              blurRadius: 10,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          Icons.chevron_left,
+                                          color: Colors.white,
+                                          size: 22.sp,
                                         ),
                                       ),
-
-                                    // 우측 화살표
-                                    if (widget.canGoNext)
-                                      Transform.translate(
-                                        offset: Offset(10 - (20 * _swipeHintAnimation.value), 0),
-                                        child: Container(
-                                          margin: EdgeInsets.only(right: 20.w),
-                                          padding: EdgeInsets.all(8.w),
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF19B3F6).withOpacity(0.8),
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Color(0xFF19B3F6).withOpacity(0.3),
-                                                blurRadius: 8,
-                                                offset: Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.white,
-                                            size: 20.sp,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                // 우측 화살표
+                                Positioned(
+                                  right: -5.w + (10 * _swipeHintAnimation.value),
+                                  top: 0,
+                                  bottom: 0,
+                                  child: IgnorePointer(
+                                    child: Center(
+                                      child: Container(
+                                        padding: EdgeInsets.all(8.w),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF19B3F6).withOpacity(0.9),
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0xFF19B3F6).withOpacity(0.4),
+                                              blurRadius: 10,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.white,
+                                          size: 22.sp,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -457,47 +729,49 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     );
   }
 
-  // 요약 타입과 내용에 따라 카드 높이 동적 계산
-  double _calculateCardHeight() {
-    // 기본 높이 (헤더 부분)
-    double baseHeight = 120.h;
-
-    // 요약 타입에 따른 추가 높이
+  // 요약 타입별 동적 높이
+  double _getCardHeightBySummaryType() {
     switch (_selectedSummaryType) {
       case '3줄':
-        baseHeight += 200.h; // 3줄 요약에 적합한 높이
-        break;
+        return 520.h; // 3줄 요약용 기본 높이
       case '짧은 글':
-        baseHeight += 280.h; // 짧은 글에 적합한 높이
-        break;
+        return 600.h; // 짧은 글용 증가된 높이
       case '긴 글':
-        baseHeight += 360.h; // 긴 글에 적합한 높이
-        break;
+        return 720.h; // 긴 글용 최대 높이
       default:
-        baseHeight += 200.h;
+        return 520.h;
     }
-
-    return baseHeight;
   }
 
-  // 간소화된 카드 디자인 - 패딩 최소화 및 내부 박스 제거
+  // 콘텐츠 크기 기반 카드 디자인 - 스크롤 없음
   Widget _buildStreamlinedCard(Keyword keyword, int index) {
     final bool isCurrentCard = index == widget.currentIndex;
 
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: isCurrentCard ? 0 : 6.h),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 4.w),
+      padding: EdgeInsets.only(bottom: 20.h, top: 4.h), // 상하단 그림자 공간
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isCurrentCard ? 0.15 : 0.08),
-              blurRadius: isCurrentCard ? 20 : 10,
-              spreadRadius: isCurrentCard ? 0 : -2,
-              offset: Offset(0, isCurrentCard ? 8 : 4),
-            ),
-          ],
+          boxShadow: AppTheme.isDark(context)
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isCurrentCard ? 0.3 : 0.2),
+                    blurRadius: isCurrentCard ? 20 : 10,
+                    spreadRadius: isCurrentCard ? 0 : -2,
+                    offset: Offset(0, isCurrentCard ? 8 : 4),
+                  ),
+                ]
+              : [
+                  // 라이트모드 - 짙은 색상의 아담한 그림자
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20.r),
@@ -513,16 +787,17 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                 ]
                     : [
                   Colors.white,
-                  Color(0xFFF8F9FA),
+                  Colors.white,
                 ],
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.all(16.w), // 전체 패딩 최소화
+              padding: EdgeInsets.all(16.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 헤더 영역 - 패딩 최소화
+                  // 헤더 영역
                   Row(
                     children: [
                       Container(
@@ -543,7 +818,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         child: Text(
                           '${index + 1}위',
                           style: TextStyle(
-                            fontSize: 11.sp,
+                            fontSize: 13.sp,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -565,7 +840,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         child: Text(
                           keyword.category,
                           style: TextStyle(
-                            fontSize: 10.sp,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF19B3F6),
                           ),
@@ -576,48 +851,74 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
 
                   SizedBox(height: 12.h),
 
-                  // 키워드 제목 - 패딩 최소화
-                  GestureDetector(
+                  // 키워드 제목 - 버튼형 디자인
+                  InkWell(
                     onTap: () {
                       context.pushNamed(
                         'keywordDetail',
                         pathParameters: {'id': keyword.id.toString()},
                       );
                     },
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: AutoSizeText(
-                            keyword.keyword,
-                            style: TextStyle(
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.getTextColor(context),
-                              letterSpacing: -0.3,
-                            ),
-                            minFontSize: 16,
-                            maxLines: 2,
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF19B3F6).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: Color(0xFF19B3F6).withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF19B3F6).withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
                           ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF19B3F6),
-                          size: 20.sp,
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AutoSizeText(
+                              keyword.keyword,
+                              style: TextStyle(
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.getTextColor(context),
+                                letterSpacing: -0.3,
+                              ),
+                              minFontSize: 18,
+                              maxLines: 2,
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF19B3F6),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.white,
+                              size: 20.sp,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
                   SizedBox(height: 12.h),
 
-                  // 요약 타입 토글 - 패딩 최소화
+                  // 요약 타입 토글
                   Row(
                     children: [
                       Text(
                         '요약',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.getTextColor(context),
                         ),
@@ -632,10 +933,115 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
 
                   SizedBox(height: 16.h),
 
-                  // 요약 내용 영역 - 내부 박스 제거, 스크롤 제거
+                  // 트렌디한 요약 내용 박스
                   Expanded(
-                    child: _buildSummaryContent(keyword),
+                    child: Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.symmetric(horizontal: 4.w),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: AppTheme.isDark(context)
+                              ? [
+                                  Color(0xFF1E1E2E).withOpacity(0.9),
+                                  Color(0xFF2A2A3E).withOpacity(0.9),
+                                ]
+                              : [
+                                  Color(0xFFF8F9FA),
+                                  Color(0xFFF0F2F5),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(18.r),
+                        border: Border.all(
+                          color: AppTheme.isDark(context)
+                              ? Colors.white.withOpacity(0.08)
+                              : Color(0xFF19B3F6).withOpacity(0.15),
+                          width: 1.5,
+                        ),
+                        boxShadow: AppTheme.isDark(context) 
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ]
+                            : [
+                                // 내부 그림자 효과 (inset 느낌)
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.6),
+                                  blurRadius: 12,
+                                  spreadRadius: -5,
+                                  offset: Offset(0, -3),
+                                ),
+                                // 외부 그림자 (깊이감)
+                                BoxShadow(
+                                  color: Color(0xFF19B3F6).withOpacity(0.12),
+                                  blurRadius: 16,
+                                  spreadRadius: -2,
+                                  offset: Offset(0, 6),
+                                ),
+                              ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16.r),
+                        child: Stack(
+                          children: [
+                            // 배경 패턴
+                            Positioned(
+                              top: -50,
+                              right: -50,
+                              child: Container(
+                                width: 150.w,
+                                height: 150.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      Color(0xFF19B3F6).withOpacity(0.1),
+                                      Color(0xFF19B3F6).withOpacity(0.0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // 콘텐츠
+                            // 콘텐츠 - 독특한 스크롤바 디자인
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(16.w, 16.w, 4.w, 16.w), // 우측 패딩 최소화
+                              child: Stack(
+                                children: [
+                                  // 메인 콘텐츠 영역
+                                  Padding(
+                                    padding: EdgeInsets.only(right: 16.w), // 스크롤바 공간 확보
+                                    child: SingleChildScrollView(
+                                      controller: _scrollControllers[index],
+                                      physics: BouncingScrollPhysics(),
+                                      child: _selectedSummaryType == '3줄'
+                                          ? Center(
+                                              child: _buildSummaryContent(keyword),
+                                            )
+                                          : _buildSummaryContent(keyword),
+                                    ),
+                                  ),
+                                  // 커스텀 스크롤바
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: _buildCustomScrollbar(index),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
+                  
+                  SizedBox(height: 12.h),
                 ],
               ),
             ),

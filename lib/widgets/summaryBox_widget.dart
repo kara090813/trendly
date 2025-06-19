@@ -91,9 +91,10 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
             paragraphSpans.add(TextSpan(
               text: paragraph.substring(currentPos, currentPos + token.length),
               style: TextStyle(
-                fontSize: 18.sp,
-                height: 1.5,
+                fontSize: 20.sp,
+                height: 1.6,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF19B3F6),
               ),
             ));
 
@@ -120,7 +121,11 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
           // 현재 위치부터 다음 매치 시작 위치까지의 텍스트를 일반 스타일로 추가
           paragraphSpans.add(TextSpan(
             text: paragraph.substring(currentPos, nextMatchPos),
-            style: TextStyle(fontSize: 18.sp, height: 1.5),
+            style: TextStyle(
+              fontSize: 20.sp, 
+              height: 1.6,
+              color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[700],
+            ),
           ));
 
           currentPos = nextMatchPos;
@@ -196,6 +201,7 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 450.h, // 3줄 요약 기준 고정 높이
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
         boxShadow: [
@@ -216,7 +222,7 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 실검 요약 타이틀과 토글 버튼
+            // 실검 요약 타이틀과 토글 버튼 (고정 영역)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               child: Row(
@@ -230,7 +236,7 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
                       Text(
                         '실검 요약',
                         style: TextStyle(
-                          fontSize: 22.sp,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -247,16 +253,16 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
               height: 10.h,
             ),
 
-            // 키워드 제목
+            // 키워드 제목 (고정 영역)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 10.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 뉴모픽 버튼 대신 일반 InkWell + Container 사용
+                  // 버튼형 디자인으로 개선된 키워드 제목
                   InkWell(
                     onTap: () {
-                      // 키워드 상세 페이지로 이동 (이제 ID만 전달)
+                      // 키워드 상세 페이지로 이동
                       context.pushNamed(
                         'keywordDetail',
                         pathParameters: {'id': widget.keyword.id.toString()},
@@ -264,38 +270,21 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
                     },
                     borderRadius: BorderRadius.circular(16.r),
                     child: Container(
-                      padding: EdgeInsets.only(
-                          top: 4.h, bottom: 4.h, left: 14.w, right: 4.w),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                       decoration: BoxDecoration(
-                        color: AppTheme.getButtonColor(context),
+                        color: Color(0xFF19B3F6).withOpacity(0.08),
                         borderRadius: BorderRadius.circular(16.r),
-                        boxShadow: AppTheme.isDark(context)
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
-                                  offset: Offset(1, 1),
-                                  blurRadius: 0.1,
-                                ),
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  offset: Offset(-1, -1),
-                                  blurRadius: 0.1,
-                                )
-                              ]
-                            : [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  offset: Offset(3, 3),
-                                  blurRadius: 5,
-                                  spreadRadius: 0.5,
-                                ),
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.9),
-                                  offset: Offset(-3, -3),
-                                  blurRadius: 5,
-                                  spreadRadius: 0.5,
-                                ),
-                              ],
+                        border: Border.all(
+                          color: Color(0xFF19B3F6).withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF19B3F6).withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -305,29 +294,28 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
                             child: AutoSizeText(
                               widget.keyword.keyword,
                               style: TextStyle(
-                                fontSize: 26.sp,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 28.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.getTextColor(context),
                               ),
-                              minFontSize: 8,
+                              minFontSize: 20,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(
-                            width: 6.w,
+                          SizedBox(width: 12.w),
+                          Container(
+                            padding: EdgeInsets.all(6.w),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF19B3F6),
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            child: Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
                           ),
-                          Column(
-                            children: [
-                              SizedBox(
-                                height: 5.h,
-                              ),
-                              Image.asset(
-                                'assets/img/items/leftArrow.png',
-                                width: 30.w,
-                                color: Color(0xFF1AB2F7),
-                              ),
-                            ],
-                          )
                         ],
                       ),
                     ),
@@ -337,28 +325,55 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.keyword.category,
-                          style: TextStyle(
-                            fontSize: 17.sp,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(
-                          height: 20.h,
-                        ),
-                        _buildSummaryContent(),
-                      ],
+                    child: Text(
+                      widget.keyword.category,
+                      style: TextStyle(
+                        fontSize: 19.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ),
-                  SizedBox(
-                    height: 60.h,
-                  )
                 ],
               ),
+            ),
+            SizedBox(
+              height: 20.h,
+            ),
+            
+            // 스크롤 가능한 요약 콘텐츠 박스
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 10.w),
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: AppTheme.isDark(context) 
+                      ? Colors.grey[850]?.withOpacity(0.5)
+                      : Colors.grey[100]?.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[700]!
+                        : Colors.grey[300]!,
+                    width: 1,
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  physics: BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSummaryContent(),
+                      SizedBox(
+                        height: 20.h,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 10.h,
             ),
           ],
         ),
