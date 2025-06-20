@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:ui';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/_widgets.dart';
 
 class TimeMachineTabComponent extends StatefulWidget {
@@ -10,11 +12,11 @@ class TimeMachineTabComponent extends StatefulWidget {
       _TimeMachineTabComponentState();
 }
 
-class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
-  DateTime _selectedDate =
-      DateTime.now().subtract(const Duration(days: 1)); // 기본값: 어제
+class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> 
+    with TickerProviderStateMixin {
+  DateTime _selectedDate = DateTime.now().subtract(const Duration(days: 1));
+  late AnimationController _floatingController;
 
-  // 카테고리 색상 매핑
   final Map<String, Color> categoryColors = {
     '정치': Color(0xFF4A90E2),
     '사회': Color(0xFF27AE60),
@@ -27,85 +29,349 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.all(16.w),
-      physics: BouncingScrollPhysics(),
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Stack(
       children: [
-        // 날짜 선택기
-        TimeMachineDateSelectorWidget(
-          selectedDate: _selectedDate,
-          onDateTap: _selectDate,
+        // 배경 그라데이션 애니메이션
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: Duration(seconds: 3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Color(0xFF0F172A),
+                        Color(0xFF1E293B),
+                        Color(0xFF0F172A),
+                      ]
+                    : [
+                        Color(0xFFF8FAFC),
+                        Color(0xFFE0E7FF),
+                        Color(0xFFF8FAFC),
+                      ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
         ),
-
-        SizedBox(height: 20.h),
-
-        // 일일 요약
-        TimeMachineDailySummaryWidget(
-          summaryData: _getDailySummaryData(),
+        
+        // 플로팅 오브 효과 (최적화)
+        ...List.generate(2, (index) => 
+          Positioned(
+            top: 150.h + (index * 300.h),
+            left: index.isEven ? -30.w : null,
+            right: index.isOdd ? -30.w : null,
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    index.isEven ? _floatingController.value * 20 : -_floatingController.value * 20,
+                    _floatingController.value * 15,
+                  ),
+                  child: Container(
+                    width: 100.w,
+                    height: 100.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.2),
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
-
-        SizedBox(height: 20.h),
-
-        // 시간별 트렌드
-        TimeMachineHourlyTrendsWidget(
-          categoryColors: categoryColors,
-          getKeywordsForHour: _getKeywordsForHour,
-          availableTimes: [
-            DateTime(2025, 1, 15, 0, 32),
-            DateTime(2025, 1, 15, 1, 30),
-            DateTime(2025, 1, 15, 2, 1),
-            DateTime(2025, 1, 15, 2, 1),
-            DateTime(2025, 1, 15, 8, 1),
-            DateTime(2025, 1, 15, 16, 1),
-            DateTime(2025, 1, 15, 18, 1),
-            DateTime(2025, 1, 15, 19, 1),
-            DateTime(2025, 1, 15, 20, 1),
-            DateTime(2025, 1, 15, 21, 1),
-            DateTime(2025, 1, 15, 23, 1)
-            // API에서 받아온 DateTime 리스트들
+        
+        CustomScrollView(
+          physics: BouncingScrollPhysics(),
+          slivers: [
+            // 히어로 섹션
+            SliverToBoxAdapter(
+              child: TimeMachineHeroSection(
+                selectedDate: _selectedDate,
+                onDateTap: _selectDate,
+                summaryData: _getDailySummaryData(),
+              ),
+            ),
+            
+            // 메트릭 섹션
+            SliverToBoxAdapter(
+              child: TimeMachineMetricsSection(
+                summaryData: _getDailySummaryData(),
+              ).animate()
+                .fadeIn(duration: 600.ms)
+                .slideY(begin: 0.03, end: 0, duration: 600.ms),
+            ),
+            
+            // 트렌드 섹션  
+            SliverToBoxAdapter(
+              child: TimeMachineTrendsSection(
+                categoryColors: categoryColors,
+                getKeywordsForHour: _getKeywordsForHour,
+                availableTimes: [
+                  DateTime(2025, 1, 15, 0, 32),
+                  DateTime(2025, 1, 15, 1, 30),
+                  DateTime(2025, 1, 15, 2, 1),
+                  DateTime(2025, 1, 15, 8, 1),
+                  DateTime(2025, 1, 15, 16, 1),
+                  DateTime(2025, 1, 15, 18, 1),
+                  DateTime(2025, 1, 15, 19, 1),
+                  DateTime(2025, 1, 15, 20, 1),
+                  DateTime(2025, 1, 15, 21, 1),
+                  DateTime(2025, 1, 15, 23, 1)
+                ],
+              ).animate()
+                .fadeIn(duration: 600.ms, delay: 200.ms)
+                .slideY(begin: 0.03, end: 0, duration: 600.ms),
+            ),
+            
+            // 워드클라우드 섹션
+            SliverToBoxAdapter(
+              child: TimeMachineWordCloudSection(
+                categoryColors: categoryColors,
+                wordCloudImagePath: 'assets/img/items/word_cloud.png',
+              ).animate()
+                .fadeIn(duration: 600.ms, delay: 400.ms)
+                .slideY(begin: 0.03, end: 0, duration: 600.ms),
+            ),
+            
+            // 하단 여백
+            SliverToBoxAdapter(
+              child: SizedBox(height: 100.h),
+            ),
           ],
         ),
-        SizedBox(height: 20.h),
-
-        // 워드클라우드
-        TimeMachineWordCloudWidget(
-          categoryColors: categoryColors,
-          wordCloudImagePath: 'assets/img/items/word_cloud.png',
+        
+        // 플로팅 날짜 선택 버튼
+        Positioned(
+          bottom: 100.h,
+          right: 20.w,
+          child: GestureDetector(
+            onTap: _selectDate,
+            child: Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF3B82F6).withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.calendar_today_rounded,
+                color: Colors.white,
+                size: 24.sp,
+              ),
+            ),
+          ).animate()
+            .scale(duration: 300.ms)
+            .fadeIn(),
         ),
-
-        SizedBox(height: 40.h),
       ],
     );
   }
 
-  // 날짜 선택
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
+    await showModalBottomSheet(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF19B3F6),
-              onPrimary: Colors.white,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildModernDatePicker(),
+    );
+  }
+  
+  Widget _buildModernDatePicker() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final now = DateTime.now();
+    
+    return Container(
+      height: 0.7.sh,
+      decoration: BoxDecoration(
+        color: isDarkMode ? Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+      ),
+      child: Column(
+        children: [
+          // 핸들 바
+          Container(
+            width: 40.w,
+            height: 4.h,
+            margin: EdgeInsets.only(top: 12.h),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2.r),
             ),
           ),
-          child: child!,
-        );
-      },
+          
+          // 헤더
+          Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '날짜 선택',
+                  style: TextStyle(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // 빠른 선택 버튼들
+          Container(
+            height: 50.h,
+            margin: EdgeInsets.symmetric(horizontal: 20.w),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildQuickDateChip('오늘', now),
+                _buildQuickDateChip('어제', now.subtract(Duration(days: 1))),
+                _buildQuickDateChip('3일 전', now.subtract(Duration(days: 3))),
+                _buildQuickDateChip('1주일 전', now.subtract(Duration(days: 7))),
+                _buildQuickDateChip('1개월 전', now.subtract(Duration(days: 30))),
+              ],
+            ),
+          ),
+          
+          // 캘린더
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24.r),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDarkMode 
+                    ? [Color(0xFF334155), Color(0xFF1E293B)]
+                    : [Color(0xFFF1F5F9), Color(0xFFE2E8F0)],
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24.r),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: ColorScheme.light(
+                        primary: Color(0xFF3B82F6),
+                        onPrimary: Colors.white,
+                        surface: Colors.transparent,
+                        onSurface: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      textTheme: TextTheme(
+                        bodyMedium: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    child: CalendarDatePicker(
+                      initialDate: _selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                      onDateChanged: (date) {
+                        setState(() {
+                          _selectedDate = date;
+                        });
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate()
+      .slideY(begin: 1, end: 0, duration: 300.ms)
+      .fadeIn();
+  }
+  
+  Widget _buildQuickDateChip(String label, DateTime date) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isSelected = _selectedDate.year == date.year && 
+                      _selectedDate.month == date.month && 
+                      _selectedDate.day == date.day;
+    
+    return Padding(
+      padding: EdgeInsets.only(right: 8.w),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedDate = date;
+          });
+          Navigator.of(context).pop();
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: isSelected 
+              ? Color(0xFF3B82F6)
+              : (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+            borderRadius: BorderRadius.circular(20.r),
+            border: isSelected ? null : Border.all(
+              color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 14.sp,
+            ),
+          ),
+        ),
+      ),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
   }
 
-  // 일일 요약 데이터 생성
   Map<String, dynamic> _getDailySummaryData() {
     return {
       'topKeyword': '천국보다 아름다운',
@@ -131,9 +397,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
     };
   }
 
-  // 시간별 키워드 데이터 (임시 데이터)
   List<Map<String, dynamic>> _getKeywordsForHour(int hour) {
-    // 실제로는 API에서 가져올 데이터
     final baseKeywords = [
       {'keyword': '포켓몬 우유', 'category': '연예', 'change': 5},
       {'keyword': '갤럭시 S25', 'category': 'IT', 'change': -2},
@@ -147,7 +411,6 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent> {
       {'keyword': '새마음', 'category': '사회', 'change': 1},
     ];
 
-    // 시간대별로 약간씩 다른 데이터 반환 (실제로는 API에서 시간별 데이터를 가져옴)
     return baseKeywords;
   }
 }

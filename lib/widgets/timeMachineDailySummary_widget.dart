@@ -26,57 +26,54 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
             lightSecondaryColor: Color(0xFFBAE6FD),
             darkPrimaryColor: Color(0xFF334155),
             darkSecondaryColor: Color(0xFF475569),
-            lightIconBackground: Color(0xFFFF6B6B),  // 코랄 레드 (강조)
+            lightIconBackground: Color(0xFFFF6B6B),
             darkIconBackground: Color(0xFFE74C3C),
           ),
 
-          SizedBox(height: 14.h),
+          SizedBox(height: 18.h),
 
-          // 3개 통계를 가로로 배치
-          Row(
+          // 메인 통계 - 세로로 배치해서 더 큰 폰트 사용
+          Column(
             children: [
-              // 종합 1위
-              Expanded(
-                child: _buildCompactStatItem(
-                  context: context,
-                  icon: Icons.emoji_events_rounded,
-                  label: "종합 1위",
-                  value: summaryData['topKeyword'] ?? "포켓몬 우유",
-                  subtitle: summaryData['topKeywordStats'] ?? "15.2만 검색",
-                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                ),
+              _buildMainStatItem(
+                context: context,
+                icon: Icons.emoji_events_rounded,
+                label: "종합 1위",
+                value: summaryData['topKeyword'] ?? "포켓몬 우유",
+                subtitle: summaryData['topKeywordStats'] ?? "15.2만 검색",
+                color: Color(0xFFFFD700),
               ),
-
-              SizedBox(width: 8.w),
-
-              // 최다 카테고리
-              Expanded(
-                child: _buildCompactStatItem(
-                  context: context,
-                  icon: Icons.category_rounded,
-                  label: "최다 카테고리",
-                  value: summaryData['topCategory'] ?? "연예",
-                  subtitle: summaryData['topCategoryStats'] ?? "전체 40%",
-                  colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
-                ),
+              
+              SizedBox(height: 14.h),
+              
+              _buildStatItem(
+                context: context,
+                icon: Icons.category_rounded,
+                label: "최다 카테고리",
+                value: summaryData['topCategory'] ?? "연예",
+                subtitle: summaryData['topCategoryStats'] ?? "전체 40%",
+                color: Color(0xFF11998e),
               ),
-
-              SizedBox(width: 8.w),
-
-              // 인기 토론방
-              Expanded(
-                child: _buildCompactStatItem(
-                  context: context,
-                  icon: Icons.forum_rounded,
-                  label: "인기 토론방",
-                  value: summaryData['topDiscussion'] ?? "갤럭시 S25",
-                  subtitle: _extractReactionCount(
-                      summaryData['topDiscussionStats'] ?? "반응 3,291개"),
-                  colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                ),
+              
+              SizedBox(height: 14.h),
+              
+              _buildStatItem(
+                context: context,
+                icon: Icons.forum_rounded,
+                label: "인기 토론방",
+                value: summaryData['topDiscussion'] ?? "갤럭시 S25",
+                subtitle: _extractReactionCount(
+                    summaryData['topDiscussionStats'] ?? "반응 3,291개"),
+                color: Color(0xFFf093fb),
               ),
             ],
           ),
+
+          // AI 인사이트가 있으면 표시
+          if (summaryData['insights'] != null) ...[
+            SizedBox(height: 18.h),
+            _buildInsightsSection(context),
+          ],
         ],
       ),
     ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(
@@ -89,10 +86,10 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
     EdgeInsetsGeometry? padding,
   }) {
     return Container(
-      padding: padding ?? EdgeInsets.all(16.w),
+      padding: padding ?? EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(18.r),
         border: Border.all(
           color: AppTheme.isDark(context)
               ? Colors.grey[800]!.withOpacity(0.3)
@@ -102,9 +99,9 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: AppTheme.isDark(context)
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 10,
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.06),
+            blurRadius: 12,
             spreadRadius: 0,
             offset: Offset(0, 4),
           ),
@@ -114,158 +111,268 @@ class TimeMachineDailySummaryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactStatItem({
+  Widget _buildMainStatItem({
     required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
     required String subtitle,
-    required List<Color> colors,
+    required Color color,
   }) {
     final bool isDark = AppTheme.isDark(context);
 
     return Container(
-      height: 140.h,
-      padding: EdgeInsets.all(12.w),
+      width: double.infinity,
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        // 라이트모드에서 더 명확한 배경색 사용
-        color: isDark
-            ? Color(0xFF2A2A36)
-            : Color(0xFFFBFBFB), // 순백색 대신 약간 회색빛 흰색
-        borderRadius: BorderRadius.circular(12.r),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          // 라이트모드에서 더 진한 테두리
-          color: isDark
-              ? colors[0].withOpacity(0.3)
-              : colors[0].withOpacity(0.6), // 0.3 -> 0.6으로 증가
-          width: 1.2, // 1 -> 1.2로 증가
+          color: color.withOpacity(0.3),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            // 라이트모드에서 더 진한 그림자
-            color: isDark
-                ? colors[0].withOpacity(0.1)
-                : colors[0].withOpacity(0.15), // 0.1 -> 0.15로 증가
-            blurRadius: isDark ? 4 : 6, // 라이트모드에서 블러 증가
+            color: color.withOpacity(0.1),
+            blurRadius: 12,
             spreadRadius: 0,
-            offset: Offset(0, isDark ? 1 : 2), // 라이트모드에서 오프셋 증가
+            offset: Offset(0, 4),
           ),
-          // 라이트모드에서 추가 그림자 효과
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 2,
-              spreadRadius: 1,
-              offset: Offset(0, 1),
-            ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
         children: [
-          // 상단: 아이콘 + 라벨
-          Column(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: colors,
-                  ),
-                  borderRadius: BorderRadius.circular(8.r),
-                  boxShadow: [
-                    BoxShadow(
-                      // 아이콘 컨테이너 그림자도 개선
-                      color: colors[0].withOpacity(isDark ? 0.25 : 0.35),
-                      blurRadius: isDark ? 3 : 4,
-                      spreadRadius: 0,
-                      offset: Offset(0, isDark ? 1 : 2),
-                    ),
-                  ],
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(14.r),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.4),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                  offset: Offset(0, 3),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 18.sp,
-                ),
-              ),
-
-              SizedBox(height: 6.h),
-
-              // 라벨 - 색상 개선
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: isDark
-                      ? Colors.grey[400]
-                      : Colors.grey[700], // 600 -> 700으로 더 진하게
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 28.sp,
+            ),
           ),
-
-          SizedBox(height: 2.h),
-
-          // 중간: 메인 값 (키워드명) - 색상 개선
+          SizedBox(width: 16.w),
           Expanded(
-            child: Center(
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  // 라이트모드에서 더 진한 텍스트
-                  color: isDark
-                      ? AppTheme.getTextColor(context)
-                      : Color(0xFF1A1A1A), // 검은색에 가깝게
-                  height: 1.2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+                SizedBox(height: 6.h),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ),
-
-          SizedBox(height: 2.h),
-
-          // 하단: 서브 정보 - 색상 개선
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 10.sp,
-              // 액센트 색상도 라이트모드에서 더 진하게
-              color: isDark
-                  ? colors[0]
-                  : Color.lerp(colors[0], Colors.black, 0.3)!, // 원색에 검은색 30% 혼합
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
-  // 토론방 통계에서 반응 개수만 추출하는 함수
+  Widget _buildStatItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String value,
+    required String subtitle,
+    required Color color,
+  }) {
+    final bool isDark = AppTheme.isDark(context);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Color(0xFF2A2A36).withOpacity(0.6)
+            : Color(0xFFFBFBFD),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 8,
+            spreadRadius: 0,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(14.w),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24.sp,
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightsSection(BuildContext context) {
+    final bool isDark = AppTheme.isDark(context);
+    final insights = summaryData['insights'] as List;
+    
+    return Container(
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Color(0xFF1E3A8A).withOpacity(0.1)
+            : Color(0xFFE0E7FF).withOpacity(0.5),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: Color(0xFF3B82F6).withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline_rounded,
+                color: Color(0xFF3B82F6),
+                size: 22.sp,
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                "AI 인사이트",
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.getTextColor(context),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          ...insights.map((insight) => Padding(
+            padding: EdgeInsets.only(bottom: 10.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  insight['icon'] ?? '💡',
+                  style: TextStyle(fontSize: 20.sp),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    insight['text'] ?? '',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: AppTheme.getTextColor(context),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )).toList(),
+        ],
+      ),
+    );
+  }
+
   String _extractReactionCount(String stats) {
-    // "댓글 1,847개 • 반응 3,291개" 에서 "반응 3,291개"만 추출
     List<String> parts = stats.split(' • ');
     for (String part in parts) {
       if (part.contains('반응')) {
         return part.trim();
       }
     }
-    // 반응이 없으면 전체 문자열 반환 (fallback)
     return stats;
   }
 }

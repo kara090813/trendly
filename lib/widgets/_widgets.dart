@@ -14,9 +14,15 @@ export 'sortToggle_widget.dart';
 export 'common_widget.dart';
 export 'enhancedSummaryBox_widget.dart';
 
-// Time Machine Widgets
+// Time Machine Widgets (Legacy)
 export 'timeMachineDateSelector_widget.dart';
 export 'timeMachineDailySummary_widget.dart';
 export 'timeMachineWordCloud_widget.dart';
 export 'timeMachineHourlyTrends_widget.dart';
 export 'historyTitle_widget.dart';
+
+// Time Machine Widgets (New Design)
+export 'timeMachineHero_section.dart';
+export 'timeMachineMetrics_section.dart';
+export 'timeMachineTrends_section.dart';
+export 'timeMachineWordCloud_section.dart';
