@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui';
 import '../app_theme.dart';
 import '../widgets/_widgets.dart';
 
@@ -11,8 +12,25 @@ class RandomKeywordTabComponent extends StatefulWidget {
   State<RandomKeywordTabComponent> createState() => _RandomKeywordTabComponentState();
 }
 
-class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
+class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> 
+    with TickerProviderStateMixin {
   bool _isRandomLoading = false;
+  late AnimationController _floatingController;
+
+  @override
+  void initState() {
+    super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    super.dispose();
+  }
 
   // 랜덤 키워드 리스트 (나중에 API로 대체)
   final List<Map<String, dynamic>> _randomKeywords = [
@@ -78,127 +96,285 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
 
   @override
   Widget build(BuildContext context) {
-    // 현재 선택된 랜덤 키워드
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final currentKeyword = _randomKeywords[_currentRandomIndex];
-
-    return ListView(
-      padding: EdgeInsets.all(0),
-      physics: BouncingScrollPhysics(),
+    
+    return Stack(
       children: [
-        SizedBox(height: 16.h),
-        _buildRandomKeywordHeader(currentKeyword),
-        SizedBox(height: 16.h),
-        _buildKeywordSummary(),
-        SizedBox(height: 16.h),
-        _buildRelatedNews(),
-        SizedBox(height: 40.h),
+        // 배경 그라데이션 애니메이션
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: Duration(seconds: 3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Color(0xFF0F172A),
+                        Color(0xFF1E293B),
+                        Color(0xFF0F172A),
+                      ]
+                    : [
+                        Color(0xFFF8FAFC),
+                        Color(0xFFE0E7FF),
+                        Color(0xFFF8FAFC),
+                      ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
+        ),
+        
+        // 플로팅 오브 효과 (최적화)
+        ...List.generate(2, (index) => 
+          Positioned(
+            top: 150.h + (index * 300.h),
+            left: index.isEven ? -30.w : null,
+            right: index.isOdd ? -30.w : null,
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    index.isEven ? _floatingController.value * 20 : -_floatingController.value * 20,
+                    _floatingController.value * 15,
+                  ),
+                  child: Container(
+                    width: 100.w,
+                    height: 100.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.2),
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        
+        CustomScrollView(
+          physics: BouncingScrollPhysics(),
+          slivers: [
+            // 히어로 섹션
+            SliverToBoxAdapter(
+              child: _buildRandomKeywordHeader(currentKeyword),
+            ),
+            
+            // 키워드 요약 섹션
+            SliverToBoxAdapter(
+              child: _buildKeywordSummary().animate()
+                .fadeIn(duration: 600.ms)
+                .slideY(begin: 0.03, end: 0, duration: 600.ms),
+            ),
+            
+            // 관련 뉴스 섹션  
+            SliverToBoxAdapter(
+              child: _buildRelatedNews().animate()
+                .fadeIn(duration: 600.ms, delay: 200.ms)
+                .slideY(begin: 0.03, end: 0, duration: 600.ms),
+            ),
+            
+            // 하단 여백
+            SliverToBoxAdapter(
+              child: SizedBox(height: 100.h),
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  // 설정 컨테이너 스타일 공통 함수
-  Widget _buildSettingContainer({
-    required Widget child,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.isDark(context)
-            ? Color(0xFF252530)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: Color(0xFF19B3F6).withOpacity(0.15),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.isDark(context)
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: padding ?? EdgeInsets.all(16.w),
-      child: child,
-    ).animate()
-        .fadeIn(duration: 300.ms)
-        .slideY(begin: 0.05, end: 0, duration: 250.ms, curve: Curves.easeOutQuad);
-  }
 
-  // 랜덤 키워드 헤더
+  // 랜덤 키워드 히어로 섹션 - TimeMachine 스타일
   Widget _buildRandomKeywordHeader(Map<String, dynamic> keyword) {
-    return _buildSettingContainer(
-      child: Row(
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _isRandomLoading
-              ? Container(
-            width: 45.w,
-            height: 45.w,
-            decoration: BoxDecoration(
-              color: Color(0xFF19B3F6).withOpacity(0.08),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Color(0xFF19B3F6).withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: SizedBox(
-                width: 24.w,
-                height: 24.w,
-                child: CircularProgressIndicator(
-                  color: Color(0xFF19B3F6),
-                  strokeWidth: 2.5,
+          // 구조화된 타이틀
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFEF4444).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.shuffle_rounded,
+                  color: Colors.white,
+                  size: 28.sp,
                 ),
               ),
-            ),
-          )
-              : Container(
-            decoration: BoxDecoration(
-              color: Color(0xFF19B3F6).withOpacity(0.08),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Color(0xFF19B3F6).withOpacity(0.2),
-                width: 1,
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "랜덤 키워드",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "예상치 못한 트렌드를 발견하세요",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            padding: EdgeInsets.all(10.w),
-            child: Icon(
-              Icons.shuffle,
-              color: Color(0xFF19B3F6),
-              size: 24.sp,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+            ],
+          ).animate()
+              .fadeIn(duration: 600.ms)
+              .slideX(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+          
+          SizedBox(height: 32.h),
+          
+          // 키워드 선택 카드
+          GestureDetector(
+            onTap: _randomizeKeyword,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [Color(0xFF1E293B), Color(0xFF0F172A)]
+                      : [Colors.white, Color(0xFFF8FAFC)],
+                ),
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: isDark 
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.06),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
                 children: [
-                  Text(
-                    keyword["keyword"],
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.getTextColor(context),
+                  _isRandomLoading
+                      ? Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFEF4444).withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 0,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: SizedBox(
+                            width: 24.sp,
+                            height: 24.sp,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFEF4444).withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 0,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.shuffle_rounded,
+                            color: Colors.white,
+                            size: 24.sp,
+                          ),
+                        ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          keyword["keyword"],
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.getTextColor(context),
+                            height: 1.2,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          keyword["date"],
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 8.w),
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                     decoration: BoxDecoration(
-                      color: Color(0xFF19B3F6).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(8.r),
+                      color: Color(0xFFEF4444).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: Color(0xFF19B3F6).withOpacity(0.2),
+                        color: Color(0xFFEF4444).withOpacity(0.3),
                         width: 1,
                       ),
                     ),
@@ -206,139 +382,190 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
                       keyword["category"],
                       style: TextStyle(
                         fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF19B3F6),
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFEF4444),
                       ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFEF4444).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 16.sp,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 4.h),
-              Text(
-                keyword["date"],
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-          Spacer(),
-          _buildButton(
-            icon: Icons.refresh,
-            label: "랜덤 선택",
-            onTap: _randomizeKeyword,
-          ),
+            ),
+          ).animate()
+              .fadeIn(duration: 800.ms, delay: 200.ms)
+              .slideY(begin: 0.1, end: 0, duration: 800.ms, curve: Curves.easeOutCubic)
+              .scale(begin: Offset(0.95, 0.95), end: Offset(1, 1), duration: 800.ms, curve: Curves.easeOutCubic),
         ],
       ),
     );
   }
 
-  // 키워드 요약
+  // 키워드 요약 섹션 - TimeMachine 스타일
   Widget _buildKeywordSummary() {
+    final bool isDark = AppTheme.isDark(context);
+    
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: AppTheme.isDark(context)
-              ? Colors.grey[800]!
-              : Colors.grey[300]!,
-          width: 1,
-        ),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HistoryTitleWidget(
-            title: "키워드 요약",
-            icon: Icons.text_snippet_rounded,
-            lightPrimaryColor: Color(0xFFDCF1FF),
-            lightSecondaryColor: Color(0xFFBAE6FD),
-            darkPrimaryColor: Color(0xFF334155),
-            darkSecondaryColor: Color(0xFF475569),
-            lightIconBackground: Color(0xFF818CF8),
-            darkIconBackground: Color(0xFF6366F1),
+          // 모던 섹션 헤더
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "키워드 요약",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "AI 분석 핵심 포인트",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 400.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
-
-          SizedBox(height: 16.h),
-
-          // 요약 내용
-          _buildNumberedPoint(
-            1,
-            "무표정 고양이 짤이 트위터에서 유행함.",
-          ),
-
-          SizedBox(height: 10.h),
-
-          _buildNumberedPoint(
-            2,
-            "이 짤은 이후 밈 채널에서 다양하게 재해석됨.",
-          ),
-
-          SizedBox(height: 10.h),
-
-          _buildNumberedPoint(
-            3,
-            "'짤줍'이라는 단어가 본격 확산되기 시작한 계기가 됨.",
-          ),
+          
+          SizedBox(height: 24.h),
+          
+          // 요약 내용 컨테이너
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildNumberedPoint(
+                    1,
+                    "무표정 고양이 짤이 트위터에서 유행함.",
+                  ),
+                  SizedBox(height: 16.h),
+                  _buildNumberedPoint(
+                    2,
+                    "이 짤은 이후 밈 채널에서 다양하게 재해석됨.",
+                  ),
+                  SizedBox(height: 16.h),
+                  _buildNumberedPoint(
+                    3,
+                    "'짤줍'이라는 단어가 본격 확산되기 시작한 계기가 됨.",
+                  ),
+                ],
+              ),
+            ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 600.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 400.ms, delay: 100.ms)
-        .slideY(begin: 0.05, end: 0, duration: 350.ms, curve: Curves.easeOutQuad);
+    );
   }
 
-  // 번호가 있는 포인트 아이템
+  // 번호가 있는 포인트 아이템 - TimeMachine 스타일
   Widget _buildNumberedPoint(int number, String text) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 24.w,
-          height: 24.w,
+          width: 32.w,
+          height: 32.w,
           decoration: BoxDecoration(
-            color: Color(0xFF19B3F6).withOpacity(0.1),
-            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF3B82F6).withOpacity(0.3),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
           child: Center(
             child: Text(
               number.toString(),
               style: TextStyle(
                 fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF19B3F6),
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
           ),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 16.w),
         Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 15.sp,
-              height: 1.4,
-              color: AppTheme.getTextColor(context),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 4.h),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 16.sp,
+                height: 1.4,
+                color: AppTheme.getTextColor(context),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -346,130 +573,151 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
     );
   }
 
-  // 관련 뉴스
+  // 관련 뉴스 섹션 - TimeMachine 스타일
   Widget _buildRelatedNews() {
+    final bool isDark = AppTheme.isDark(context);
+    
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: AppTheme.isDark(context)
-              ? Colors.grey[800]!
-              : Colors.grey[300]!,
-          width: 1,
-        ),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HistoryTitleWidget(
-            title: "관련 뉴스",
-            icon: Icons.newspaper_rounded,
-            lightPrimaryColor: Color(0xFFDCF1FF),
-            lightSecondaryColor: Color(0xFFBAE6FD),
-            darkPrimaryColor: Color(0xFF334155),
-            darkSecondaryColor: Color(0xFF475569),
-            lightIconBackground: Color(0xFFFBBF24),
-            darkIconBackground: Color(0xFFF59E0B),
+          // 모던 섹션 헤더
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "관련 뉴스",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "연관 뉴스 및 커뮤니티 반응",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 800.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
-
-          SizedBox(height: 16.h),
-
-          // 뉴스 카드 목록
-          ..._newsData.asMap().entries.map((entry) {
-            final int index = entry.key;
-            final Map<String, dynamic> newsItem = entry.value;
-            return Padding(
-              padding: EdgeInsets.only(bottom: index == _newsData.length - 1 ? 0 : 12.h),
-              child: _buildNewsCard(newsItem, index * 100),
-            );
-          }).toList(),
+          
+          SizedBox(height: 24.h),
+          
+          // 뉴스 리스트 컨테이너
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  ..._newsData.asMap().entries.map((entry) {
+                    final int index = entry.key;
+                    final Map<String, dynamic> newsItem = entry.value;
+                    final isLast = index == _newsData.length - 1;
+                    return _buildNewsCard(newsItem, index * 100, isLast);
+                  }),
+                ],
+              ),
+            ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 1000.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 400.ms, delay: 200.ms)
-        .slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutQuad);
+    );
   }
 
-  // 개선된 뉴스 카드
-  Widget _buildNewsCard(Map<String, dynamic> newsItem, int delay) {
+  // 뉴스 카드 - TimeMachine 스타일
+  Widget _buildNewsCard(Map<String, dynamic> newsItem, int delay, bool isLast) {
+    final bool isDark = AppTheme.isDark(context);
+    
     return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: AppTheme.isDark(context)
-            ? Color(0xFF21202C)
-            : Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: AppTheme.isDark(context)
-              ? Colors.grey[700]!
-              : Colors.grey[400]!,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.isDark(context)
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
+        border: isLast ? null : Border(
+          bottom: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+            width: 1,
           ),
-        ],
+        ),
       ),
-      padding: EdgeInsets.all(12.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 썸네일 이미지 또는 기본 이미지
           Container(
-            width: 60.w,
-            height: 60.w,
+            width: 56.w,
+            height: 56.w,
             decoration: BoxDecoration(
-              color: AppTheme.isDark(context)
-                  ? Color(0xFF2A2A36)
-                  : Colors.grey[200],
-              borderRadius: BorderRadius.circular(8.r),
+              color: isDark
+                  ? Color(0xFF0F172A)
+                  : Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: AppTheme.isDark(context)
-                    ? Colors.grey[600]!
-                    : Colors.grey[300]!,
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
                 width: 1,
               ),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(7.r),
+              borderRadius: BorderRadius.circular(11.r),
               child: newsItem['hasImage'] == true && newsItem['thumbnail'] != null
                   ? Image.network(
-                newsItem['thumbnail'],
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildDefaultThumbnail(newsItem['type']);
-                },
-              )
+                      newsItem['thumbnail'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildDefaultThumbnail(newsItem['type']);
+                      },
+                    )
                   : _buildDefaultThumbnail(newsItem['type']),
             ),
           ),
 
-          SizedBox(width: 12.w),
+          SizedBox(width: 16.w),
 
           // 뉴스 내용
           Expanded(
@@ -485,47 +733,27 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[300]
-                            : Colors.grey[700],
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
                     ),
 
-                    SizedBox(width: 6.w),
-
-                    // 구분점
-                    Container(
-                      width: 3.w,
-                      height: 3.w,
-                      decoration: BoxDecoration(
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[500]
-                            : Colors.grey[400],
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-
-                    SizedBox(width: 6.w),
+                    SizedBox(width: 8.w),
 
                     // 커뮤니티/뉴스 타입 태그
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 6.w,
-                        vertical: 2.h,
+                        horizontal: 8.w,
+                        vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: _getTypeColor(newsItem['type']).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4.r),
-                        border: Border.all(
-                          color: _getTypeColor(newsItem['type']).withOpacity(0.3),
-                          width: 1,
-                        ),
+                        color: _getTypeColor(newsItem['type']).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Text(
                         newsItem['type'],
                         style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
                           color: _getTypeColor(newsItem['type']),
                         ),
                       ),
@@ -537,10 +765,9 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
                     Text(
                       newsItem['date'],
                       style: TextStyle(
-                        fontSize: 11.sp,
-                        color: AppTheme.isDark(context)
-                            ? Colors.grey[500]
-                            : Colors.grey[600],
+                        fontSize: 12.sp,
+                        color: isDark ? Colors.grey[500] : Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -552,7 +779,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
                 Text(
                   newsItem['title'],
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.getTextColor(context),
                     height: 1.3,
@@ -565,28 +792,28 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
           ),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 300.ms, delay: Duration(milliseconds: delay))
-        .slideX(begin: 0.05, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
+    ).animate(delay: Duration(milliseconds: delay))
+        .fadeIn(duration: 600.ms)
+        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
-  // 기본 썸네일 (썸네일이 없을 때)
+  // 기본 썸네일 (썸네일이 없을 때) - TimeMachine 스타일
   Widget _buildDefaultThumbnail(String type) {
     IconData iconData;
     Color iconColor;
 
     switch (type) {
       case '뉴스':
-        iconData = Icons.newspaper;
-        iconColor = Color(0xFF19B3F6);
+        iconData = Icons.newspaper_rounded;
+        iconColor = Color(0xFF10B981);
         break;
       case '커뮤니티':
-        iconData = Icons.forum;
-        iconColor = Color(0xFF9B59B6);
+        iconData = Icons.forum_rounded;
+        iconColor = Color(0xFF8B5CF6);
         break;
       default:
-        iconData = Icons.article;
-        iconColor = Color(0xFF6C757D);
+        iconData = Icons.article_rounded;
+        iconColor = Color(0xFF6B7280);
     }
 
     return Container(
@@ -597,7 +824,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            iconColor.withOpacity(0.1),
+            iconColor.withOpacity(0.15),
             iconColor.withOpacity(0.05),
           ],
         ),
@@ -605,70 +832,23 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent> {
       child: Center(
         child: Icon(
           iconData,
-          color: iconColor.withOpacity(0.6),
-          size: 24.sp,
+          color: iconColor.withOpacity(0.7),
+          size: 20.sp,
         ),
       ),
     );
   }
 
-  // 타입에 따른 색상 반환
+  // 타입에 따른 색상 반환 - TimeMachine 스타일
   Color _getTypeColor(String type) {
     switch (type) {
       case '뉴스':
-        return Color(0xFF19B3F6);
+        return Color(0xFF10B981);
       case '커뮤니티':
-        return Color(0xFF9B59B6);
+        return Color(0xFF8B5CF6);
       default:
         return AppTheme.isDark(context) ? Colors.grey[400]! : Colors.grey[600]!;
     }
   }
 
-  // 버튼
-  Widget _buildButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    final buttonColor = color ?? Color(0xFF19B3F6);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: buttonColor,
-          borderRadius: BorderRadius.circular(8.r),
-          boxShadow: [
-            BoxShadow(
-              color: buttonColor.withOpacity(0.2),
-              blurRadius: 4,
-              spreadRadius: 0,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 16.sp,
-            ),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

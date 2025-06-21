@@ -169,37 +169,6 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           ],
         ),
         
-        // 플로팅 날짜 선택 버튼
-        Positioned(
-          bottom: 100.h,
-          right: 20.w,
-          child: GestureDetector(
-            onTap: _selectDate,
-            child: Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF3B82F6).withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.calendar_today_rounded,
-                color: Colors.white,
-                size: 24.sp,
-              ),
-            ),
-          ).animate()
-            .scale(duration: 300.ms)
-            .fadeIn(),
-        ),
       ],
     );
   }
@@ -348,7 +317,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           Navigator.of(context).pop();
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           decoration: BoxDecoration(
             color: isSelected 
               ? Color(0xFF3B82F6)
@@ -359,12 +328,14 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
               width: 1,
             ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              fontSize: 14.sp,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 14.sp,
+              ),
             ),
           ),
         ),

@@ -140,39 +140,6 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
     );
   }
 
-  Widget _buildCompactNavButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    required bool enabled,
-    required bool isDark,
-  }) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 32.w,
-        height: 32.w,
-        decoration: BoxDecoration(
-          color: enabled 
-              ? Color(0xFF3B82F6).withOpacity(0.1)
-              : (isDark ? Colors.grey[800] : Colors.grey[200]),
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: enabled 
-                ? Color(0xFF3B82F6).withOpacity(0.3)
-                : Colors.transparent,
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          icon,
-          color: enabled 
-              ? Color(0xFF3B82F6)
-              : (isDark ? Colors.grey[600] : Colors.grey[400]),
-          size: 18.sp,
-        ),
-      ),
-    );
-  }
 
   void _animateSwipe(double direction, VoidCallback onComplete) {
     _swipeAnimation = Tween<Offset>(
@@ -230,75 +197,77 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
 
   Widget _buildSimpleTimeNavigation(bool isDark) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 이전/다음 버튼
-          _buildCompactNavButton(
-            icon: Icons.chevron_left_rounded,
-            onTap: () => _navigateTime(-1),
-            enabled: _selectedTimeIndex > 0,
-            isDark: isDark,
-          ),
+      height: 60.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.availableTimes.length,
+        padding: EdgeInsets.symmetric(horizontal: 8.w),
+        itemBuilder: (context, index) {
+          final isSelected = index == _selectedTimeIndex;
+          final time = widget.availableTimes[index];
           
-          SizedBox(width: 16.w),
-          
-          // 현재 시간 표시
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  _formatTime(widget.availableTimes[_selectedTimeIndex]),
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedTimeIndex = index;
+                _showAll = false;
+              });
+            },
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              width: 80.w,
+              margin: EdgeInsets.symmetric(horizontal: 4.w),
+              decoration: BoxDecoration(
+                gradient: isSelected ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                ) : null,
+                color: isSelected ? null : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04)),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(
+                  color: isSelected 
+                      ? Colors.transparent
+                      : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  width: 1,
                 ),
-                SizedBox(height: 4.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF3B82F6).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12.r),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: Color(0xFF3B82F6).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
                   ),
-                  child: Text(
-                    "${_selectedTimeIndex + 1} / ${widget.availableTimes.length}",
+                ] : [],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _formatTime(time),
                     style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF3B82F6),
+                      fontSize: 14.sp,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: isSelected 
+                          ? Colors.white
+                          : (isDark ? Colors.white : Colors.black).withOpacity(0.8),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 2.h),
+                  Container(
+                    width: 6.w,
+                    height: 6.w,
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                          ? Colors.white
+                          : (isDark ? Colors.white : Colors.black).withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-          SizedBox(width: 16.w),
-          
-          _buildCompactNavButton(
-            icon: Icons.chevron_right_rounded,
-            onTap: () => _navigateTime(1),
-            enabled: _selectedTimeIndex < widget.availableTimes.length - 1,
-            isDark: isDark,
-          ),
-        ],
+          );
+        },
       ),
     );
   }

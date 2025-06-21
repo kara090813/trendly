@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:ui';
 import '../app_theme.dart';
 import '../widgets/_widgets.dart';
 
@@ -13,8 +14,27 @@ class KeywordHistoryTabComponent extends StatefulWidget {
   State<KeywordHistoryTabComponent> createState() => _KeywordHistoryTabComponentState();
 }
 
-class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent> {
+class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent> 
+    with TickerProviderStateMixin {
   String _selectedTimePeriod = '주간'; // 기본값: 주간
+  late AnimationController _floatingController;
+  String _sortType = 'date'; // 정렬 타입: date(날짜순), rank(순위순)
+  bool _sortAscending = false; // 정렬 방향: false(내림차순), true(오름차순)
+
+  @override
+  void initState() {
+    super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    super.dispose();
+  }
 
   // 키워드 히스토리 스냅샷 데이터 (같은 키워드의 다른 날짜별 기록)
   final List<Map<String, dynamic>> _keywordSnapshots = [
@@ -58,268 +78,549 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
       'summary': '크리스마스 특집 상품 출시 발표',
       'isWeekPeak': false,
     },
+    {
+      'date': '2024.12.10',
+      'rank': 4,
+      'category': '연예',
+      'peakTime': '22:15',
+      'summary': '콜라보 상품 예약 판매 시작',
+      'isWeekPeak': false,
+    },
+    {
+      'date': '2024.11.28',
+      'rank': 6,
+      'category': '연예',
+      'peakTime': '18:00',
+      'summary': '포켓몬 애니메이션 콜라보 방영',
+      'isWeekPeak': false,
+    },
+    {
+      'date': '2024.11.15',
+      'rank': 1,
+      'category': '연예',
+      'peakTime': '20:30',
+      'summary': '한정판 굿즈 품절 대란으로 화제',
+      'isWeekPeak': true,
+    },
+    {
+      'date': '2024.11.28',
+      'rank': 6,
+      'category': '연예',
+      'peakTime': '18:00',
+      'summary': '포켓몬 애니메이션 콜라보 방영',
+      'isWeekPeak': false,
+    },
+    {
+      'date': '2024.11.15',
+      'rank': 1,
+      'category': '연예',
+      'peakTime': '20:30',
+      'summary': '한정판 굿즈 품절 대란으로 화제',
+      'isWeekPeak': true,
+    },
+    {
+      'date': '2024.11.28',
+      'rank': 6,
+      'category': '연예',
+      'peakTime': '18:00',
+      'summary': '포켓몬 애니메이션 콜라보 방영',
+      'isWeekPeak': false,
+    },
+    {
+      'date': '2024.11.15',
+      'rank': 1,
+      'category': '연예',
+      'peakTime': '20:30',
+      'summary': '한정판 굿즈 품절 대란으로 화제',
+      'isWeekPeak': true,
+    },
+    {
+      'date': '2024.11.28',
+      'rank': 6,
+      'category': '연예',
+      'peakTime': '18:00',
+      'summary': '포켓몬 애니메이션 콜라보 방영',
+      'isWeekPeak': false,
+    },
+    {
+      'date': '2024.11.15',
+      'rank': 1,
+      'category': '연예',
+      'peakTime': '20:30',
+      'summary': '한정판 굿즈 품절 대란으로 화제',
+      'isWeekPeak': true,
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.all(0),
-      physics: BouncingScrollPhysics(),
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Stack(
       children: [
-        SizedBox(height: 16.h),
-        _buildKeywordSelector(),
-        SizedBox(height: 16.h),
-        _buildPeriodSelector(),
-        SizedBox(height: 16.h),
-        _buildHistoryGraph(),
-        SizedBox(height: 16.h),
-        _buildKeywordSnapshots(),
-        SizedBox(height: 40.h),
+        // 배경 그라데이션 애니메이션
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: Duration(seconds: 3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Color(0xFF0F172A),
+                        Color(0xFF1E293B),
+                        Color(0xFF0F172A),
+                      ]
+                    : [
+                        Color(0xFFF8FAFC),
+                        Color(0xFFE0E7FF),
+                        Color(0xFFF8FAFC),
+                      ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
+        ),
+        
+        // 플로팅 오브 효과
+        ...List.generate(2, (index) => 
+          Positioned(
+            top: 150.h + (index * 300.h),
+            left: index.isEven ? -30.w : null,
+            right: index.isOdd ? -30.w : null,
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    index.isEven ? _floatingController.value * 20 : -_floatingController.value * 20,
+                    _floatingController.value * 15,
+                  ),
+                  child: Container(
+                    width: 100.w,
+                    height: 100.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.2),
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        
+        CustomScrollView(
+          physics: BouncingScrollPhysics(),
+          slivers: [
+            // 키워드 선택 섹션
+            SliverToBoxAdapter(
+              child: _buildKeywordSelector(),
+            ),
+            
+            // 히스토리 그래프 섹션 (기간 선택기 포함)
+            SliverToBoxAdapter(
+              child: _buildHistoryGraph(),
+            ),
+            
+            // 키워드 스냅샷 섹션
+            SliverToBoxAdapter(
+              child: _buildKeywordSnapshots(),
+            ),
+            
+            // 하단 여백
+            SliverToBoxAdapter(
+              child: SizedBox(height: 100.h),
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  // 설정 컨테이너 스타일 공통 함수
-  Widget _buildSettingContainer({
-    required Widget child,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.isDark(context)
-            ? Color(0xFF252530)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: Color(0xFF19B3F6).withOpacity(0.15),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.isDark(context)
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: padding ?? EdgeInsets.all(16.w),
-      child: child,
-    ).animate()
-        .fadeIn(duration: 300.ms)
-        .slideY(begin: 0.05, end: 0, duration: 250.ms, curve: Curves.easeOutQuad);
-  }
 
-  // 키워드 선택기
+  // 키워드 선택기 - TimeMachine 히어로 스타일
   Widget _buildKeywordSelector() {
-    return _buildSettingContainer(
-      child: Row(
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Color(0xFF19B3F6).withOpacity(0.08),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Color(0xFF19B3F6).withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            padding: EdgeInsets.all(10.w),
-            child: Icon(
-              Icons.trending_up,
-              color: Color(0xFF19B3F6),
-              size: 24.sp,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // 구조화된 타이틀
+          Row(
             children: [
-              Text(
-                "포켓몬 우유",
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF8B5CF6).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.history_rounded,
+                  color: Colors.white,
+                  size: 28.sp,
                 ),
               ),
-              SizedBox(height: 2.h),
-              Text(
-                "키워드 히스토리",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "키워드 히스토리",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "키워드의 과거 순위 변화를 추적하고 분석하세요",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          Spacer(),
-          _buildButton(
-            icon: Icons.search,
-            label: "키워드 검색",
+          ).animate()
+              .fadeIn(duration: 600.ms)
+              .slideX(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+          
+          SizedBox(height: 32.h),
+          
+          // 키워드 선택 카드
+          GestureDetector(
             onTap: () {
               // 키워드 검색 기능
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('키워드 검색 기능은 개발 중입니다')),
               );
             },
-          ),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [Color(0xFF1E293B), Color(0xFF0F172A)]
+                      : [Colors.white, Color(0xFFF8FAFC)],
+                ),
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: isDark 
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.06),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                      ),
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFF3B82F6).withOpacity(0.3),
+                          blurRadius: 12,
+                          spreadRadius: 0,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.trending_up_rounded,
+                      color: Colors.white,
+                      size: 24.sp,
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "포켓몬 우유",
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.getTextColor(context),
+                            height: 1.2,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "선택된 키워드",
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            color: Color(0xFF3B82F6),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF3B82F6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF3B82F6),
+                      size: 16.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).animate()
+              .fadeIn(duration: 800.ms, delay: 200.ms)
+              .slideY(begin: 0.1, end: 0, duration: 800.ms, curve: Curves.easeOutCubic)
+              .scale(begin: Offset(0.95, 0.95), end: Offset(1, 1), duration: 800.ms, curve: Curves.easeOutCubic),
         ],
       ),
     );
   }
 
-  // 기간 선택기
-  Widget _buildPeriodSelector() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      height: 40.h,
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: AppTheme.isDark(context)
-              ? Colors.grey[800]!
-              : Colors.grey[300]!,
-          width: 1,
-        ),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 6,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 6,
-            spreadRadius: 0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 8.w),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: ['일간', '주간', '월간', '전체'].map((period) {
-          final isSelected = period == _selectedTimePeriod;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedTimePeriod = period;
-              });
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: isSelected ? Color(0xFF19B3F6) : Colors.transparent,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(
-                period,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.white : AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[700],
+  // 그래프 내부 기간 선택기 - TimeMachine 스타일
+  Widget _buildPeriodSelectorInGraph() {
+    final bool isDark = AppTheme.isDark(context);
+    final periods = ['일간', '주간', '월간', '전체'];
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
+      child: Container(
+        height: 50.h,
+        child: Row(
+          children: periods.asMap().entries.map((entry) {
+            final index = entry.key;
+            final period = entry.value;
+            final isSelected = period == _selectedTimePeriod;
+            final isLast = index == periods.length - 1;
+            
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedTimePeriod = period;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  margin: EdgeInsets.only(right: isLast ? 0 : 8.w),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                    ) : null,
+                    color: isSelected ? null : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04)),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: isSelected 
+                          ? Colors.transparent
+                          : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                      width: 1,
+                    ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(
+                        color: Color(0xFF10B981).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ] : [],
+                  ),
+                  child: Center(
+                    child: Text(
+                      period,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected 
+                            ? Colors.white
+                            : (isDark ? Colors.white : Colors.black).withOpacity(0.8),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     ).animate()
-        .fadeIn(duration: 300.ms, delay: 100.ms)
-        .slideY(begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOutQuad);
+        .fadeIn(duration: 600.ms, delay: 700.ms)
+        .slideY(begin: 0.02, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
-  // 히스토리 그래프
+  // 히스토리 그래프 - TimeMachine 스타일
   Widget _buildHistoryGraph() {
+    final bool isDark = AppTheme.isDark(context);
+    
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: AppTheme.isDark(context)
-              ? Colors.grey[800]!
-              : Colors.grey[300]!,
-          width: 1,
-        ),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HistoryTitleWidget(
-            title: "순위 변화 그래프",
-            icon: Icons.trending_up,
-            lightPrimaryColor: Color(0xFFDCF1FF),
-            lightSecondaryColor: Color(0xFFBAE6FD),
-            darkPrimaryColor: Color(0xFF334155),
-            darkSecondaryColor: Color(0xFF475569),
-            lightIconBackground: Color(0xFF10B981),  // 에메랄드 (긍정적 변화)
-            darkIconBackground: Color(0xFF22C55E),
+          // 모던 섹션 헤더
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "순위 변화 그래프",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "키워드 순위 역사 추적",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 600.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
-
-          SizedBox(height: 16.h),
-
-          Container(
-            height: 280.h,
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: AppTheme.isDark(context)
-                  ? Color(0xFF21202C)
-                  : Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: AppTheme.isDark(context)
-                    ? Colors.grey[700]!
-                    : Colors.grey[300]!,
-                width: 1,
+          
+          SizedBox(height: 20.h),
+          
+          // 기간 선택기
+          _buildPeriodSelectorInGraph(),
+          
+          SizedBox(height: 20.h),
+          
+          // 그래프 컨테이너
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 280.h,
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Color(0xFF0F172A)
+                          : Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+                        width: 1,
+                      ),
+                    ),
+                    child: _buildDynamicLineChart(),
+                  ),
+                  
+                  SizedBox(height: 16.h),
+                  
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendItem(
+                          Color(0xFF3B82F6),
+                          "키워드 순위"
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            child: _buildDynamicLineChart(),
-          ),
-
-          SizedBox(height: 12.h),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem(
-                  Color(0xFF19B3F6),
-                  "키워드 순위"
-              ),
-            ],
-          ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 800.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 400.ms, delay: 100.ms)
-        .slideY(begin: 0.05, end: 0, duration: 350.ms, curve: Curves.easeOutQuad);
+    );
   }
 
   // 그래프 범례 아이템
@@ -348,72 +649,158 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
     );
   }
 
-  // 키워드 히스토리 스냅샷 리스트
+  // 키워드 히스토리 스냅샷 리스트 - TimeMachine 스타일
   Widget _buildKeywordSnapshots() {
+    final bool isDark = AppTheme.isDark(context);
+    
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: AppTheme.getContainerColor(context),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: AppTheme.isDark(context)
-              ? Colors.grey[800]!
-              : Colors.grey[300]!,
-          width: 1,
-        ),
-        boxShadow: AppTheme.isDark(context)
-            ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ]
-            : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HistoryTitleWidget(
-            title: "순위 기록 타임라인",
-            icon: Icons.timeline_rounded,
-            lightPrimaryColor: Color(0xFFDCF1FF),
-            lightSecondaryColor: Color(0xFFBAE6FD),
-            darkPrimaryColor: Color(0xFF334155),
-            darkSecondaryColor: Color(0xFF475569),
-            lightIconBackground: Color(0xFF8B5CF6),
-            darkIconBackground: Color(0xFF7C3AED),
-          ),
-
-          SizedBox(height: 16.h),
-
-          // 스냅샷 카드 리스트
-          Column(
-            children: _keywordSnapshots.asMap().entries.map((entry) {
-              final int index = entry.key;
-              final Map<String, dynamic> snapshot = entry.value;
-              return Padding(
-                padding: EdgeInsets.only(
-                    bottom: index == _keywordSnapshots.length - 1 ? 0 : 12.h
+          // 모던 섹션 헤더
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "순위 기록 타임라인",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
-                child: _buildSnapshotCard(snapshot, index),
-              );
-            }).toList(),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "주요 순위 기록 목록",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 1000.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
+          
+          SizedBox(height: 24.h),
+          
+          // 스냅샷 리스트 컨테이너
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // 스냅샷 카드 리스트 (5개 이하: 전체, 5개 이상: 상위 5개)
+                  ..._getDisplaySnapshots().asMap().entries.map((entry) {
+                    final int index = entry.key;
+                    final Map<String, dynamic> snapshot = entry.value;
+                    final isLast = index == _getDisplaySnapshots().length - 1;
+                    return _buildSnapshotCard(snapshot, index, isLast && _keywordSnapshots.length <= 5);
+                  }),
+                  
+                  // 전체보기 버튼 (5개 이상일 때만 표시)
+                  if (_keywordSnapshots.length > 5)
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            _showAllSnapshotsModal();
+                          },
+                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.r)),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.grid_view_rounded,
+                                  color: isDark ? Color(0xFFBB86FC) : Color(0xFF8B5CF6),
+                                  size: 18.sp,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  "전체 기록 보기",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Color(0xFFBB86FC) : Color(0xFF8B5CF6),
+                                  ),
+                                ),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  "(총 ${_keywordSnapshots.length}개)",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Color(0xFFBB86FC).withOpacity(0.8) : Color(0xFF8B5CF6).withOpacity(0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 1200.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
         ],
       ),
-    ).animate()
-        .fadeIn(duration: 400.ms, delay: 200.ms)
-        .slideY(begin: 0.05, end: 0, duration: 400.ms, curve: Curves.easeOutQuad);
+    );
   }
 
   // 날짜 포맷팅 함수
@@ -440,164 +827,151 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
     }
   }
 
-  // 개별 스냅샷 카드
-  Widget _buildSnapshotCard(Map<String, dynamic> snapshot, int index) {
+  // 개별 스냅샷 카드 - TimeMachine 스타일
+  Widget _buildSnapshotCard(Map<String, dynamic> snapshot, int index, bool isLast) {
     final Color rankColor = _getRankColor(snapshot['rank']);
     final bool isWeekPeak = snapshot['isWeekPeak'] ?? false;
+    final bool isDark = AppTheme.isDark(context);
 
     // 일간 선택시 날짜 대신 시간만 표시
     final bool isDaily = _selectedTimePeriod == '일간';
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          // 해당 날짜의 키워드 상세 페이지로 이동
-          context.pushNamed(
-            'keywordDetail',
-            pathParameters: {'id': '1'}, // 실제 키워드 ID
-            queryParameters: {'date': snapshot['date']}, // 특정 날짜
-          );
-        },
-        borderRadius: BorderRadius.circular(12.r),
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppTheme.isDark(context)
-                ? Color(0xFF2A2A36)
-                : Color(0xFFFAFAFA),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: isWeekPeak
-                  ? rankColor.withOpacity(0.3)
-                  : (AppTheme.isDark(context)
-                  ? Colors.grey[700]!.withOpacity(0.3)
-                  : Colors.grey[300]!.withOpacity(0.5)),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.isDark(context)
-                    ? Colors.black.withOpacity(0.2)
-                    : Colors.black.withOpacity(0.05),
-                blurRadius: 3,
-                spreadRadius: 0,
-                offset: Offset(0, 1),
-              ),
-            ],
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      decoration: BoxDecoration(
+        border: isLast ? null : Border(
+          bottom: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+            width: 1,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // 해당 날짜의 키워드 상세 페이지로 이동
+            context.pushNamed(
+              'keywordDetail',
+              pathParameters: {'id': '1'}, // 실제 키워드 ID
+              queryParameters: {'date': snapshot['date']}, // 특정 날짜
+            );
+          },
+          borderRadius: BorderRadius.circular(12.r),
+          child: Row(
             children: [
-              // 상단: 순위, 날짜/시간, 피크
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 순위 뱃지
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: rankColor,
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      '${snapshot['rank']}위',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: 12.w),
-
-                  // 일간: 시간만 텍스트로 표시
-                  if (isDaily)
-                    Text(
-                      snapshot['peakTime'],
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.getTextColor(context),
-                      ),
-                    )
-                  // 주간/월간/전체: 날짜(텍스트) + 시간(태그)
-                  else ...[
-                    Text(
-                      _formatDate(snapshot['date']),
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.getTextColor(context),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF19B3F6).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(5.r),
-                        border: Border.all(
-                          color: Color(0xFF19B3F6).withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        snapshot['peakTime'],
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF19B3F6),
-                        ),
-                      ),
+              // 순위 번호 - TimeMachine 스타일
+              Container(
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  color: rankColor,
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: rankColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
-
-                  Spacer(),
-
-                  // 주간 피크 표시
-                  if (isWeekPeak) ...[
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFF6B35),
-                        borderRadius: BorderRadius.circular(3.r),
-                      ),
-                      child: Text(
-                        'PEAK',
-                        style: TextStyle(
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                ),
+                child: Center(
+                  child: Text(
+                    snapshot['rank'].toString(),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
-                    SizedBox(width: 8.w),
-                  ],
-
-                  // 화살표 아이콘
-                  Icon(
-                    Icons.chevron_right,
-                    size: 16.sp,
-                    color: AppTheme.isDark(context)
-                        ? Colors.grey[500]
-                        : Colors.grey[400],
                   ),
-                ],
+                ),
               ),
-
-              SizedBox(height: 12.h),
-
-              // 하단: 요약 정보
-              Text(
-                snapshot['summary'],
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[300]
-                      : Colors.grey[700],
-                  height: 1.3,
+              
+              SizedBox(width: 16.w),
+              
+              // 컨텐츠 영역
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // 일간: 시간만 텍스트로 표시
+                        if (isDaily)
+                          Text(
+                            snapshot['peakTime'],
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.getTextColor(context),
+                            ),
+                          )
+                        // 주간/월간/전체: 날짜(텍스트) + 시간(태그)
+                        else ...[
+                          Text(
+                            _formatDate(snapshot['date']),
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.getTextColor(context),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF3B82F6).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              snapshot['peakTime'],
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF3B82F6),
+                              ),
+                            ),
+                          ),
+                        ],
+                        
+                        Spacer(),
+                        
+                        // 주간 피크 표시
+                        if (isWeekPeak)
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
+                              ),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              'PEAK',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    
+                    SizedBox(height: 8.h),
+                    
+                    // 요약 정보
+                    Text(
+                      snapshot['summary'],
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isDark ? Colors.grey[300] : Colors.grey[700],
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -605,65 +979,417 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         ),
       ),
     ).animate(delay: Duration(milliseconds: index * 150))
-        .fadeIn(duration: 300.ms)
-        .slideX(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOutCubic);
+        .fadeIn(duration: 600.ms)
+        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
-  // 순위에 따른 색상 반환 (1,2,3위 외 통일)
-  Color _getRankColor(int rank) {
-    if (rank == 1) return Color(0xFFFF2D55); // 1위는 빨간색
-    if (rank == 2) return Color(0xFFFF6B35); // 2위는 주황색
-    if (rank == 3) return Color(0xFF19B3F6); // 3위는 파란색
-    return AppTheme.isDark(context) ? Colors.grey[600]! : Colors.grey[500]!; // 4위 이상은 통일된 회색
+  // 표시할 스냅샷 가져오기
+  List<Map<String, dynamic>> _getDisplaySnapshots() {
+    if (_keywordSnapshots.length <= 5) {
+      // 5개 이하면 전체 표시 (날짜순)
+      return _keywordSnapshots;
+    } else {
+      // 5개 이상이면 상위 5개 표시 (순위순, 동일 순위는 최신순)
+      final sorted = List<Map<String, dynamic>>.from(_keywordSnapshots);
+      sorted.sort((a, b) {
+        // 먼저 순위로 정렬 (오름차순)
+        final rankCompare = a['rank'].compareTo(b['rank']);
+        if (rankCompare != 0) return rankCompare;
+        
+        // 순위가 같으면 날짜로 정렬 (내림차순 - 최신순)
+        return b['date'].compareTo(a['date']);
+      });
+      return sorted.take(5).toList();
+    }
   }
-
-  // 버튼
-  Widget _buildButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    final buttonColor = color ?? Color(0xFF19B3F6);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: buttonColor,
-          borderRadius: BorderRadius.circular(8.r),
-          boxShadow: [
-            BoxShadow(
-              color: buttonColor.withOpacity(0.2),
-              blurRadius: 4,
-              spreadRadius: 0,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 16.sp,
-            ),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
+  
+  // 전체보기 모달 표시
+  void _showAllSnapshotsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildAllSnapshotsModal(),
     );
   }
+  
+  // 전체보기 모달 위젯
+  Widget _buildAllSnapshotsModal() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return StatefulBuilder(
+      builder: (context, setModalState) {
+        return Container(
+          height: 0.85.sh,
+          decoration: BoxDecoration(
+            color: isDark ? Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+          ),
+          child: Column(
+            children: [
+              // 핸들 바
+              Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(top: 12.h),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+              
+              // 헤더
+              Padding(
+                padding: EdgeInsets.all(20.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '전체 순위 기록',
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          '총 ${_keywordSnapshots.length}개의 기록',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // 정렬 옵션
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Row(
+                  children: [
+                    // 날짜순 버튼
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setModalState(() {
+                            if (_sortType == 'date') {
+                              _sortAscending = !_sortAscending;
+                            } else {
+                              _sortType = 'date';
+                              _sortAscending = false;
+                            }
+                          });
+                        },
+                        child: Container(
+                          height: 45.h,
+                          decoration: BoxDecoration(
+                            color: _sortType == 'date' 
+                                ? Color(0xFF8B5CF6) 
+                                : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04)),
+                            borderRadius: BorderRadius.horizontal(left: Radius.circular(12.r)),
+                            border: Border.all(
+                              color: _sortType == 'date'
+                                  ? Colors.transparent
+                                  : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '날짜순',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: _sortType == 'date'
+                                        ? Colors.white
+                                        : (isDark ? Colors.white : Colors.black).withOpacity(0.8),
+                                  ),
+                                ),
+                                if (_sortType == 'date') ...[
+                                  SizedBox(width: 4.w),
+                                  Icon(
+                                    _sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                    size: 16.sp,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // 순위순 버튼
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setModalState(() {
+                            if (_sortType == 'rank') {
+                              _sortAscending = !_sortAscending;
+                            } else {
+                              _sortType = 'rank';
+                              _sortAscending = false;
+                            }
+                          });
+                        },
+                        child: Container(
+                          height: 45.h,
+                          decoration: BoxDecoration(
+                            color: _sortType == 'rank' 
+                                ? Color(0xFF8B5CF6) 
+                                : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04)),
+                            borderRadius: BorderRadius.horizontal(right: Radius.circular(12.r)),
+                            border: Border.all(
+                              color: _sortType == 'rank'
+                                  ? Colors.transparent
+                                  : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '순위순',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: _sortType == 'rank'
+                                        ? Colors.white
+                                        : (isDark ? Colors.white : Colors.black).withOpacity(0.8),
+                                  ),
+                                ),
+                                SizedBox(width: 4.w),
+                                Icon(
+                                  Icons.emoji_events_rounded,
+                                  size: 16.sp,
+                                  color: _sortType == 'rank'
+                                      ? Colors.white
+                                      : (isDark ? Colors.white : Colors.black).withOpacity(0.8),
+                                ),
+                                if (_sortType == 'rank') ...[
+                                  SizedBox(width: 4.w),
+                                  Icon(
+                                    _sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                    size: 16.sp,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              SizedBox(height: 16.h),
+          
+              // 리스트
+              Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  itemCount: _getSortedSnapshots().length,
+                  itemBuilder: (context, index) {
+                    final snapshot = _getSortedSnapshots()[index];
+                return Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.pushNamed(
+                          'keywordDetail',
+                          pathParameters: {'id': '1'},
+                          queryParameters: {'date': snapshot['date']},
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(16.r),
+                      child: Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Row(
+                          children: [
+                            // 순위
+                            Container(
+                              width: 40.w,
+                              height: 40.w,
+                              decoration: BoxDecoration(
+                                color: _getRankColor(snapshot['rank']),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  snapshot['rank'].toString(),
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            // 내용
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _formatDate(snapshot['date']),
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white : Colors.black,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF3B82F6).withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(12.r),
+                                        ),
+                                        child: Text(
+                                          snapshot['peakTime'],
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF3B82F6),
+                                          ),
+                                        ),
+                                      ),
+                                      if (snapshot['isWeekPeak'] == true) ...[
+                                        SizedBox(width: 8.w),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
+                                            ),
+                                            borderRadius: BorderRadius.circular(12.r),
+                                          ),
+                                          child: Text(
+                                            'PEAK',
+                                            style: TextStyle(
+                                              fontSize: 10.sp,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    snapshot['summary'],
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+                ),
+              ),
+            ],
+          ),
+        ).animate()
+            .slideY(begin: 1, end: 0, duration: 300.ms)
+            .fadeIn();
+      },
+    );
+  }
+  
+  // 정렬된 스냅샷 가져오기
+  List<Map<String, dynamic>> _getSortedSnapshots() {
+    final sorted = List<Map<String, dynamic>>.from(_keywordSnapshots);
+    
+    if (_sortType == 'date') {
+      // 날짜순 정렬
+      if (_sortAscending) {
+        // 오름차순 (과거 → 최신)
+        sorted.sort((a, b) => a['date'].compareTo(b['date']));
+      } else {
+        // 내림차순 (최신 → 과거)
+        sorted.sort((a, b) => b['date'].compareTo(a['date']));
+      }
+    } else {
+      // 순위순 정렬
+      sorted.sort((a, b) {
+        int rankCompare;
+        if (_sortAscending) {
+          // 오름차순 (낮은 순위 → 높은 순위)
+          rankCompare = b['rank'].compareTo(a['rank']);
+        } else {
+          // 내림차순 (높은 순위 → 낮은 순위)
+          rankCompare = a['rank'].compareTo(b['rank']);
+        }
+        
+        if (rankCompare != 0) return rankCompare;
+        // 동일 순위는 항상 최신순
+        return b['date'].compareTo(a['date']);
+      });
+    }
+    
+    return sorted;
+  }
+
+  // 순위에 따른 색상 반환 - TimeMachine 스타일
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return Color(0xFFFFD700); // 금색
+      case 2:
+        return Color(0xFFC0C0C0); // 은색
+      case 3:
+        return Color(0xFFCD7F32); // 동색
+      default:
+        return Color(0xFF6B7280); // 회색
+    }
+  }
+
 
   // 동적 라인 차트 (x축 단위 조정 가능)
   Widget _buildDynamicLineChart() {
@@ -882,8 +1608,8 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             isCurved: true,
             gradient: LinearGradient(
               colors: [
-                Color(0xFF19B3F6),
-                Color(0xFF1E90FF),
+                Color(0xFF3B82F6),
+                Color(0xFF1D4ED8),
               ],
             ),
             barWidth: 3,
@@ -898,7 +1624,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                 if (actualRank == 1) {
                   return FlDotCirclePainter(
                     radius: 6,
-                    color: Color(0xFFFF2D55),
+                    color: Color(0xFFFFD700),
                     strokeWidth: 2,
                     strokeColor: Colors.white,
                   );
@@ -907,7 +1633,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                 else if (actualRank <= 3) {
                   return FlDotCirclePainter(
                     radius: 5,
-                    color: Color(0xFF19B3F6),
+                    color: Color(0xFF3B82F6),
                     strokeWidth: 2,
                     strokeColor: Colors.white,
                   );
@@ -916,7 +1642,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                 else {
                   return FlDotCirclePainter(
                     radius: 4,
-                    color: Color(0xFF19B3F6).withOpacity(0.7),
+                    color: Color(0xFF3B82F6).withOpacity(0.7),
                     strokeWidth: 1,
                     strokeColor: Colors.white,
                   );
@@ -929,8 +1655,8 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF19B3F6).withOpacity(0.3),
-                  Color(0xFF19B3F6).withOpacity(0.0),
+                  Color(0xFF3B82F6).withOpacity(0.3),
+                  Color(0xFF3B82F6).withOpacity(0.0),
                 ],
               ),
             ),
