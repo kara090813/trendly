@@ -27,10 +27,19 @@ class TabHeaderWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.35)
-                : Colors.black.withOpacity(0.1),
+                ? Colors.black.withOpacity(0.5)
+                : Colors.black.withOpacity(0.12),
+            blurRadius: 16,
+            spreadRadius: 3,
+            offset: Offset(0, 6),
+          ),
+          // 추가 그림자 레이어
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.06),
             blurRadius: 8,
-            spreadRadius: 0,
+            spreadRadius: 1,
             offset: Offset(0, 2),
           ),
         ],

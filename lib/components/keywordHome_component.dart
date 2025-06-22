@@ -331,10 +331,21 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                 color: AppTheme.getContainerColor(context),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha(30),
-                    blurRadius: 7,
+                    color: isDark
+                        ? Colors.black.withOpacity(0.5)
+                        : Colors.black.withOpacity(0.12),
+                    blurRadius: 16,
                     spreadRadius: 3,
-                    offset: const Offset(0, 1),
+                    offset: Offset(0, 6),
+                  ),
+                  // 추가 그림자 레이어
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                    offset: Offset(0, 2),
                   ),
                 ],
                 borderRadius: BorderRadius.only(
