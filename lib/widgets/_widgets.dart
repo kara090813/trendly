@@ -13,6 +13,7 @@ export 'commentList_widget.dart';
 export 'sortToggle_widget.dart';
 export 'common_widget.dart';
 export 'enhancedSummaryBox_widget.dart';
+export 'tabHeader_widget.dart';
 
 // Time Machine Widgets (Legacy)
 export 'timeMachineDateSelector_widget.dart';

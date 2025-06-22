@@ -57,8 +57,8 @@ class AppBarComponent extends StatelessWidget {
             onTap: () => onTap(1),
           ),
           AppBarIconWidget(
-            imageUrl: 'assets/img/items/bar_history.png',
-            label: '히스토리',
+            icon: Icons.explore,
+            label: '탐험',
             isSelected: currentIndex == 2,
             onTap: () => onTap(2),
           ),

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppBarIconWidget extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
+  final IconData? icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -10,12 +11,14 @@ class AppBarIconWidget extends StatelessWidget {
 
   const AppBarIconWidget({
     Key? key,
-    required this.imageUrl,
+    this.imageUrl,
+    this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
     this.iconSize = 30,
-  }) : super(key: key);
+  }) : assert(imageUrl != null || icon != null, 'Either imageUrl or icon must be provided'),
+       super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,12 +28,18 @@ class AppBarIconWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(height: 10.h,),
-          Image.asset(
-            imageUrl,
-            width: iconSize,
-            height: iconSize,
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
-          ),
+          imageUrl != null
+              ? Image.asset(
+                  imageUrl!,
+                  width: iconSize,
+                  height: iconSize,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
+                )
+              : Icon(
+                  icon!,
+                  size: iconSize,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
+                ),
           Text(
             label,
             style: TextStyle(
