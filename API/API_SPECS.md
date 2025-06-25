@@ -98,7 +98,7 @@
 {
   "keyword": "포켓몬 우유",
   "period": "weekly",
-  "history": [
+  "history": [[
     {
       "id": 123,
       "rank": 1,
@@ -109,7 +109,7 @@
       "rank": 3,
       "created_at": "2025-02-10T14:20:00Z"
     }
-  ]
+  ]]
 }
 ```
 ### K10. /api/keyword/date_groups/<str:datestr>/
@@ -158,11 +158,13 @@
     "percentage": 40.0,
     "count": 4
   },
-  "top_discussion": {
+  "top_discussion_room": {
+    "id": 456,
     "keyword": "갤럭시 S25",
-    "discussion_room_id": 456,
     "comment_count": 1847,
-    "reaction_count": 3291
+    "positive_count": 1200,
+    "neutral_count": 500,
+    "negative_count": 591
   }
 }
 ```
@@ -189,7 +191,6 @@
 - 요청 형식: JSON, {"keyword": "원하는 키워드"}
 - 응답 형식: JSON, DiscussionRoom 1개
 - 요청하면 해당 키워드를 가진 토론방 중 가장 최근 1개의 인스턴스를 리턴
-
 ### D6. /api/discussion/<int:discussion_room_id>/sentiment/
 - 요청 방식: POST
 - 요청 형식: JSON,
@@ -214,6 +215,18 @@
   - Option 1: Any
   - Option 2: Open only
   - Option 3: Closed only
+### D9. /api/discussion/count/<str:option>
+- 요청 방식: GET
+- 요청 형식: all, open, close을 option으로 가질 수 있다.
+- 응답 형식: 각각 all은 모든 토론방, open은 열린 토론방, close는 닫힌 토론방의 수를 반환함
+### D10. /api/discussion/paging
+- 요청 방식: GET
+- 요청 형식: ?option=N&sort=(new|pop)&page=N
+- 응답 형식: [DiscussionRoom 10개]
+- option은 0, 1, 2로 각 all, open, closed를 표현함
+- sort는 new, pop으로 각 갱신시각순, (댓글+긍정)순을 표현함
+- page는 Paginator(page 내 항목 수는 10개)에 의한 페이지를 표현함
+- 예시: ?option=1&sort=pop&page=1은 열린 토론방을 인기순으로 정렬한 뒤 1~10위 항목을 반환함
 
 ## Comment-related APIs
 ### C1. /api/comment/<int:comment_id>/
@@ -257,17 +270,20 @@
 - 요청 형식: JSON, 
 ```
 {
-  "discussion_room_id": "토론방 ID",
+  "discussion_room": 토론방_ID (정수),
   "user": "사용자 ID",
   "password": "비밀번호",
   "nick": "닉네임",
   "comment": "댓글 내용",
   "is_sub_comment": true/false,
-  "parent_id": "Subcomment인 경우 부모 댓글의 ID"
+  "parent": 부모_댓글_ID (대댓글인 경우만, 정수)
 }
 ```
-- 응답 형식: 성공 시 HTTP 201
-- 요청하면 해당 댓글을 지정한 토론방에 등록하고 토론방 댓글 수를 +1
+- 응답 형식: 성공 시 HTTP 201 + 생성된 댓글 데이터
+- 주의사항: 
+  - ip_addr은 서버에서 자동으로 HTTP 헤더에서 추출하여 설정
+  - 토론방 댓글 수가 자동으로 +1 됨
+  - 대댓글인 경우 부모 댓글의 sub_comment_count가 자동으로 +1 됨
 ### C8. /api/discussion/<int:discussion_room_id>/del_comment/
 - 요청 방식: POST
 - 요청 형식: JSON, 

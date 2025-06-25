@@ -301,6 +301,65 @@ class ApiService {
     }
   }
 
+  /// 토론방 수량 조회
+  /// GET /discussion/count/<str:option>
+  Future<int> getDiscussionCountByOption(String option) async {
+    final String url = '$_baseUrl/discussion/count/$option';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return int.parse(decodedBody);
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('토론방 수량 조회 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('토론방 수량 조회 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: option=$option');
+      rethrow;
+    }
+  }
+
+  /// 토론방 페이징 조회
+  /// GET /discussion/paging?option=N&sort=(new|pop)&page=N
+  Future<List<DiscussionRoom>> getDiscussionRoomsPaging({
+    required int option, // 0=all, 1=open, 2=closed
+    required String sort, // new=갱신시각순, pop=(댓글+긍정)순
+    required int page,
+  }) async {
+    final String url = '$_baseUrl/discussion/paging?option=$option&sort=$sort&page=$page';
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        // UTF-8 디코딩 적용
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((item) => DiscussionRoom.fromJson(item)).toList();
+      } else {
+        print('API 요청 실패: 상태 코드 ${response.statusCode}');
+        print('요청 URL: $url');
+        throw Exception('토론방 페이징 조회 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('토론방 페이징 조회 오류: $e');
+      print('요청 URL: $url');
+      print('요청 파라미터: option=$option, sort=$sort, page=$page');
+      rethrow;
+    }
+  }
+
   /// 특정 날짜의 키워드 그룹 가져오기
   /// GET /keyword/date_groups/<str:datestr>/
   Future<Map<String, dynamic>> getKeywordDateGroups(String dateStr) async {
@@ -644,7 +703,7 @@ class ApiService {
       {bool isSubComment = false, int? parentId}) async {
     final String url = '$_baseUrl/discussion/$roomId/add_comment/';
     final Map<String, dynamic> requestData = {
-      'discussion_room_id': roomId,
+      'discussion_room': roomId,
       'user': user,
       'password': password,
       'nick': nick,
@@ -653,7 +712,7 @@ class ApiService {
     };
 
     if (isSubComment && parentId != null) {
-      requestData['parent_id'] = parentId;
+      requestData['parent'] = parentId;
     }
 
     try {
@@ -666,14 +725,16 @@ class ApiService {
       if (response.statusCode != 201) {
         print('API 요청 실패: 상태 코드 ${response.statusCode}');
         print('요청 URL: $url');
-        print('요청 데이터: ${{"discussion_room_id": roomId, "user": user, "password": "****", "nick": nick, "comment": comment, "is_sub_comment": isSubComment, "parent_id": parentId}}');
+        print('요청 데이터: ${{"discussion_room": roomId, "user": user, "password": "****", "nick": nick, "comment": comment, "is_sub_comment": isSubComment, "parent": parentId}}');
       }
-
+      print(response.statusCode);
+      print(url);
+      print(requestData);
       return response.statusCode == 201;
     } catch (e) {
       print('댓글 작성 오류: $e');
       print('요청 URL: $url');
-      print('요청 데이터: ${{"discussion_room_id": roomId, "user": user, "password": "****", "nick": nick, "comment": comment, "is_sub_comment": isSubComment, "parent_id": parentId}}');
+      print('요청 데이터: ${{"discussion_room": roomId, "user": user, "password": "****", "nick": nick, "comment": comment, "is_sub_comment": isSubComment, "parent_id": parentId}}');
       rethrow;
     }
   }
@@ -683,7 +744,7 @@ class ApiService {
   Future<bool> deleteComment(int roomId, int commentId, String password) async {
     final String url = '$_baseUrl/discussion/$roomId/del_comment/';
     final Map<String, dynamic> requestData = {
-      'comment_id': commentId,
+      'comment_id': commentId.toString(),
       'password': password,
     };
     try {

@@ -152,9 +152,9 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
       // type1이 문자열로 저장된 JSON 형태일 경우 파싱
       List<String> summaryLines = [];
 
-      if (widget.keyword.type1.isNotEmpty) {
-        // widget.keyword.type1은 List<String>이지만 실제로는 하나의 문자열일 수 있음
-        String type1String = widget.keyword.type1.first;
+      // type1을 안전하게 처리
+      if (widget.keyword.type1 is List && (widget.keyword.type1 as List).isNotEmpty) {
+        String type1String = (widget.keyword.type1 as List).first.toString();
 
         // JSON 형식의 문자열인지 확인 (대괄호로 시작하는지)
         if (type1String.trim().startsWith('[') &&
@@ -164,8 +164,12 @@ class _SummaryBoxWidgetState extends State<SummaryBoxWidget> {
           summaryLines = cleaned.split(',').map((s) => s.trim()).toList();
         } else {
           // JSON 형식이 아니면 그냥 리스트의 모든 항목 사용
-          summaryLines = widget.keyword.type1;
+          summaryLines = (widget.keyword.type1 as List).map((e) => e.toString()).toList();
         }
+      } else if (widget.keyword.type1 is Map) {
+        // type1이 Map인 경우 처리 (API 사양 변경에 따라)
+        final Map<String, dynamic> type1Map = widget.keyword.type1 as Map<String, dynamic>;
+        summaryLines = type1Map.values.map((e) => e.toString()).toList();
       }
 
       if (summaryLines.isNotEmpty) {

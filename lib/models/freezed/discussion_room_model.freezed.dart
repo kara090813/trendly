@@ -31,20 +31,21 @@ mixin _$DiscussionRoom {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'closed_at')
-  DateTime? get closedAt => throw _privateConstructorUsedError;
+  DateTime? get closedAt =>
+      throw _privateConstructorUsedError; // comment_count에 null=True 추가
   @JsonKey(name: 'comment_count')
   int? get commentCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'comment_summary')
   String? get commentSummary =>
-      throw _privateConstructorUsedError; // 새로 추가된 감정 반응 관련 필드
+      throw _privateConstructorUsedError; // 감정 반응 관련 필드 (기본값 추가)
   @JsonKey(name: 'positive_count')
-  int? get positiveCount => throw _privateConstructorUsedError;
+  int get positiveCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'neutral_count')
-  int? get neutralCount => throw _privateConstructorUsedError;
+  int get neutralCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'negative_count')
-  int? get negativeCount => throw _privateConstructorUsedError;
+  int get negativeCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'sentiment_snapshot')
-  List<SentimentSnapshot>? get sentimentSnapshot =>
+  List<SentimentSnapshot> get sentimentSnapshot =>
       throw _privateConstructorUsedError;
 
   /// Serializes this DiscussionRoom to a JSON map.
@@ -73,11 +74,11 @@ abstract class $DiscussionRoomCopyWith<$Res> {
       @JsonKey(name: 'closed_at') DateTime? closedAt,
       @JsonKey(name: 'comment_count') int? commentCount,
       @JsonKey(name: 'comment_summary') String? commentSummary,
-      @JsonKey(name: 'positive_count') int? positiveCount,
-      @JsonKey(name: 'neutral_count') int? neutralCount,
-      @JsonKey(name: 'negative_count') int? negativeCount,
+      @JsonKey(name: 'positive_count') int positiveCount,
+      @JsonKey(name: 'neutral_count') int neutralCount,
+      @JsonKey(name: 'negative_count') int negativeCount,
       @JsonKey(name: 'sentiment_snapshot')
-      List<SentimentSnapshot>? sentimentSnapshot});
+      List<SentimentSnapshot> sentimentSnapshot});
 }
 
 /// @nodoc
@@ -104,10 +105,10 @@ class _$DiscussionRoomCopyWithImpl<$Res, $Val extends DiscussionRoom>
     Object? closedAt = freezed,
     Object? commentCount = freezed,
     Object? commentSummary = freezed,
-    Object? positiveCount = freezed,
-    Object? neutralCount = freezed,
-    Object? negativeCount = freezed,
-    Object? sentimentSnapshot = freezed,
+    Object? positiveCount = null,
+    Object? neutralCount = null,
+    Object? negativeCount = null,
+    Object? sentimentSnapshot = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -146,22 +147,22 @@ class _$DiscussionRoomCopyWithImpl<$Res, $Val extends DiscussionRoom>
           ? _value.commentSummary
           : commentSummary // ignore: cast_nullable_to_non_nullable
               as String?,
-      positiveCount: freezed == positiveCount
+      positiveCount: null == positiveCount
           ? _value.positiveCount
           : positiveCount // ignore: cast_nullable_to_non_nullable
-              as int?,
-      neutralCount: freezed == neutralCount
+              as int,
+      neutralCount: null == neutralCount
           ? _value.neutralCount
           : neutralCount // ignore: cast_nullable_to_non_nullable
-              as int?,
-      negativeCount: freezed == negativeCount
+              as int,
+      negativeCount: null == negativeCount
           ? _value.negativeCount
           : negativeCount // ignore: cast_nullable_to_non_nullable
-              as int?,
-      sentimentSnapshot: freezed == sentimentSnapshot
+              as int,
+      sentimentSnapshot: null == sentimentSnapshot
           ? _value.sentimentSnapshot
           : sentimentSnapshot // ignore: cast_nullable_to_non_nullable
-              as List<SentimentSnapshot>?,
+              as List<SentimentSnapshot>,
     ) as $Val);
   }
 }
@@ -184,11 +185,11 @@ abstract class _$$DiscussionRoomImplCopyWith<$Res>
       @JsonKey(name: 'closed_at') DateTime? closedAt,
       @JsonKey(name: 'comment_count') int? commentCount,
       @JsonKey(name: 'comment_summary') String? commentSummary,
-      @JsonKey(name: 'positive_count') int? positiveCount,
-      @JsonKey(name: 'neutral_count') int? neutralCount,
-      @JsonKey(name: 'negative_count') int? negativeCount,
+      @JsonKey(name: 'positive_count') int positiveCount,
+      @JsonKey(name: 'neutral_count') int neutralCount,
+      @JsonKey(name: 'negative_count') int negativeCount,
       @JsonKey(name: 'sentiment_snapshot')
-      List<SentimentSnapshot>? sentimentSnapshot});
+      List<SentimentSnapshot> sentimentSnapshot});
 }
 
 /// @nodoc
@@ -213,10 +214,10 @@ class __$$DiscussionRoomImplCopyWithImpl<$Res>
     Object? closedAt = freezed,
     Object? commentCount = freezed,
     Object? commentSummary = freezed,
-    Object? positiveCount = freezed,
-    Object? neutralCount = freezed,
-    Object? negativeCount = freezed,
-    Object? sentimentSnapshot = freezed,
+    Object? positiveCount = null,
+    Object? neutralCount = null,
+    Object? negativeCount = null,
+    Object? sentimentSnapshot = null,
   }) {
     return _then(_$DiscussionRoomImpl(
       id: null == id
@@ -255,22 +256,22 @@ class __$$DiscussionRoomImplCopyWithImpl<$Res>
           ? _value.commentSummary
           : commentSummary // ignore: cast_nullable_to_non_nullable
               as String?,
-      positiveCount: freezed == positiveCount
+      positiveCount: null == positiveCount
           ? _value.positiveCount
           : positiveCount // ignore: cast_nullable_to_non_nullable
-              as int?,
-      neutralCount: freezed == neutralCount
+              as int,
+      neutralCount: null == neutralCount
           ? _value.neutralCount
           : neutralCount // ignore: cast_nullable_to_non_nullable
-              as int?,
-      negativeCount: freezed == negativeCount
+              as int,
+      negativeCount: null == negativeCount
           ? _value.negativeCount
           : negativeCount // ignore: cast_nullable_to_non_nullable
-              as int?,
-      sentimentSnapshot: freezed == sentimentSnapshot
+              as int,
+      sentimentSnapshot: null == sentimentSnapshot
           ? _value._sentimentSnapshot
           : sentimentSnapshot // ignore: cast_nullable_to_non_nullable
-              as List<SentimentSnapshot>?,
+              as List<SentimentSnapshot>,
     ));
   }
 }
@@ -281,18 +282,19 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
   const _$DiscussionRoomImpl(
       {required this.id,
       required this.keyword,
-      @JsonKey(name: 'keyword_id_list') required final List<int> keywordIdList,
-      @JsonKey(name: 'is_closed') required this.isClosed,
+      @JsonKey(name: 'keyword_id_list')
+      final List<int> keywordIdList = const [],
+      @JsonKey(name: 'is_closed') this.isClosed = false,
       @JsonKey(name: 'created_at') required this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt,
       @JsonKey(name: 'closed_at') this.closedAt,
       @JsonKey(name: 'comment_count') this.commentCount,
       @JsonKey(name: 'comment_summary') this.commentSummary,
-      @JsonKey(name: 'positive_count') this.positiveCount,
-      @JsonKey(name: 'neutral_count') this.neutralCount,
-      @JsonKey(name: 'negative_count') this.negativeCount,
+      @JsonKey(name: 'positive_count') this.positiveCount = 0,
+      @JsonKey(name: 'neutral_count') this.neutralCount = 0,
+      @JsonKey(name: 'negative_count') this.negativeCount = 0,
       @JsonKey(name: 'sentiment_snapshot')
-      final List<SentimentSnapshot>? sentimentSnapshot})
+      final List<SentimentSnapshot> sentimentSnapshot = const []})
       : _keywordIdList = keywordIdList,
         _sentimentSnapshot = sentimentSnapshot;
 
@@ -324,32 +326,31 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
   @override
   @JsonKey(name: 'closed_at')
   final DateTime? closedAt;
+// comment_count에 null=True 추가
   @override
   @JsonKey(name: 'comment_count')
   final int? commentCount;
   @override
   @JsonKey(name: 'comment_summary')
   final String? commentSummary;
-// 새로 추가된 감정 반응 관련 필드
+// 감정 반응 관련 필드 (기본값 추가)
   @override
   @JsonKey(name: 'positive_count')
-  final int? positiveCount;
+  final int positiveCount;
   @override
   @JsonKey(name: 'neutral_count')
-  final int? neutralCount;
+  final int neutralCount;
   @override
   @JsonKey(name: 'negative_count')
-  final int? negativeCount;
-  final List<SentimentSnapshot>? _sentimentSnapshot;
+  final int negativeCount;
+  final List<SentimentSnapshot> _sentimentSnapshot;
   @override
   @JsonKey(name: 'sentiment_snapshot')
-  List<SentimentSnapshot>? get sentimentSnapshot {
-    final value = _sentimentSnapshot;
-    if (value == null) return null;
+  List<SentimentSnapshot> get sentimentSnapshot {
     if (_sentimentSnapshot is EqualUnmodifiableListView)
       return _sentimentSnapshot;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_sentimentSnapshot);
   }
 
   @override
@@ -427,18 +428,18 @@ abstract class _DiscussionRoom implements DiscussionRoom {
   const factory _DiscussionRoom(
       {required final int id,
       required final String keyword,
-      @JsonKey(name: 'keyword_id_list') required final List<int> keywordIdList,
-      @JsonKey(name: 'is_closed') required final bool isClosed,
+      @JsonKey(name: 'keyword_id_list') final List<int> keywordIdList,
+      @JsonKey(name: 'is_closed') final bool isClosed,
       @JsonKey(name: 'created_at') required final DateTime createdAt,
       @JsonKey(name: 'updated_at') final DateTime? updatedAt,
       @JsonKey(name: 'closed_at') final DateTime? closedAt,
       @JsonKey(name: 'comment_count') final int? commentCount,
       @JsonKey(name: 'comment_summary') final String? commentSummary,
-      @JsonKey(name: 'positive_count') final int? positiveCount,
-      @JsonKey(name: 'neutral_count') final int? neutralCount,
-      @JsonKey(name: 'negative_count') final int? negativeCount,
+      @JsonKey(name: 'positive_count') final int positiveCount,
+      @JsonKey(name: 'neutral_count') final int neutralCount,
+      @JsonKey(name: 'negative_count') final int negativeCount,
       @JsonKey(name: 'sentiment_snapshot')
-      final List<SentimentSnapshot>? sentimentSnapshot}) = _$DiscussionRoomImpl;
+      final List<SentimentSnapshot> sentimentSnapshot}) = _$DiscussionRoomImpl;
 
   factory _DiscussionRoom.fromJson(Map<String, dynamic> json) =
       _$DiscussionRoomImpl.fromJson;
@@ -461,25 +462,25 @@ abstract class _DiscussionRoom implements DiscussionRoom {
   DateTime? get updatedAt;
   @override
   @JsonKey(name: 'closed_at')
-  DateTime? get closedAt;
+  DateTime? get closedAt; // comment_count에 null=True 추가
   @override
   @JsonKey(name: 'comment_count')
   int? get commentCount;
   @override
   @JsonKey(name: 'comment_summary')
-  String? get commentSummary; // 새로 추가된 감정 반응 관련 필드
+  String? get commentSummary; // 감정 반응 관련 필드 (기본값 추가)
   @override
   @JsonKey(name: 'positive_count')
-  int? get positiveCount;
+  int get positiveCount;
   @override
   @JsonKey(name: 'neutral_count')
-  int? get neutralCount;
+  int get neutralCount;
   @override
   @JsonKey(name: 'negative_count')
-  int? get negativeCount;
+  int get negativeCount;
   @override
   @JsonKey(name: 'sentiment_snapshot')
-  List<SentimentSnapshot>? get sentimentSnapshot;
+  List<SentimentSnapshot> get sentimentSnapshot;
 
   /// Create a copy of DiscussionRoom
   /// with the given fields replaced by the non-null parameter values.

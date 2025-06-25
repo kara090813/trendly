@@ -25,14 +25,16 @@ mixin _$Keyword {
   String get category => throw _privateConstructorUsedError;
   int get rank => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  List<String> get type1 => throw _privateConstructorUsedError;
+  DateTime get createdAt =>
+      throw _privateConstructorUsedError; // type1을 dynamic으로 변경하여 List<String>과 Map<String, dynamic> 모두 지원
+  dynamic get type1 => throw _privateConstructorUsedError;
   String get type2 => throw _privateConstructorUsedError;
-  String get type3 => throw _privateConstructorUsedError;
-  List<Reference> get references =>
-      throw _privateConstructorUsedError; // 필드명을 API 응답에 맞게 수정
+  String get type3 =>
+      throw _privateConstructorUsedError; // references도 dynamic으로 변경하여 호환성 유지
+  dynamic get references =>
+      throw _privateConstructorUsedError; // 필드명을 API 응답에 맞게 수정 (null 가능하도록 변경)
   @JsonKey(name: 'current_discussion_room')
-  int get currentDiscussionRoomId => throw _privateConstructorUsedError;
+  int? get currentDiscussionRoomId => throw _privateConstructorUsedError;
 
   /// Serializes this Keyword to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -54,11 +56,11 @@ abstract class $KeywordCopyWith<$Res> {
       String category,
       int rank,
       @JsonKey(name: 'created_at') DateTime createdAt,
-      List<String> type1,
+      dynamic type1,
       String type2,
       String type3,
-      List<Reference> references,
-      @JsonKey(name: 'current_discussion_room') int currentDiscussionRoomId});
+      dynamic references,
+      @JsonKey(name: 'current_discussion_room') int? currentDiscussionRoomId});
 }
 
 /// @nodoc
@@ -81,11 +83,11 @@ class _$KeywordCopyWithImpl<$Res, $Val extends Keyword>
     Object? category = null,
     Object? rank = null,
     Object? createdAt = null,
-    Object? type1 = null,
+    Object? type1 = freezed,
     Object? type2 = null,
     Object? type3 = null,
-    Object? references = null,
-    Object? currentDiscussionRoomId = null,
+    Object? references = freezed,
+    Object? currentDiscussionRoomId = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -108,10 +110,10 @@ class _$KeywordCopyWithImpl<$Res, $Val extends Keyword>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      type1: null == type1
+      type1: freezed == type1
           ? _value.type1
           : type1 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as dynamic,
       type2: null == type2
           ? _value.type2
           : type2 // ignore: cast_nullable_to_non_nullable
@@ -120,14 +122,14 @@ class _$KeywordCopyWithImpl<$Res, $Val extends Keyword>
           ? _value.type3
           : type3 // ignore: cast_nullable_to_non_nullable
               as String,
-      references: null == references
+      references: freezed == references
           ? _value.references
           : references // ignore: cast_nullable_to_non_nullable
-              as List<Reference>,
-      currentDiscussionRoomId: null == currentDiscussionRoomId
+              as dynamic,
+      currentDiscussionRoomId: freezed == currentDiscussionRoomId
           ? _value.currentDiscussionRoomId
           : currentDiscussionRoomId // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
     ) as $Val);
   }
 }
@@ -145,11 +147,11 @@ abstract class _$$KeywordImplCopyWith<$Res> implements $KeywordCopyWith<$Res> {
       String category,
       int rank,
       @JsonKey(name: 'created_at') DateTime createdAt,
-      List<String> type1,
+      dynamic type1,
       String type2,
       String type3,
-      List<Reference> references,
-      @JsonKey(name: 'current_discussion_room') int currentDiscussionRoomId});
+      dynamic references,
+      @JsonKey(name: 'current_discussion_room') int? currentDiscussionRoomId});
 }
 
 /// @nodoc
@@ -170,11 +172,11 @@ class __$$KeywordImplCopyWithImpl<$Res>
     Object? category = null,
     Object? rank = null,
     Object? createdAt = null,
-    Object? type1 = null,
+    Object? type1 = freezed,
     Object? type2 = null,
     Object? type3 = null,
-    Object? references = null,
-    Object? currentDiscussionRoomId = null,
+    Object? references = freezed,
+    Object? currentDiscussionRoomId = freezed,
   }) {
     return _then(_$KeywordImpl(
       id: null == id
@@ -197,10 +199,10 @@ class __$$KeywordImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      type1: null == type1
-          ? _value._type1
+      type1: freezed == type1
+          ? _value.type1
           : type1 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as dynamic,
       type2: null == type2
           ? _value.type2
           : type2 // ignore: cast_nullable_to_non_nullable
@@ -209,14 +211,14 @@ class __$$KeywordImplCopyWithImpl<$Res>
           ? _value.type3
           : type3 // ignore: cast_nullable_to_non_nullable
               as String,
-      references: null == references
-          ? _value._references
+      references: freezed == references
+          ? _value.references
           : references // ignore: cast_nullable_to_non_nullable
-              as List<Reference>,
-      currentDiscussionRoomId: null == currentDiscussionRoomId
+              as dynamic,
+      currentDiscussionRoomId: freezed == currentDiscussionRoomId
           ? _value.currentDiscussionRoomId
           : currentDiscussionRoomId // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
     ));
   }
 }
@@ -230,14 +232,11 @@ class _$KeywordImpl implements _Keyword {
       required this.category,
       required this.rank,
       @JsonKey(name: 'created_at') required this.createdAt,
-      final List<String> type1 = const [],
+      this.type1 = const [],
       required this.type2,
       required this.type3,
-      final List<Reference> references = const [],
-      @JsonKey(name: 'current_discussion_room')
-      this.currentDiscussionRoomId = 0})
-      : _type1 = type1,
-        _references = references;
+      this.references = const [],
+      @JsonKey(name: 'current_discussion_room') this.currentDiscussionRoomId});
 
   factory _$KeywordImpl.fromJson(Map<String, dynamic> json) =>
       _$$KeywordImplFromJson(json);
@@ -253,32 +252,22 @@ class _$KeywordImpl implements _Keyword {
   @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
-  final List<String> _type1;
+// type1을 dynamic으로 변경하여 List<String>과 Map<String, dynamic> 모두 지원
   @override
   @JsonKey()
-  List<String> get type1 {
-    if (_type1 is EqualUnmodifiableListView) return _type1;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_type1);
-  }
-
+  final dynamic type1;
   @override
   final String type2;
   @override
   final String type3;
-  final List<Reference> _references;
+// references도 dynamic으로 변경하여 호환성 유지
   @override
   @JsonKey()
-  List<Reference> get references {
-    if (_references is EqualUnmodifiableListView) return _references;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_references);
-  }
-
-// 필드명을 API 응답에 맞게 수정
+  final dynamic references;
+// 필드명을 API 응답에 맞게 수정 (null 가능하도록 변경)
   @override
   @JsonKey(name: 'current_discussion_room')
-  final int currentDiscussionRoomId;
+  final int? currentDiscussionRoomId;
 
   @override
   String toString() {
@@ -297,11 +286,11 @@ class _$KeywordImpl implements _Keyword {
             (identical(other.rank, rank) || other.rank == rank) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            const DeepCollectionEquality().equals(other._type1, _type1) &&
+            const DeepCollectionEquality().equals(other.type1, type1) &&
             (identical(other.type2, type2) || other.type2 == type2) &&
             (identical(other.type3, type3) || other.type3 == type3) &&
             const DeepCollectionEquality()
-                .equals(other._references, _references) &&
+                .equals(other.references, references) &&
             (identical(
                     other.currentDiscussionRoomId, currentDiscussionRoomId) ||
                 other.currentDiscussionRoomId == currentDiscussionRoomId));
@@ -316,10 +305,10 @@ class _$KeywordImpl implements _Keyword {
       category,
       rank,
       createdAt,
-      const DeepCollectionEquality().hash(_type1),
+      const DeepCollectionEquality().hash(type1),
       type2,
       type3,
-      const DeepCollectionEquality().hash(_references),
+      const DeepCollectionEquality().hash(references),
       currentDiscussionRoomId);
 
   /// Create a copy of Keyword
@@ -345,12 +334,12 @@ abstract class _Keyword implements Keyword {
       required final String category,
       required final int rank,
       @JsonKey(name: 'created_at') required final DateTime createdAt,
-      final List<String> type1,
+      final dynamic type1,
       required final String type2,
       required final String type3,
-      final List<Reference> references,
+      final dynamic references,
       @JsonKey(name: 'current_discussion_room')
-      final int currentDiscussionRoomId}) = _$KeywordImpl;
+      final int? currentDiscussionRoomId}) = _$KeywordImpl;
 
   factory _Keyword.fromJson(Map<String, dynamic> json) = _$KeywordImpl.fromJson;
 
@@ -364,18 +353,19 @@ abstract class _Keyword implements Keyword {
   int get rank;
   @override
   @JsonKey(name: 'created_at')
-  DateTime get createdAt;
+  DateTime
+      get createdAt; // type1을 dynamic으로 변경하여 List<String>과 Map<String, dynamic> 모두 지원
   @override
-  List<String> get type1;
+  dynamic get type1;
   @override
   String get type2;
   @override
-  String get type3;
+  String get type3; // references도 dynamic으로 변경하여 호환성 유지
   @override
-  List<Reference> get references; // 필드명을 API 응답에 맞게 수정
+  dynamic get references; // 필드명을 API 응답에 맞게 수정 (null 가능하도록 변경)
   @override
   @JsonKey(name: 'current_discussion_room')
-  int get currentDiscussionRoomId;
+  int? get currentDiscussionRoomId;
 
   /// Create a copy of Keyword
   /// with the given fields replaced by the non-null parameter values.

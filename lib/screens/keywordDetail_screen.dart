@@ -55,13 +55,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       List<Comment>? comments;
 
       try {
-        if (keyword.currentDiscussionRoomId > 0) {
+        if (keyword.currentDiscussionRoomId != null && keyword.currentDiscussionRoomId! > 0) {
           // 토론방 정보가 있는 경우 댓글 목록 가져오기 (인기순으로 변경)
-          comments = await _apiService.getDiscussionComments(keyword.currentDiscussionRoomId, isPopular: true);
+          comments = await _apiService.getDiscussionComments(keyword.currentDiscussionRoomId!, isPopular: true);
 
           // 토론방 정보도 가져오기
           try {
-            discussionRoom = await _apiService.getDiscussionRoomById(keyword.currentDiscussionRoomId);
+            discussionRoom = await _apiService.getDiscussionRoomById(keyword.currentDiscussionRoomId!);
           } catch (e) {
             print('토론방 상세 정보 로드 실패: $e');
           }
@@ -318,11 +318,11 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ..._keyword!.type1.asMap().entries.map((entry) {
+            ...(_keyword!.type1 is List ? (_keyword!.type1 as List) : []).asMap().entries.map((entry) {
               int index = entry.key;
               String content = entry.value;
               return Padding(
-                padding: EdgeInsets.only(bottom: index < _keyword!.type1.length - 1 ? 15.h : 0),
+                padding: EdgeInsets.only(bottom: index < (_keyword!.type1 is List ? (_keyword!.type1 as List).length : 0) - 1 ? 15.h : 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -403,7 +403,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    if (_keyword!.currentDiscussionRoomId > 0) {
+                    if (_keyword!.currentDiscussionRoomId != null && _keyword!.currentDiscussionRoomId! > 0) {
                       context.push('/discussion/${_keyword!.currentDiscussionRoomId}');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -585,15 +585,21 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       return SizedBox.shrink();
     }
 
+    // references를 List로 안전하게 변환 (early conversion)
+    final List<dynamic> referencesListForCheck = _keyword!.references is List ? (_keyword!.references as List) : [];
+    
     // 펼쳐보기 버튼이 필요한지 확인
-    final bool needExpand = _keyword!.references.length > 3;
+    final bool needExpand = referencesListForCheck.length > 3;
 
+    // references를 List로 안전하게 변환
+    final List<dynamic> referencesList = _keyword!.references is List ? (_keyword!.references as List) : [];
+    
     // 기본 표시할 뉴스 (항상 고정)
-    final int baseCount = _keyword!.references.length > 3 ? 3 : _keyword!.references.length;
+    final int baseCount = referencesList.length > 3 ? 3 : referencesList.length;
 
     // 추가로 표시할 뉴스 (애니메이션으로 표시)
-    final List<Reference> additionalNews = _isNewsExpanded && _keyword!.references.length > 3
-        ? _keyword!.references.sublist(3)
+    final List<dynamic> additionalNews = _isNewsExpanded && referencesList.length > 3
+        ? referencesList.sublist(3)
         : [];
 
     return Container(
@@ -672,11 +678,14 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   }
 
   // 뉴스 아이템 위젯
-  Widget _buildNewsItem(Reference ref) {
+  Widget _buildNewsItem(dynamic ref) {
     final HtmlUnescape _htmlUnescape = HtmlUnescape();
+    
+    // ref를 Map으로 안전하게 변환
+    final Map<String, dynamic> refData = ref is Map<String, dynamic> ? ref : {};
 
     return InkWell(
-      onTap: () => _launchNewsUrl(ref.link),
+      onTap: () => _launchNewsUrl(refData['link']?.toString() ?? ''),
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
         child: Row(
@@ -689,14 +698,14 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.isDark(context) ? Color(0xFF333340) : Colors.grey[200],
                 borderRadius: BorderRadius.circular(8.r),
-                image: ref.thumbnail != null && ref.thumbnail!.isNotEmpty
+                image: refData['thumbnail'] != null && refData['thumbnail']!.toString().isNotEmpty
                     ? DecorationImage(
-                  image: NetworkImage(ref.thumbnail!),
+                  image: NetworkImage(refData['thumbnail']!.toString()),
                   fit: BoxFit.cover,
                 )
                     : null,
               ),
-              child: ref.thumbnail == null || ref.thumbnail!.isEmpty
+              child: refData['thumbnail'] == null || refData['thumbnail']!.toString().isEmpty
                   ? Icon(
                 Icons.article,
                 color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[500],
@@ -712,7 +721,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _htmlUnescape.convert(ref.title),
+                    _htmlUnescape.convert(refData['title']?.toString() ?? ''),
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w500,
@@ -724,7 +733,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   ),
                   SizedBox(height: 6.h),
                   Text(
-                    '${ref.type} · ${ref.date}',
+                    '${refData['type']?.toString() ?? ''} · ${refData['date']?.toString() ?? ''}',
                     style: TextStyle(
                       color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[600],
                       fontSize: 13.sp,

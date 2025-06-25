@@ -10,10 +10,11 @@ _$DiscussionRoomImpl _$$DiscussionRoomImplFromJson(Map<String, dynamic> json) =>
     _$DiscussionRoomImpl(
       id: (json['id'] as num).toInt(),
       keyword: json['keyword'] as String,
-      keywordIdList: (json['keyword_id_list'] as List<dynamic>)
-          .map((e) => (e as num).toInt())
-          .toList(),
-      isClosed: json['is_closed'] as bool,
+      keywordIdList: (json['keyword_id_list'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          const [],
+      isClosed: json['is_closed'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] == null
           ? null
@@ -23,12 +24,14 @@ _$DiscussionRoomImpl _$$DiscussionRoomImplFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['closed_at'] as String),
       commentCount: (json['comment_count'] as num?)?.toInt(),
       commentSummary: json['comment_summary'] as String?,
-      positiveCount: (json['positive_count'] as num?)?.toInt(),
-      neutralCount: (json['neutral_count'] as num?)?.toInt(),
-      negativeCount: (json['negative_count'] as num?)?.toInt(),
+      positiveCount: (json['positive_count'] as num?)?.toInt() ?? 0,
+      neutralCount: (json['neutral_count'] as num?)?.toInt() ?? 0,
+      negativeCount: (json['negative_count'] as num?)?.toInt() ?? 0,
       sentimentSnapshot: (json['sentiment_snapshot'] as List<dynamic>?)
-          ?.map((e) => SentimentSnapshot.fromJson(e as Map<String, dynamic>))
-          .toList(),
+              ?.map(
+                  (e) => SentimentSnapshot.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$$DiscussionRoomImplToJson(

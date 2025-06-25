@@ -9,18 +9,19 @@ class DiscussionRoom with _$DiscussionRoom {
   const factory DiscussionRoom({
     required int id,
     required String keyword,
-    @JsonKey(name: 'keyword_id_list') required List<int> keywordIdList,
-    @JsonKey(name: 'is_closed') required bool isClosed,
+    @JsonKey(name: 'keyword_id_list') @Default([]) List<int> keywordIdList,
+    @JsonKey(name: 'is_closed') @Default(false) bool isClosed,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'closed_at') DateTime? closedAt,
+    // comment_count에 null=True 추가
     @JsonKey(name: 'comment_count') int? commentCount,
     @JsonKey(name: 'comment_summary') String? commentSummary,
-    // 새로 추가된 감정 반응 관련 필드
-    @JsonKey(name: 'positive_count') int? positiveCount,
-    @JsonKey(name: 'neutral_count') int? neutralCount,
-    @JsonKey(name: 'negative_count') int? negativeCount,
-    @JsonKey(name: 'sentiment_snapshot') List<SentimentSnapshot>? sentimentSnapshot,
+    // 감정 반응 관련 필드 (기본값 추가)
+    @JsonKey(name: 'positive_count') @Default(0) int positiveCount,
+    @JsonKey(name: 'neutral_count') @Default(0) int neutralCount,
+    @JsonKey(name: 'negative_count') @Default(0) int negativeCount,
+    @JsonKey(name: 'sentiment_snapshot') @Default([]) List<SentimentSnapshot> sentimentSnapshot,
   }) = _DiscussionRoom;
 
   factory DiscussionRoom.fromJson(Map<String, dynamic> json) => _$DiscussionRoomFromJson(json);

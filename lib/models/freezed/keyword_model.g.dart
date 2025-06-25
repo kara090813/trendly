@@ -13,17 +13,12 @@ _$KeywordImpl _$$KeywordImplFromJson(Map<String, dynamic> json) =>
       category: json['category'] as String,
       rank: (json['rank'] as num).toInt(),
       createdAt: DateTime.parse(json['created_at'] as String),
-      type1:
-          (json['type1'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-              const [],
+      type1: json['type1'] ?? const [],
       type2: json['type2'] as String,
       type3: json['type3'] as String,
-      references: (json['references'] as List<dynamic>?)
-              ?.map((e) => Reference.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
+      references: json['references'] ?? const [],
       currentDiscussionRoomId:
-          (json['current_discussion_room'] as num?)?.toInt() ?? 0,
+          (json['current_discussion_room'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$KeywordImplToJson(_$KeywordImpl instance) =>

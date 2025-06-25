@@ -1984,7 +1984,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _keyword!.type1.asMap().entries.map((entry) {
+          children: (_keyword!.type1 is List ? (_keyword!.type1 as List) : []).asMap().entries.map((entry) {
             int index = entry.key;
             String line = entry.value;
 

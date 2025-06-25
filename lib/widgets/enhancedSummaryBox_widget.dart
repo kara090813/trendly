@@ -335,15 +335,20 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     try {
       List<String> summaryLines = [];
 
-      if (keyword.type1.isNotEmpty) {
-        String type1String = keyword.type1.first;
+      // type1을 안전하게 처리
+      if (keyword.type1 is List && (keyword.type1 as List).isNotEmpty) {
+        String type1String = (keyword.type1 as List).first.toString();
 
         if (type1String.trim().startsWith('[') && type1String.trim().endsWith(']')) {
           String cleaned = type1String.replaceAll(RegExp(r"[\[\]']"), "");
           summaryLines = cleaned.split(',').map((s) => s.trim()).toList();
         } else {
-          summaryLines = keyword.type1;
+          summaryLines = (keyword.type1 as List).map((e) => e.toString()).toList();
         }
+      } else if (keyword.type1 is Map) {
+        // type1이 Map인 경우 처리 (API 사양 변경에 따라)
+        final Map<String, dynamic> type1Map = keyword.type1 as Map<String, dynamic>;
+        summaryLines = type1Map.values.map((e) => e.toString()).toList();
       }
 
       if (summaryLines.isNotEmpty) {

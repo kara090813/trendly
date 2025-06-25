@@ -12,12 +12,14 @@ class Keyword with _$Keyword {
     required String category,
     required int rank,
     @JsonKey(name: 'created_at') required DateTime createdAt,
-    @Default([]) List<String> type1,
+    // type1을 dynamic으로 변경하여 List<String>과 Map<String, dynamic> 모두 지원
+    @Default([]) dynamic type1,
     required String type2,
     required String type3,
-    @Default([]) List<Reference> references,
-    // 필드명을 API 응답에 맞게 수정
-    @JsonKey(name: 'current_discussion_room') @Default(0) int currentDiscussionRoomId,
+    // references도 dynamic으로 변경하여 호환성 유지
+    @Default([]) dynamic references,
+    // 필드명을 API 응답에 맞게 수정 (null 가능하도록 변경)
+    @JsonKey(name: 'current_discussion_room') int? currentDiscussionRoomId,
   }) = _Keyword;
 
   factory Keyword.fromJson(Map<String, dynamic> json) => _$KeywordFromJson(json);
