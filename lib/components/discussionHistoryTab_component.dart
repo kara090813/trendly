@@ -48,12 +48,12 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     try {
       // 랜덤 토론방에서 종료된 것들 가져오기
       final randomRooms = await _apiService.getRandomDiscussionRooms(50);
-      final closedRooms = randomRooms.where((room) => room.isClosed).toList();
+      final closedRooms = randomRooms.where((room) => room.is_closed).toList();
       
       // 최근 종료된 순으로 정렬
       closedRooms.sort((a, b) {
-        final aDate = a.closedAt ?? a.updatedAt;
-        final bDate = b.closedAt ?? b.updatedAt;
+        final aDate = a.closed_at ?? a.updated_at;
+        final bDate = b.closed_at ?? b.updated_at;
         
         // null 체크 후 비교
         if (bDate == null && aDate == null) return 0;
@@ -87,18 +87,18 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
       // 인기 토론 (공감 수 기준)
       final popularRooms = List<DiscussionRoom>.from(allRooms);
       popularRooms.sort((a, b) => 
-        ((b.positiveCount ?? 0) + (b.neutralCount ?? 0) + (b.negativeCount ?? 0)).compareTo(
-          (a.positiveCount ?? 0) + (a.neutralCount ?? 0) + (a.negativeCount ?? 0)));
+        ((b.positive_count ?? 0) + (b.neutral_count ?? 0) + (b.negative_count ?? 0)).compareTo(
+          (a.positive_count ?? 0) + (a.neutral_count ?? 0) + (a.negative_count ?? 0)));
       
       // 치열한 토론 (댓글 수 기준)  
       final intenseRooms = List<DiscussionRoom>.from(allRooms);
-      intenseRooms.sort((a, b) => (b.commentCount ?? 0).compareTo(a.commentCount ?? 0));
+      intenseRooms.sort((a, b) => (b.comment_count ?? 0).compareTo(a.comment_count ?? 0));
       
       // 장수 토론 (지속 시간 기준)
       final longLastingRooms = List<DiscussionRoom>.from(allRooms);
       longLastingRooms.sort((a, b) {
-        final aDuration = a.closedAt?.difference(a.createdAt).inHours ?? 0;
-        final bDuration = b.closedAt?.difference(b.createdAt).inHours ?? 0;
+        final aDuration = a.closed_at?.difference(a.created_at).inHours ?? 0;
+        final bDuration = b.closed_at?.difference(b.created_at).inHours ?? 0;
         return bDuration.compareTo(aDuration);
       });
       
@@ -1200,7 +1200,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       children: [
                         Icon(Icons.comment, size: 12.sp, color: textColor.withOpacity(0.6)),
                         SizedBox(width: 4.w),
-                        Text('${discussion.commentCount ?? 0}', 
+                        Text('${discussion.comment_count ?? 0}', 
                           style: TextStyle(fontSize: 11.sp, color: textColor.withOpacity(0.6))),
                       ],
                     ),
@@ -1235,9 +1235,9 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     final textColor = isDark ? Colors.white : Colors.black;
     
     // 테스트 데이터 사용 (실제 데이터가 0인 경우)
-    var positive = room.positiveCount ?? 0;
-    var neutral = room.neutralCount ?? 0;
-    var negative = room.negativeCount ?? 0;
+    var positive = room.positive_count ?? 0;
+    var neutral = room.neutral_count ?? 0;
+    var negative = room.negative_count ?? 0;
     
     // 실제 데이터가 없으면 테스트 데이터 사용
     if (positive == 0 && neutral == 0 && negative == 0) {
@@ -1367,9 +1367,9 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
   }
 
   int _getTotalReactionsForModal(DiscussionRoom room) {
-    var positive = room.positiveCount ?? 0;
-    var neutral = room.neutralCount ?? 0;
-    var negative = room.negativeCount ?? 0;
+    var positive = room.positive_count ?? 0;
+    var neutral = room.neutral_count ?? 0;
+    var negative = room.negative_count ?? 0;
     
     // 실제 데이터가 없으면 테스트 데이터 사용
     if (positive == 0 && neutral == 0 && negative == 0) {

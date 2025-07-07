@@ -21,28 +21,18 @@ Comment _$CommentFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Comment {
   int get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'discussion_room')
-  int get discussionRoomId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'ip_addr')
-  String? get ipAddr => throw _privateConstructorUsedError;
+  int get discussion_room => throw _privateConstructorUsedError;
+  String? get ip_addr => throw _privateConstructorUsedError;
   String get user => throw _privateConstructorUsedError;
   String get password => throw _privateConstructorUsedError;
   String get nick => throw _privateConstructorUsedError;
   String get comment => throw _privateConstructorUsedError;
-  @JsonKey(name: 'is_sub_comment')
-  bool get isSubComment =>
-      throw _privateConstructorUsedError; // parent 필드에 null=True, default=None 추가 반영
-  @JsonKey(name: 'parent')
-  int? get parentId =>
-      throw _privateConstructorUsedError; // sub_comment_count 기본값 0 추가
-  @JsonKey(name: 'sub_comment_count')
-  int get subCommentCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  @JsonKey(name: 'like_count')
-  int get likeCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'dislike_count')
-  int get dislikeCount =>
+  int get sub_comment_count => throw _privateConstructorUsedError;
+  bool get is_sub_comment => throw _privateConstructorUsedError;
+  int? get parent => throw _privateConstructorUsedError;
+  DateTime get created_at => throw _privateConstructorUsedError;
+  int get like_count => throw _privateConstructorUsedError;
+  int get dislike_count =>
       throw _privateConstructorUsedError; // UI에서만 쓰이는 필드들은 여전히 남겨둠
   int? get replies => throw _privateConstructorUsedError;
   String? get timeAgo => throw _privateConstructorUsedError;
@@ -63,18 +53,18 @@ abstract class $CommentCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      @JsonKey(name: 'discussion_room') int discussionRoomId,
-      @JsonKey(name: 'ip_addr') String? ipAddr,
+      int discussion_room,
+      String? ip_addr,
       String user,
       String password,
       String nick,
       String comment,
-      @JsonKey(name: 'is_sub_comment') bool isSubComment,
-      @JsonKey(name: 'parent') int? parentId,
-      @JsonKey(name: 'sub_comment_count') int subCommentCount,
-      @JsonKey(name: 'created_at') DateTime createdAt,
-      @JsonKey(name: 'like_count') int likeCount,
-      @JsonKey(name: 'dislike_count') int dislikeCount,
+      int sub_comment_count,
+      bool is_sub_comment,
+      int? parent,
+      DateTime created_at,
+      int like_count,
+      int dislike_count,
       int? replies,
       String? timeAgo});
 }
@@ -95,18 +85,18 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
   @override
   $Res call({
     Object? id = null,
-    Object? discussionRoomId = null,
-    Object? ipAddr = freezed,
+    Object? discussion_room = null,
+    Object? ip_addr = freezed,
     Object? user = null,
     Object? password = null,
     Object? nick = null,
     Object? comment = null,
-    Object? isSubComment = null,
-    Object? parentId = freezed,
-    Object? subCommentCount = null,
-    Object? createdAt = null,
-    Object? likeCount = null,
-    Object? dislikeCount = null,
+    Object? sub_comment_count = null,
+    Object? is_sub_comment = null,
+    Object? parent = freezed,
+    Object? created_at = null,
+    Object? like_count = null,
+    Object? dislike_count = null,
     Object? replies = freezed,
     Object? timeAgo = freezed,
   }) {
@@ -115,13 +105,13 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      discussionRoomId: null == discussionRoomId
-          ? _value.discussionRoomId
-          : discussionRoomId // ignore: cast_nullable_to_non_nullable
+      discussion_room: null == discussion_room
+          ? _value.discussion_room
+          : discussion_room // ignore: cast_nullable_to_non_nullable
               as int,
-      ipAddr: freezed == ipAddr
-          ? _value.ipAddr
-          : ipAddr // ignore: cast_nullable_to_non_nullable
+      ip_addr: freezed == ip_addr
+          ? _value.ip_addr
+          : ip_addr // ignore: cast_nullable_to_non_nullable
               as String?,
       user: null == user
           ? _value.user
@@ -139,29 +129,29 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
           ? _value.comment
           : comment // ignore: cast_nullable_to_non_nullable
               as String,
-      isSubComment: null == isSubComment
-          ? _value.isSubComment
-          : isSubComment // ignore: cast_nullable_to_non_nullable
+      sub_comment_count: null == sub_comment_count
+          ? _value.sub_comment_count
+          : sub_comment_count // ignore: cast_nullable_to_non_nullable
+              as int,
+      is_sub_comment: null == is_sub_comment
+          ? _value.is_sub_comment
+          : is_sub_comment // ignore: cast_nullable_to_non_nullable
               as bool,
-      parentId: freezed == parentId
-          ? _value.parentId
-          : parentId // ignore: cast_nullable_to_non_nullable
+      parent: freezed == parent
+          ? _value.parent
+          : parent // ignore: cast_nullable_to_non_nullable
               as int?,
-      subCommentCount: null == subCommentCount
-          ? _value.subCommentCount
-          : subCommentCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      created_at: null == created_at
+          ? _value.created_at
+          : created_at // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      likeCount: null == likeCount
-          ? _value.likeCount
-          : likeCount // ignore: cast_nullable_to_non_nullable
+      like_count: null == like_count
+          ? _value.like_count
+          : like_count // ignore: cast_nullable_to_non_nullable
               as int,
-      dislikeCount: null == dislikeCount
-          ? _value.dislikeCount
-          : dislikeCount // ignore: cast_nullable_to_non_nullable
+      dislike_count: null == dislike_count
+          ? _value.dislike_count
+          : dislike_count // ignore: cast_nullable_to_non_nullable
               as int,
       replies: freezed == replies
           ? _value.replies
@@ -184,18 +174,18 @@ abstract class _$$CommentImplCopyWith<$Res> implements $CommentCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      @JsonKey(name: 'discussion_room') int discussionRoomId,
-      @JsonKey(name: 'ip_addr') String? ipAddr,
+      int discussion_room,
+      String? ip_addr,
       String user,
       String password,
       String nick,
       String comment,
-      @JsonKey(name: 'is_sub_comment') bool isSubComment,
-      @JsonKey(name: 'parent') int? parentId,
-      @JsonKey(name: 'sub_comment_count') int subCommentCount,
-      @JsonKey(name: 'created_at') DateTime createdAt,
-      @JsonKey(name: 'like_count') int likeCount,
-      @JsonKey(name: 'dislike_count') int dislikeCount,
+      int sub_comment_count,
+      bool is_sub_comment,
+      int? parent,
+      DateTime created_at,
+      int like_count,
+      int dislike_count,
       int? replies,
       String? timeAgo});
 }
@@ -214,18 +204,18 @@ class __$$CommentImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? discussionRoomId = null,
-    Object? ipAddr = freezed,
+    Object? discussion_room = null,
+    Object? ip_addr = freezed,
     Object? user = null,
     Object? password = null,
     Object? nick = null,
     Object? comment = null,
-    Object? isSubComment = null,
-    Object? parentId = freezed,
-    Object? subCommentCount = null,
-    Object? createdAt = null,
-    Object? likeCount = null,
-    Object? dislikeCount = null,
+    Object? sub_comment_count = null,
+    Object? is_sub_comment = null,
+    Object? parent = freezed,
+    Object? created_at = null,
+    Object? like_count = null,
+    Object? dislike_count = null,
     Object? replies = freezed,
     Object? timeAgo = freezed,
   }) {
@@ -234,13 +224,13 @@ class __$$CommentImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      discussionRoomId: null == discussionRoomId
-          ? _value.discussionRoomId
-          : discussionRoomId // ignore: cast_nullable_to_non_nullable
+      discussion_room: null == discussion_room
+          ? _value.discussion_room
+          : discussion_room // ignore: cast_nullable_to_non_nullable
               as int,
-      ipAddr: freezed == ipAddr
-          ? _value.ipAddr
-          : ipAddr // ignore: cast_nullable_to_non_nullable
+      ip_addr: freezed == ip_addr
+          ? _value.ip_addr
+          : ip_addr // ignore: cast_nullable_to_non_nullable
               as String?,
       user: null == user
           ? _value.user
@@ -258,29 +248,29 @@ class __$$CommentImplCopyWithImpl<$Res>
           ? _value.comment
           : comment // ignore: cast_nullable_to_non_nullable
               as String,
-      isSubComment: null == isSubComment
-          ? _value.isSubComment
-          : isSubComment // ignore: cast_nullable_to_non_nullable
+      sub_comment_count: null == sub_comment_count
+          ? _value.sub_comment_count
+          : sub_comment_count // ignore: cast_nullable_to_non_nullable
+              as int,
+      is_sub_comment: null == is_sub_comment
+          ? _value.is_sub_comment
+          : is_sub_comment // ignore: cast_nullable_to_non_nullable
               as bool,
-      parentId: freezed == parentId
-          ? _value.parentId
-          : parentId // ignore: cast_nullable_to_non_nullable
+      parent: freezed == parent
+          ? _value.parent
+          : parent // ignore: cast_nullable_to_non_nullable
               as int?,
-      subCommentCount: null == subCommentCount
-          ? _value.subCommentCount
-          : subCommentCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      created_at: null == created_at
+          ? _value.created_at
+          : created_at // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      likeCount: null == likeCount
-          ? _value.likeCount
-          : likeCount // ignore: cast_nullable_to_non_nullable
+      like_count: null == like_count
+          ? _value.like_count
+          : like_count // ignore: cast_nullable_to_non_nullable
               as int,
-      dislikeCount: null == dislikeCount
-          ? _value.dislikeCount
-          : dislikeCount // ignore: cast_nullable_to_non_nullable
+      dislike_count: null == dislike_count
+          ? _value.dislike_count
+          : dislike_count // ignore: cast_nullable_to_non_nullable
               as int,
       replies: freezed == replies
           ? _value.replies
@@ -299,18 +289,18 @@ class __$$CommentImplCopyWithImpl<$Res>
 class _$CommentImpl implements _Comment {
   const _$CommentImpl(
       {required this.id,
-      @JsonKey(name: 'discussion_room') required this.discussionRoomId,
-      @JsonKey(name: 'ip_addr') this.ipAddr,
+      required this.discussion_room,
+      this.ip_addr,
       required this.user,
       required this.password,
       required this.nick,
       required this.comment,
-      @JsonKey(name: 'is_sub_comment') required this.isSubComment,
-      @JsonKey(name: 'parent') this.parentId,
-      @JsonKey(name: 'sub_comment_count') this.subCommentCount = 0,
-      @JsonKey(name: 'created_at') required this.createdAt,
-      @JsonKey(name: 'like_count') this.likeCount = 0,
-      @JsonKey(name: 'dislike_count') this.dislikeCount = 0,
+      this.sub_comment_count = 0,
+      required this.is_sub_comment,
+      this.parent,
+      required this.created_at,
+      this.like_count = 0,
+      this.dislike_count = 0,
       this.replies,
       this.timeAgo});
 
@@ -320,11 +310,9 @@ class _$CommentImpl implements _Comment {
   @override
   final int id;
   @override
-  @JsonKey(name: 'discussion_room')
-  final int discussionRoomId;
+  final int discussion_room;
   @override
-  @JsonKey(name: 'ip_addr')
-  final String? ipAddr;
+  final String? ip_addr;
   @override
   final String user;
   @override
@@ -334,25 +322,20 @@ class _$CommentImpl implements _Comment {
   @override
   final String comment;
   @override
-  @JsonKey(name: 'is_sub_comment')
-  final bool isSubComment;
-// parent 필드에 null=True, default=None 추가 반영
+  @JsonKey()
+  final int sub_comment_count;
   @override
-  @JsonKey(name: 'parent')
-  final int? parentId;
-// sub_comment_count 기본값 0 추가
+  final bool is_sub_comment;
   @override
-  @JsonKey(name: 'sub_comment_count')
-  final int subCommentCount;
+  final int? parent;
   @override
-  @JsonKey(name: 'created_at')
-  final DateTime createdAt;
+  final DateTime created_at;
   @override
-  @JsonKey(name: 'like_count')
-  final int likeCount;
+  @JsonKey()
+  final int like_count;
   @override
-  @JsonKey(name: 'dislike_count')
-  final int dislikeCount;
+  @JsonKey()
+  final int dislike_count;
 // UI에서만 쓰이는 필드들은 여전히 남겨둠
   @override
   final int? replies;
@@ -361,7 +344,7 @@ class _$CommentImpl implements _Comment {
 
   @override
   String toString() {
-    return 'Comment(id: $id, discussionRoomId: $discussionRoomId, ipAddr: $ipAddr, user: $user, password: $password, nick: $nick, comment: $comment, isSubComment: $isSubComment, parentId: $parentId, subCommentCount: $subCommentCount, createdAt: $createdAt, likeCount: $likeCount, dislikeCount: $dislikeCount, replies: $replies, timeAgo: $timeAgo)';
+    return 'Comment(id: $id, discussion_room: $discussion_room, ip_addr: $ip_addr, user: $user, password: $password, nick: $nick, comment: $comment, sub_comment_count: $sub_comment_count, is_sub_comment: $is_sub_comment, parent: $parent, created_at: $created_at, like_count: $like_count, dislike_count: $dislike_count, replies: $replies, timeAgo: $timeAgo)';
   }
 
   @override
@@ -370,26 +353,25 @@ class _$CommentImpl implements _Comment {
         (other.runtimeType == runtimeType &&
             other is _$CommentImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.discussionRoomId, discussionRoomId) ||
-                other.discussionRoomId == discussionRoomId) &&
-            (identical(other.ipAddr, ipAddr) || other.ipAddr == ipAddr) &&
+            (identical(other.discussion_room, discussion_room) ||
+                other.discussion_room == discussion_room) &&
+            (identical(other.ip_addr, ip_addr) || other.ip_addr == ip_addr) &&
             (identical(other.user, user) || other.user == user) &&
             (identical(other.password, password) ||
                 other.password == password) &&
             (identical(other.nick, nick) || other.nick == nick) &&
             (identical(other.comment, comment) || other.comment == comment) &&
-            (identical(other.isSubComment, isSubComment) ||
-                other.isSubComment == isSubComment) &&
-            (identical(other.parentId, parentId) ||
-                other.parentId == parentId) &&
-            (identical(other.subCommentCount, subCommentCount) ||
-                other.subCommentCount == subCommentCount) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.likeCount, likeCount) ||
-                other.likeCount == likeCount) &&
-            (identical(other.dislikeCount, dislikeCount) ||
-                other.dislikeCount == dislikeCount) &&
+            (identical(other.sub_comment_count, sub_comment_count) ||
+                other.sub_comment_count == sub_comment_count) &&
+            (identical(other.is_sub_comment, is_sub_comment) ||
+                other.is_sub_comment == is_sub_comment) &&
+            (identical(other.parent, parent) || other.parent == parent) &&
+            (identical(other.created_at, created_at) ||
+                other.created_at == created_at) &&
+            (identical(other.like_count, like_count) ||
+                other.like_count == like_count) &&
+            (identical(other.dislike_count, dislike_count) ||
+                other.dislike_count == dislike_count) &&
             (identical(other.replies, replies) || other.replies == replies) &&
             (identical(other.timeAgo, timeAgo) || other.timeAgo == timeAgo));
   }
@@ -399,18 +381,18 @@ class _$CommentImpl implements _Comment {
   int get hashCode => Object.hash(
       runtimeType,
       id,
-      discussionRoomId,
-      ipAddr,
+      discussion_room,
+      ip_addr,
       user,
       password,
       nick,
       comment,
-      isSubComment,
-      parentId,
-      subCommentCount,
-      createdAt,
-      likeCount,
-      dislikeCount,
+      sub_comment_count,
+      is_sub_comment,
+      parent,
+      created_at,
+      like_count,
+      dislike_count,
       replies,
       timeAgo);
 
@@ -433,18 +415,18 @@ class _$CommentImpl implements _Comment {
 abstract class _Comment implements Comment {
   const factory _Comment(
       {required final int id,
-      @JsonKey(name: 'discussion_room') required final int discussionRoomId,
-      @JsonKey(name: 'ip_addr') final String? ipAddr,
+      required final int discussion_room,
+      final String? ip_addr,
       required final String user,
       required final String password,
       required final String nick,
       required final String comment,
-      @JsonKey(name: 'is_sub_comment') required final bool isSubComment,
-      @JsonKey(name: 'parent') final int? parentId,
-      @JsonKey(name: 'sub_comment_count') final int subCommentCount,
-      @JsonKey(name: 'created_at') required final DateTime createdAt,
-      @JsonKey(name: 'like_count') final int likeCount,
-      @JsonKey(name: 'dislike_count') final int dislikeCount,
+      final int sub_comment_count,
+      required final bool is_sub_comment,
+      final int? parent,
+      required final DateTime created_at,
+      final int like_count,
+      final int dislike_count,
       final int? replies,
       final String? timeAgo}) = _$CommentImpl;
 
@@ -453,11 +435,9 @@ abstract class _Comment implements Comment {
   @override
   int get id;
   @override
-  @JsonKey(name: 'discussion_room')
-  int get discussionRoomId;
+  int get discussion_room;
   @override
-  @JsonKey(name: 'ip_addr')
-  String? get ipAddr;
+  String? get ip_addr;
   @override
   String get user;
   @override
@@ -467,23 +447,17 @@ abstract class _Comment implements Comment {
   @override
   String get comment;
   @override
-  @JsonKey(name: 'is_sub_comment')
-  bool get isSubComment; // parent 필드에 null=True, default=None 추가 반영
+  int get sub_comment_count;
   @override
-  @JsonKey(name: 'parent')
-  int? get parentId; // sub_comment_count 기본값 0 추가
+  bool get is_sub_comment;
   @override
-  @JsonKey(name: 'sub_comment_count')
-  int get subCommentCount;
+  int? get parent;
   @override
-  @JsonKey(name: 'created_at')
-  DateTime get createdAt;
+  DateTime get created_at;
   @override
-  @JsonKey(name: 'like_count')
-  int get likeCount;
+  int get like_count;
   @override
-  @JsonKey(name: 'dislike_count')
-  int get dislikeCount; // UI에서만 쓰이는 필드들은 여전히 남겨둠
+  int get dislike_count; // UI에서만 쓰이는 필드들은 여전히 남겨둠
   @override
   int? get replies;
   @override

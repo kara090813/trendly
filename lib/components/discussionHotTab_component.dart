@@ -38,14 +38,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
       
       // 인기순 정렬 (댓글 + 반응 수 기준)
       activeRooms.sort((a, b) {
-        final aTotal = (a.commentCount ?? 0) + 
-                       (a.positiveCount ?? 0) + 
-                       (a.neutralCount ?? 0) + 
-                       (a.negativeCount ?? 0);
-        final bTotal = (b.commentCount ?? 0) + 
-                       (b.positiveCount ?? 0) + 
-                       (b.neutralCount ?? 0) + 
-                       (b.negativeCount ?? 0);
+        final aTotal = (a.comment_count ?? 0) + 
+                       (a.positive_count ?? 0) + 
+                       (a.neutral_count ?? 0) + 
+                       (a.negative_count ?? 0);
+        final bTotal = (b.comment_count ?? 0) + 
+                       (b.positive_count ?? 0) + 
+                       (b.neutral_count ?? 0) + 
+                       (b.negative_count ?? 0);
         return bTotal.compareTo(aTotal);
       });
 
@@ -75,8 +75,8 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final List<int> keywordIds = [];
 
     for (var room in rooms) {
-      if (room.keywordIdList.isNotEmpty) {
-        final lastKeywordId = room.keywordIdList.last;
+      if (room.keyword_id_list.isNotEmpty) {
+        final lastKeywordId = room.keyword_id_list.last;
         roomToKeywordMap[room.id] = lastKeywordId;
         keywordIds.add(lastKeywordId);
       }
@@ -138,9 +138,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
   }
 
   int _getTotalReactions(DiscussionRoom room) {
-    var positive = room.positiveCount ?? 0;
-    var neutral = room.neutralCount ?? 0;
-    var negative = room.negativeCount ?? 0;
+    var positive = room.positive_count ?? 0;
+    var neutral = room.neutral_count ?? 0;
+    var negative = room.negative_count ?? 0;
     
     // 실제 데이터가 없으면 테스트 데이터 사용
     if (positive == 0 && neutral == 0 && negative == 0) {
@@ -406,7 +406,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                       children: [
                         Icon(Icons.comment, size: 14.sp, color: textColor.withOpacity(0.6)),
                         SizedBox(width: 4.w),
-                        Text('${room.commentCount ?? 0}', 
+                        Text('${room.comment_count ?? 0}', 
                           style: TextStyle(fontSize: 12.sp, color: textColor.withOpacity(0.6))),
                         SizedBox(width: 16.w),
                         Icon(Icons.group, size: 14.sp, color: textColor.withOpacity(0.6)),
@@ -432,9 +432,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final textColor = isDark ? Colors.white : Colors.black;
     
     // 테스트 데이터 사용 (실제 데이터가 0인 경우)
-    var positive = room.positiveCount ?? 0;
-    var neutral = room.neutralCount ?? 0;
-    var negative = room.negativeCount ?? 0;
+    var positive = room.positive_count ?? 0;
+    var neutral = room.neutral_count ?? 0;
+    var negative = room.negative_count ?? 0;
     
     // 실제 데이터가 없으면 테스트 데이터 사용
     if (positive == 0 && neutral == 0 && negative == 0) {
@@ -700,7 +700,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                       children: [
                         Icon(Icons.comment, size: 12.sp, color: textColor.withOpacity(0.6)),
                         SizedBox(width: 4.w),
-                        Text('${room.commentCount ?? 0}', 
+                        Text('${room.comment_count ?? 0}', 
                           style: TextStyle(fontSize: 11.sp, color: textColor.withOpacity(0.6))),
                       ],
                     ),
@@ -736,9 +736,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final textColor = isDark ? Colors.white : Colors.black;
     
     // 테스트 데이터 사용 (실제 데이터가 0인 경우)
-    var positive = room.positiveCount ?? 0;
-    var neutral = room.neutralCount ?? 0;
-    var negative = room.negativeCount ?? 0;
+    var positive = room.positive_count ?? 0;
+    var neutral = room.neutral_count ?? 0;
+    var negative = room.negative_count ?? 0;
     
     // 실제 데이터가 없으면 테스트 데이터 사용
     if (positive == 0 && neutral == 0 && negative == 0) {

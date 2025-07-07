@@ -31,21 +31,30 @@ flutter build web     # Web
 
 ### State Management
 The app uses Provider for state management. Main providers are located in `/lib/providers/`:
-- `keyword_provider.dart`: Manages keyword data and API calls
-- `theme_provider.dart`: Handles theme switching
+- `user_preference_provider.dart`: Manages user preferences, comment reactions, and sentiment selections
+- `theme_provider.dart`: Handles theme switching (light/dark mode)
 
 ### Routing
 Uses go_router for declarative routing. Routes are defined in `/lib/router.dart`:
 - `/`: Main screen with trending keywords
 - `/keyword/:id`: Keyword detail page
-- `/discussion/:roomId`: Discussion room
-- `/discussion/:roomId/comments/:commentId`: Comment thread
+- `/discussion/:id`: Discussion room
+- `/comment/:id`: Comment thread (for replies)
 
 ### Data Models
-Models use Freezed for immutability and JSON serialization (`/lib/models/`):
-- `keyword.dart`: Keyword data with trend information
-- `discussion_room.dart`: Discussion forum data
-- `comment.dart`: Comment and reaction data
+Models use Freezed for immutability and JSON serialization (`/lib/models/freezed/`):
+- `keyword_model.dart`: Keyword data with trend information
+  - Contains type1 (3-line summary as List), type2 (short text), type3 (long text)
+  - References field for source URLs
+  - Current discussion room reference
+- `discussion_room_model.dart`: Discussion forum data
+  - Sentiment counts (positive, neutral, negative)
+  - Comment count and AI-generated summary
+  - Sentiment snapshot for historical data
+- `comment_model.dart`: Comment and reaction data
+  - Support for sub-comments (replies)
+  - Like/dislike counts
+  - Password field for deletion
 
 ### API Integration
 All API calls go through `/lib/services/api_service.dart` using the singleton pattern.
@@ -59,129 +68,102 @@ Base URL: `https://trendly.servehttp.com:10443/api`
 
 ### API Endpoints Reference
 
-#### Keyword APIs
+#### Keyword APIs (Currently Implemented)
 
-1. **POST /api/keyword/search/** - Search keywords by name and time range
-   - Body: `{"keyword": "폭싹 속았수다", "start_time": "2025-04-05T00:00:00.000000Z", "end_time": "2025-04-08T12:30:00.000000Z"}`
-   - Response: `{"id_list": [1, 2, 3, 4]}`
+1. **GET /api/keyword/now/** - Get current top 10 trending keywords
+   - Response: List of 10 Keyword objects with rank 1-10
+   - **Status: ✅ Implemented**
 
 2. **GET /api/keyword/get/{keyword_id}/** - Get keyword details by ID
    - Path param: keyword_id (int)
    - Response: Single Keyword object
+   - **Status: ✅ Implemented**
 
 3. **POST /api/keyword/get_keyword_many/** - Get multiple keywords by IDs
    - Body: `{"id_list": [1, 2, 3, 4]}`
    - Response: List of Keyword objects
+   - **Status: ⚠️ Stub (returns empty list)**
 
-4. **GET /api/keyword/now/** - Get current top 10 trending keywords
-   - Response: List of 10 Keyword objects with rank 1-10
+4. **GET /api/keyword/get-latest-keyword-by-room-id/{discussion_room_id}/** - Get latest keyword for discussion room
+   - Path param: discussion_room_id (int)
+   - Response: Single Keyword object
+   - **Status: ⚠️ Stub (returns error)**
 
-5. **GET /api/keyword/time_machine/{time}/** - Get keywords at specific time
-   - Path param: time (ISO8601 format: `time.toUtc().toIso8601String()`)
-   - Response: List of 10 Keywords at that time
+Other keyword endpoints listed in the original spec are not yet implemented in the service layer.
 
-6. **GET /api/random_keyword_history/** - Get random keyword with rank history
-   - Response: `{"keyword": "키워드명", "ranks": [1, 3, 2, 5, ...]}`
-
-7. **POST /api/keyword/history/** - Get keyword history (404 if not found)
-   - Body: `{"keyword": "키워드명"}`
-   - Response: List of `{"id": 1, "keyword": "이재명", "rank": 1, "created_at": "2025-05-16T13:15:32.123456Z"}`
-
-8. **GET /api/keyword/random/{count}/** - Get random keywords
-   - Path param: count (int)
-   - Response: List of random Keywords
-
-9. **POST /api/keyword/history_simple/** - Get simplified keyword history
-   - Body: `{"keyword": "포켓몬 우유", "period": "weekly"}` // period: daily, weekly, monthly, all
-   - Response: `{"keyword": "포켓몬 우유", "period": "weekly", "history": [{"id": 123, "rank": 1, "created_at": "2025-02-13T21:30:00Z"}]}`
-
-10. **GET /api/keyword/date_groups/{datestr}/** - Get all keywords for a specific date grouped by time
-    - Path param: datestr (format: YYYY-MM-DD, e.g., 2025-01-15)
-    - Response: `{"date": "2025-01-15", "keyword_groups": [{"created_at": "2025-01-15T00:32:00Z", "keywords": [10 keywords]}], "total_groups": 24}`
-
-11. **GET /api/keyword/daily_summary/{datestr}/** - Get AI-generated daily summary
-    - Path param: datestr (format: YYYY-MM-DD)
-    - Response: `{"date": "2025-01-15", "top_keyword": {...}, "top_category": {...}, "top_discussion": {...}}`
-
-#### Discussion Room APIs
+#### Discussion Room APIs (Currently Implemented)
 
 1. **GET /api/discussion/get/{discussion_room_id}/** - Get discussion room details
    - Path param: discussion_room_id (int)
    - Response: Single DiscussionRoom object
+   - **Status: ✅ Implemented**
 
-2. **GET /api/discussion/get-latest-keyword-by-room-id/{discussion_room_id}/** - Get latest keyword for discussion room
-   - Path param: discussion_room_id (int)
-   - Response: Single Keyword object
-
-3. **GET /api/discussion/now/** - Get current top 10 active discussion rooms
-   - Response: List of 10 DiscussionRoom objects
-
-4. **GET /api/discussion/all?page={N}** - Get all discussion rooms (paginated)
-   - Query param: page (int, default 1, max 10 per page)
-   - Response: List of DiscussionRooms
-
-5. **POST /api/discussion/** - Get/create discussion room by keyword
-   - Body: `{"keyword": "원하는 키워드"}`
-   - Response: DiscussionRoom object (most recent for keyword)
-
-6. **POST /api/discussion/{discussion_room_id}/sentiment/** - Update sentiment
+2. **POST /api/discussion/{discussion_room_id}/sentiment/** - Update sentiment
    - Path param: discussion_room_id (int)
    - Body: `{"positive": "1", "neutral": "0", "negative": "0"}`
    - Response: 202 on success, 400 on failure
+   - **Status: ✅ Implemented**
 
-7. **GET /api/discussion/active/** - Get active (not closed) discussion rooms
+3. **GET /api/discussion/active/** - Get active (not closed) discussion rooms
    - Response: List of DiscussionRooms where is_closed=False
+   - **Status: ⚠️ Stub (returns empty list)**
 
-8. **GET /api/discussion/get_random/{count}/{option}/** - Get random discussion rooms
-   - Path params: count (int), option (int: 1=Any, 2=Open only, 3=Closed only)
-   - Response: List of random DiscussionRooms
+4. **GET /api/discussion/now/** - Get current top 10 active discussion rooms
+   - Response: List of 10 DiscussionRoom objects
+   - **Status: ⚠️ Stub (returns empty list)**
 
-#### Comment APIs
+Other discussion room endpoints are not yet implemented in the service layer.
 
-1. **GET /api/comment/{comment_id}/** - Get comment details
+#### Comment APIs (Currently Implemented)
+
+1. **GET /api/discussion/{discussion_room_id}/get_comment/** - Get comments (newest, excluding subcomments)
+   - Path param: discussion_room_id (int)
+   - Response: List of Comments sorted by newest
+   - **Status: ✅ Implemented**
+
+2. **GET /api/discussion/{discussion_room_id}/get_comment/pop** - Get comments (popular, excluding subcomments)
+   - Path param: discussion_room_id (int)
+   - Response: List of Comments sorted by likes
+   - **Status: ✅ Implemented**
+
+3. **POST /api/discussion/{discussion_room_id}/add_comment/** - Add new comment
+   - Path param: discussion_room_id (int)
+   - Body: `{"discussion_room": int, "user": "string", "password": "string", "nick": "string", "comment": "string", "is_sub_comment": bool, "parent": int (optional)}`
+   - Response: 201 on success
+   - **Status: ✅ Implemented**
+
+4. **POST /api/discussion/{discussion_room_id}/del_comment/** - Delete comment
+   - Path param: discussion_room_id (int)
+   - Body: `{"comment_id": int, "password": "string"}`
+   - Response: 204 on success
+   - **Status: ✅ Implemented**
+
+5. **GET /api/comment/{comment_id}/** - Get comment details
    - Path param: comment_id (int)
    - Response: Single Comment object
+   - **Status: ⚠️ Stub (returns error)**
 
-2. **POST /api/comment/{comment_id}/like/** - Toggle like on comment
+6. **POST /api/comment/{comment_id}/like/** - Toggle like on comment
    - Path param: comment_id (int)
    - Body: `{"is_cancel": true/false}`
    - Response: 202 on success, 400 on failure
+   - **Status: ⚠️ Stub (returns false)**
 
-3. **POST /api/comment/{comment_id}/dislike/** - Toggle dislike on comment
+7. **POST /api/comment/{comment_id}/dislike/** - Toggle dislike on comment
    - Path param: comment_id (int)
    - Body: `{"is_cancel": true/false}`
    - Response: 202 on success
+   - **Status: ⚠️ Stub (returns false)**
 
-4. **GET /api/discussion/{discussion_room_id}/comment/** - Get all comments for discussion
-   - Path param: discussion_room_id (int)
-   - Response: List of all Comment objects
-
-5. **GET /api/discussion/{discussion_room_id}/get_comment/** - Get comments (newest, excluding subcomments)
-   - Alias: `/api/discussion/{discussion_room_id}/get_comment/new`
-   - Path param: discussion_room_id (int)
-   - Response: List of Comments sorted by newest
-
-6. **GET /api/discussion/{discussion_room_id}/get_comment/pop** - Get comments (popular, excluding subcomments)
-   - Path param: discussion_room_id (int)
-   - Response: List of Comments sorted by likes
-
-7. **POST /api/discussion/{discussion_room_id}/add_comment/** - Add new comment
-   - Path param: discussion_room_id (int)
-   - Body: `{"discussion_room_id": "토론방 ID", "user": "사용자 ID", "password": "비밀번호", "nick": "닉네임", "comment": "댓글 내용", "is_sub_comment": true/false, "parent_id": "부모 댓글 ID (서브댓글인 경우)"}`
-   - Response: 201 on success
-
-8. **POST /api/discussion/{discussion_room_id}/del_comment/** - Delete comment
-   - Path param: discussion_room_id (int)
-   - Body: `{"comment_id": "댓글 ID", "password": "비밀번호"}`
-   - Response: 204 on success
-
-9. **GET /api/discussion/subcomment/{parent_comment_id}/new** - Get subcomments (newest)
+8. **GET /api/discussion/subcomment/{parent_comment_id}/new** - Get subcomments (newest)
    - Path param: parent_comment_id (int)
    - Response: List of subcomments sorted by newest
+   - **Status: ⚠️ Stub (returns empty list)**
 
-10. **GET /api/discussion/subcomment/{parent_comment_id}/pop** - Get subcomments (popular)
-    - Path param: parent_comment_id (int)
-    - Response: List of subcomments sorted by likes
+9. **GET /api/discussion/subcomment/{parent_comment_id}/pop** - Get subcomments (popular)
+   - Path param: parent_comment_id (int)
+   - Response: List of subcomments sorted by likes
+   - **Status: ⚠️ Stub (returns empty list)**
 
 ### Data Models
 
@@ -248,18 +230,73 @@ Base URL: `https://trendly.servehttp.com:10443/api`
 - Other codes: Specific API failures
 
 ### UI Structure
-- `/lib/screens/`: Main application screens
-- `/lib/components/`: Page-level components (KeywordCard, DiscussionCard, etc.)
-- `/lib/widgets/`: Reusable UI widgets (AnimatedLogo, GradientText, etc.)
+
+#### Main Screens (`/lib/screens/`)
+- `main_screen.dart`: Home screen with trending keywords
+- `keywordDetail_screen.dart`: Keyword detail page with trend information
+- `discussionRoom_screen.dart`: Discussion room with comments and reactions
+  - Features tabs for "토론" (Discussion) and "요약" (Summary)
+  - Sentiment selection (positive/neutral/negative)
+  - Real-time countdown timer for discussion closure
+- `commentRoom_screen.dart`: Comment thread for replies (sub-comments)
+
+#### Components (`/lib/components/`)
+- `discussionHotTab_component.dart`: Hot discussion rooms with swipeable top 3
+- `discussionLiveTab_component.dart`: Live/active discussion rooms
+- `discussionHistoryTab_component.dart`: Closed discussion rooms history
+
+#### Key Widgets (`/lib/widgets/`)
+- `discussionReaction_widget.dart`: Displays discussion sentiment statistics
+  - Progress bar visualization for positive/neutral/negative reactions
+  - Opinion summary cards
+- `commentList_widget.dart`: Reusable comment list with sorting
+- `circleButton_widget.dart`: Neumorphic circular button component
+- `sortPopup_widget.dart`: Sort options for comments (newest/popular)
+
+### Key Features
+
+1. **Discussion Room Features**
+   - Real-time sentiment tracking (positive/neutral/negative)
+   - 24-hour discussion timer with automatic closure
+   - Comment sorting (newest/popular)
+   - Sub-comments (replies) support
+   - Anonymous commenting with password-based deletion
+
+2. **User Preferences**
+   - Local storage of nickname and password
+   - Comment reaction tracking (like/dislike)
+   - Sentiment selection persistence
+   - "My comments" identification
+
+3. **Theme Support**
+   - Dark/Light mode toggle
+   - Neumorphic design elements
+   - Consistent color scheme through AppTheme
 
 ## Key Development Patterns
 
 1. **Freezed Models**: Always run `flutter pub run build_runner build` after modifying model files
 2. **API Calls**: Use the ApiService singleton for all API interactions
-3. **Responsive Design**: Use ScreenUtil for responsive dimensions
-4. **Theme Support**: Access theme through `context.read<ThemeProvider>()`
-5. **Error Handling**: API service includes built-in error handling with user-friendly messages
+3. **Responsive Design**: Use ScreenUtil for responsive dimensions (`.w`, `.h`, `.sp`)
+4. **Theme Support**: Access theme through `AppTheme.isDark(context)` and related methods
+5. **Error Handling**: Use `StylishToast` for user-friendly error messages
+6. **Animations**: Use flutter_animate package for smooth transitions
+
+## Local Storage
+
+The app uses SharedPreferences for:
+- User nickname and password
+- Comment IDs (to identify user's own comments)
+- Comment reactions (like/dislike states)
+- Room sentiment selections
 
 ## Testing Approach
 
 Tests should be placed in the `/test` directory following the same structure as `/lib`. Use `flutter test` to run all tests.
+
+## Backend Models (Django)
+
+Located in `/API/models.py`:
+- `KeywordModel`: Stores keyword trends with AI-generated summaries
+- `DiscussionRoomModel`: Manages discussion forums with sentiment tracking
+- `CommentModel`: Handles comments with nested reply support

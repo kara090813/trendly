@@ -9,17 +9,14 @@ class Keyword with _$Keyword {
   const factory Keyword({
     required int id,
     required String keyword,
-    required String category,
     required int rank,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    // type1을 dynamic으로 변경하여 List<String>과 Map<String, dynamic> 모두 지원
+    required DateTime created_at,
     @Default([]) dynamic type1,
     required String type2,
     required String type3,
-    // references도 dynamic으로 변경하여 호환성 유지
-    @Default([]) dynamic references,
-    // 필드명을 API 응답에 맞게 수정 (null 가능하도록 변경)
-    @JsonKey(name: 'current_discussion_room') int? currentDiscussionRoomId,
+    required String category,
+    dynamic references,
+    int? current_discussion_room,
   }) = _Keyword;
 
   factory Keyword.fromJson(Map<String, dynamic> json) => _$KeywordFromJson(json);

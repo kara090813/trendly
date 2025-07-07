@@ -139,8 +139,8 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
     final List<int> keywordIds = [];
 
     for (var room in rooms) {
-      if (room.keywordIdList.isNotEmpty) {
-        final lastKeywordId = room.keywordIdList.last;
+      if (room.keyword_id_list.isNotEmpty) {
+        final lastKeywordId = room.keyword_id_list.last;
         roomToKeywordMap[room.id] = lastKeywordId;
         keywordIds.add(lastKeywordId);
       }
@@ -471,7 +471,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   Widget _buildCommunityListItem(DiscussionRoom room) {
     final category = _getCategoryForRoom(room);
     final categoryColor = _getCategoryColor(category);
-    final totalReactions = (room.positiveCount ?? 0) + (room.neutralCount ?? 0) + (room.negativeCount ?? 0);
+    final totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
     
     return Material(
       color: Colors.transparent,
@@ -544,7 +544,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                           SizedBox(width: 8.w),
                           // 작성 시간
                           Text(
-                            _getTimeAgo(room.createdAt),
+                            _getTimeAgo(room.created_at),
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: Colors.grey[500],
@@ -557,7 +557,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                               Icon(Icons.chat_bubble_outline, size: 12.sp, color: Colors.grey[400]),
                               SizedBox(width: 3.w),
                               Text(
-                                '${room.commentCount ?? 0}',
+                                '${room.comment_count ?? 0}',
                                 style: TextStyle(
                                   fontSize: 11.sp,
                                   color: Colors.grey[600],

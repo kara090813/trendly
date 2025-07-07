@@ -55,13 +55,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       List<Comment>? comments;
 
       try {
-        if (keyword.currentDiscussionRoomId != null && keyword.currentDiscussionRoomId! > 0) {
+        if (keyword.current_discussion_room != null && keyword.current_discussion_room! > 0) {
           // 토론방 정보가 있는 경우 댓글 목록 가져오기 (인기순으로 변경)
-          comments = await _apiService.getDiscussionComments(keyword.currentDiscussionRoomId!, isPopular: true);
+          comments = await _apiService.getDiscussionComments(keyword.current_discussion_room!, isPopular: true);
 
           // 토론방 정보도 가져오기
           try {
-            discussionRoom = await _apiService.getDiscussionRoomById(keyword.currentDiscussionRoomId!);
+            discussionRoom = await _apiService.getDiscussionRoomById(keyword.current_discussion_room!);
           } catch (e) {
             print('토론방 상세 정보 로드 실패: $e');
           }
@@ -403,8 +403,8 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    if (_keyword!.currentDiscussionRoomId != null && _keyword!.currentDiscussionRoomId! > 0) {
-                      context.push('/discussion/${_keyword!.currentDiscussionRoomId}');
+                    if (_keyword!.current_discussion_room != null && _keyword!.current_discussion_room! > 0) {
+                      context.push('/discussion/${_keyword!.current_discussion_room}');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('활성화된 토론방이 없습니다.')),
@@ -470,7 +470,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     // 댓글이 있는 경우 - 인기순(좋아요 수)으로 정렬하고 최대 3개만 표시
     List<Comment> sortedComments = List.from(_comments!);
     sortedComments.sort((a, b) =>
-        (b.likeCount ?? 0).compareTo(a.likeCount ?? 0));
+        (b.like_count ?? 0).compareTo(a.like_count ?? 0));
 
     final displayComments = sortedComments.length > 3 ?
     sortedComments.sublist(0, 3) : sortedComments;
@@ -505,7 +505,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    _formatTimeAgo(comment.createdAt.toString()),
+                    _formatTimeAgo(comment.created_at.toString()),
                     style: TextStyle(
                       color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey,
                       fontSize: 13.sp,
@@ -537,7 +537,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   ),
                   SizedBox(width: 4.w),
                   Text(
-                    (comment.likeCount ?? 0).toString(),
+                    (comment.like_count ?? 0).toString(),
                     style: TextStyle(
                       color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 13.sp,
@@ -551,7 +551,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   ),
                   SizedBox(width: 4.w),
                   Text(
-                    (comment.dislikeCount ?? 0).toString(),
+                    (comment.dislike_count ?? 0).toString(),
                     style: TextStyle(
                       color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 13.sp,
@@ -565,7 +565,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   ),
                   SizedBox(width: 4.w),
                   Text(
-                    (comment.replies ?? 0).toString(),
+                    (comment.sub_comment_count ?? comment.replies ?? 0).toString(),
                     style: TextStyle(
                       color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 13.sp,

@@ -126,8 +126,8 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           if (reaction != null) {
             _commentReactions[comment.id] = CommentReaction(
               reactionType: reaction,
-              likeCount: comment.likeCount ?? 0,
-              dislikeCount: comment.dislikeCount ?? 0,
+              likeCount: comment.like_count ?? 0,
+              dislikeCount: comment.dislike_count ?? 0,
             );
           }
         }
@@ -150,8 +150,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       // 데이터 로드
       final discussionRoom =
           await _apiService.getDiscussionRoomById(widget.discussionRoomId);
-      final keyword = await _apiService
-          .getLatestKeywordByDiscussionRoomId(widget.discussionRoomId);
+      
+      // keyword_id_list의 마지막 요소로 키워드 가져오기
+      late Keyword keyword;
+      if (discussionRoom.keyword_id_list.isNotEmpty) {
+        final lastKeywordId = discussionRoom.keyword_id_list.last;
+        keyword = await _apiService.getKeywordById(lastKeywordId);
+      } else {
+        throw Exception('No keyword found for this discussion room');
+      }
       await _loadComments(isPopular: _isPopularSort);
 
       if (_isRefreshing) {
@@ -164,15 +171,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           _keyword = keyword;
 
           // 토론방 종료 시간 계산
-          if (discussionRoom.isClosed) {
+          if (discussionRoom.is_closed) {
             _expireTime = null;
             _isDisabled = true;
             _isDiscussionReactionEnabled = true;
           } else {
-            if (discussionRoom.updatedAt != null) {
-              _expireTime = discussionRoom.updatedAt!.add(Duration(hours: 24));
+            if (discussionRoom.updated_at != null) {
+              _expireTime = discussionRoom.updated_at!.add(Duration(hours: 24));
             } else {
-              _expireTime = discussionRoom.createdAt.add(Duration(hours: 24));
+              _expireTime = discussionRoom.created_at.add(Duration(hours: 24));
             }
             _updateRemainingTime();
             _startTimer();
@@ -233,15 +240,15 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       if (reaction != null) {
         _commentReactions[comment.id] = CommentReaction(
           reactionType: reaction,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
       } else {
         // 반응이 없는 경우 초기 상태 설정
         _commentReactions[comment.id] = CommentReaction(
           reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
       }
     }
@@ -436,7 +443,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 12.h),
-                      if (_discussionRoom?.isClosed ?? false)
+                      if (_discussionRoom?.is_closed ?? false)
                         _buildClosedDiscussionAlert(),
                       SizedBox(height: 12.h),
                       _buildInfoSection(),
@@ -640,7 +647,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 // 닫힌 토론방 알림 위젯 - 원래 디자인을 유지하면서 개선
   Widget _buildClosedDiscussionAlert() {
     final DateTime closedAt =
-        _discussionRoom?.closedAt ?? _discussionRoom!.createdAt;
+        _discussionRoom?.closed_at ?? _discussionRoom!.created_at;
 
     final String closedTimeStr =
         '${closedAt.year}년 ${closedAt.month}월 ${closedAt.day}일 ${_formatHour(closedAt.hour)} ${_formatMinutes(closedAt.minute)}분';
@@ -840,7 +847,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     final containerHeight = 180.h;
 
     // 토론방이 종료된 경우 비활성화
-    final bool isDisabled = _discussionRoom?.isClosed ?? false;
+    final bool isDisabled = _discussionRoom?.is_closed ?? false;
 
     return Container(
       key: ValueKey('emotion_container_${_selectedSentiment}'),
@@ -1290,7 +1297,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
   // 감정 선택 처리 메서드
   void _handleEmotionSelection(String sentiment) async {
-    if (_discussionRoom?.isClosed ?? true) return;
+    if (_discussionRoom?.is_closed ?? true) return;
 
     // 애니메이션 플래그 설정
     setState(() {
@@ -1317,7 +1324,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       }
 
       await _apiService.setDiscussionSentiment(
-          widget.discussionRoomId, positive, neutral, negative);
+          widget.discussionRoomId, positive.toString(), neutral.toString(), negative.toString());
 
       // 로컬에도 저장
       final provider =
@@ -1352,7 +1359,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 감정 재선택 메서드
   // 감정 재선택 메서드
   void _resetEmotionSelection() async {
-    if (_discussionRoom?.isClosed ?? true) return;
+    if (_discussionRoom?.is_closed ?? true) return;
 
     setState(() {
       _isAnimating = true;
@@ -1380,7 +1387,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
       // 서버에 감정 의견 업데이트
       await _apiService.setDiscussionSentiment(
-          widget.discussionRoomId, positive, neutral, negative);
+          widget.discussionRoomId, positive.toString(), neutral.toString(), negative.toString());
 
       // 로컬에서도 제거
       final provider =
@@ -1497,7 +1504,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 정보 섹션 (토론방 시작 시간, 남은 시간)
   Widget _buildInfoSection() {
     // 토론방 생성 시간 포맷팅
-    final DateTime createdAt = _discussionRoom?.createdAt ?? DateTime.now();
+    final DateTime createdAt = _discussionRoom?.created_at ?? DateTime.now();
     final String dateStr =
         '${createdAt.year}년 ${createdAt.month}월 ${createdAt.day}일';
     final String timeStr =
@@ -1505,7 +1512,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
     // 남은 시간 포맷팅
     final bool isExpired =
-        _discussionRoom?.isClosed ?? false || _remainingTime.inSeconds <= 0;
+        _discussionRoom?.is_closed ?? false || _remainingTime.inSeconds <= 0;
     final String hoursStr = isExpired
         ? "00"
         : _remainingTime.inHours.remainder(24).toString().padLeft(2, '0');
@@ -2207,7 +2214,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
   // 하단 입력 섹션
   Widget _buildInputSection() {
     // 토론방이 종료된 경우 입력 비활성화
-    final bool isDisabled = _discussionRoom?.isClosed ?? false;
+    final bool isDisabled = _discussionRoom?.is_closed ?? false;
 
     return Container(
       width: double.infinity,

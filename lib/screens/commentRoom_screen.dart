@@ -70,8 +70,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       setState(() {
         _parentCommentReaction = CommentReaction(
           reactionType: reaction,
-          likeCount: _parentComment!.likeCount ?? 0,
-          dislikeCount: _parentComment!.dislikeCount ?? 0,
+          likeCount: _parentComment!.like_count ?? 0,
+          dislikeCount: _parentComment!.dislike_count ?? 0,
         );
       });
     }
@@ -105,8 +105,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           if (reaction != null) {
             _commentReactions[comment.id] = CommentReaction(
               reactionType: reaction,
-              likeCount: comment.likeCount ?? 0,
-              dislikeCount: comment.dislikeCount ?? 0,
+              likeCount: comment.like_count ?? 0,
+              dislikeCount: comment.dislike_count ?? 0,
             );
           }
         }
@@ -135,11 +135,11 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       Keyword? keyword;
 
       try {
-        discussionRoom = await _apiService.getDiscussionRoomById(comment.discussionRoomId);
+        discussionRoom = await _apiService.getDiscussionRoomById(comment.discussion_room);
 
         // 토론방 정보를 성공적으로 가져온 경우, 해당 토론방의 최신 키워드 정보 가져오기
         if (discussionRoom != null) {
-          keyword = await _apiService.getLatestKeywordByDiscussionRoomId(comment.discussionRoomId);
+          keyword = await _apiService.getLatestKeywordByDiscussionRoomId(comment.discussion_room);
         }
       } catch (e) {
         print('토론방 또는 키워드 정보 로드 오류: $e');
@@ -153,7 +153,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       if (mounted) {
         setState(() {
           _parentComment = comment;
-          _discussionRoomId = comment.discussionRoomId;
+          _discussionRoomId = comment.discussion_room;
           _discussionRoom = discussionRoom;
           _keyword = keyword;
           _isLoading = false;
@@ -242,15 +242,15 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       if (reaction != null) {
         _commentReactions[comment.id] = CommentReaction(
           reactionType: reaction,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
       } else {
         // 반응이 없는 경우 초기 상태 설정
         _commentReactions[comment.id] = CommentReaction(
           reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
       }
     }
@@ -501,12 +501,12 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     if (_parentComment == null) return SizedBox.shrink();
 
     // 시간 포맷팅
-    final String timeAgo = _formatTimeAgo(_parentComment!.createdAt);
+    final String timeAgo = _formatTimeAgo(_parentComment!.created_at);
 
     // 좋아요/싫어요 상태 확인
     final reaction = _parentCommentReaction;
-    final int likeCount = reaction?.likeCount ?? _parentComment!.likeCount ?? 0;
-    final int dislikeCount = reaction?.dislikeCount ?? _parentComment!.dislikeCount ?? 0;
+    final int likeCount = reaction?.likeCount ?? _parentComment!.like_count ?? 0;
+    final int dislikeCount = reaction?.dislikeCount ?? _parentComment!.dislike_count ?? 0;
     final bool hasLiked = reaction?.reactionType == 'like';
     final bool hasDisliked = reaction?.reactionType == 'dislike';
 
@@ -615,8 +615,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     final CommentReaction currentReaction = _parentCommentReaction ??
         CommentReaction(
           reactionType: null,
-          likeCount: _parentComment!.likeCount ?? 0,
-          dislikeCount: _parentComment!.dislikeCount ?? 0,
+          likeCount: _parentComment!.like_count ?? 0,
+          dislikeCount: _parentComment!.dislike_count ?? 0,
         );
 
     // 먼저 UI 업데이트 (즉시 반응 위해)
@@ -693,8 +693,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     final CommentReaction currentReaction = _parentCommentReaction ??
         CommentReaction(
           reactionType: null,
-          likeCount: _parentComment!.likeCount ?? 0,
-          dislikeCount: _parentComment!.dislikeCount ?? 0,
+          likeCount: _parentComment!.like_count ?? 0,
+          dislikeCount: _parentComment!.dislike_count ?? 0,
         );
 
     // 먼저 UI 업데이트 (즉시 반응 위해)
@@ -928,8 +928,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
     // 로컬 상태가 없으면 Provider에서 가져옴
     String? userReaction;
-    int likeCount = comment.likeCount ?? 0;
-    int dislikeCount = comment.dislikeCount ?? 0;
+    int likeCount = comment.like_count ?? 0;
+    int dislikeCount = comment.dislike_count ?? 0;
 
     if (localReaction != null) {
       userReaction = localReaction.reactionType;
@@ -943,7 +943,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     final bool hasDisliked = userReaction == 'dislike';
 
     // 시간 포맷팅
-    final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.createdAt);
+    final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.created_at);
 
     return Column(
       children: [
@@ -1226,8 +1226,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     final CommentReaction currentReaction = _commentReactions[commentId] ??
         CommentReaction(
           reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
 
     // 먼저 UI 업데이트 (즉시 반응 위해)
@@ -1306,8 +1306,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     final CommentReaction currentReaction = _commentReactions[commentId] ??
         CommentReaction(
           reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
 
     // 먼저 UI 업데이트 (즉시 반응 위해)

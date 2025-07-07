@@ -10,14 +10,14 @@ _$KeywordImpl _$$KeywordImplFromJson(Map<String, dynamic> json) =>
     _$KeywordImpl(
       id: (json['id'] as num).toInt(),
       keyword: json['keyword'] as String,
-      category: json['category'] as String,
       rank: (json['rank'] as num).toInt(),
-      createdAt: DateTime.parse(json['created_at'] as String),
+      created_at: DateTime.parse(json['created_at'] as String),
       type1: json['type1'] ?? const [],
       type2: json['type2'] as String,
       type3: json['type3'] as String,
-      references: json['references'] ?? const [],
-      currentDiscussionRoomId:
+      category: json['category'] as String,
+      references: json['references'],
+      current_discussion_room:
           (json['current_discussion_room'] as num?)?.toInt(),
     );
 
@@ -25,14 +25,14 @@ Map<String, dynamic> _$$KeywordImplToJson(_$KeywordImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'keyword': instance.keyword,
-      'category': instance.category,
       'rank': instance.rank,
-      'created_at': instance.createdAt.toIso8601String(),
+      'created_at': instance.created_at.toIso8601String(),
       'type1': instance.type1,
       'type2': instance.type2,
       'type3': instance.type3,
+      'category': instance.category,
       'references': instance.references,
-      'current_discussion_room': instance.currentDiscussionRoomId,
+      'current_discussion_room': instance.current_discussion_room,
     };
 
 _$ReferenceImpl _$$ReferenceImplFromJson(Map<String, dynamic> json) =>

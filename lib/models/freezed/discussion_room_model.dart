@@ -9,19 +9,17 @@ class DiscussionRoom with _$DiscussionRoom {
   const factory DiscussionRoom({
     required int id,
     required String keyword,
-    @JsonKey(name: 'keyword_id_list') @Default([]) List<int> keywordIdList,
-    @JsonKey(name: 'is_closed') @Default(false) bool isClosed,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-    @JsonKey(name: 'closed_at') DateTime? closedAt,
-    // comment_count에 null=True 추가
-    @JsonKey(name: 'comment_count') int? commentCount,
-    @JsonKey(name: 'comment_summary') String? commentSummary,
-    // 감정 반응 관련 필드 (기본값 추가)
-    @JsonKey(name: 'positive_count') @Default(0) int positiveCount,
-    @JsonKey(name: 'neutral_count') @Default(0) int neutralCount,
-    @JsonKey(name: 'negative_count') @Default(0) int negativeCount,
-    @JsonKey(name: 'sentiment_snapshot') @Default([]) List<SentimentSnapshot> sentimentSnapshot,
+    @Default([]) List<int> keyword_id_list,
+    @Default(false) bool is_closed,
+    required DateTime created_at,
+    DateTime? updated_at,
+    DateTime? closed_at,
+    int? comment_count,
+    String? comment_summary,
+    @Default(0) int positive_count,
+    @Default(0) int neutral_count,
+    @Default(0) int negative_count,
+    @Default([]) List<SentimentSnapshot> sentiment_snapshot,
   }) = _DiscussionRoom;
 
   factory DiscussionRoom.fromJson(Map<String, dynamic> json) => _$DiscussionRoomFromJson(json);
@@ -31,10 +29,10 @@ class DiscussionRoom with _$DiscussionRoom {
 @freezed
 class SentimentSnapshot with _$SentimentSnapshot {
   const factory SentimentSnapshot({
-    @JsonKey(name: 't') required String time,
-    @JsonKey(name: 'pos') required int positive,
-    @JsonKey(name: 'neu') required int neutral,
-    @JsonKey(name: 'neg') required int negative,
+    required String t,
+    required int pos,
+    required int neu,
+    required int neg,
   }) = _SentimentSnapshot;
 
   factory SentimentSnapshot.fromJson(Map<String, dynamic> json) => _$SentimentSnapshotFromJson(json);

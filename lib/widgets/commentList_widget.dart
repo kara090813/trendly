@@ -173,8 +173,8 @@ class _CommentListWidgetState extends State<CommentListWidget> {
 
     // 로컬 상태가 없으면 Provider에서 가져옴
     String? userReaction;
-    int likeCount = comment.likeCount ?? 0;
-    int dislikeCount = comment.dislikeCount ?? 0;
+    int likeCount = comment.like_count ?? 0;
+    int dislikeCount = comment.dislike_count ?? 0;
 
     if (localReaction != null) {
       userReaction = localReaction.reactionType;
@@ -188,7 +188,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
     final bool hasDisliked = userReaction == 'dislike';
 
     // 시간 포맷팅
-    final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.createdAt);
+    final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.created_at);
 
     return Stack(
       children: [
@@ -318,8 +318,8 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  comment.subCommentCount != null
-                                      ? comment.subCommentCount.toString()
+                                  comment.sub_comment_count != null
+                                      ? comment.sub_comment_count.toString()
                                       : (comment.replies ?? 0).toString(),
                                   style: TextStyle(
                                     fontSize: 13.sp,
@@ -468,8 +468,8 @@ class _CommentListWidgetState extends State<CommentListWidget> {
     final CommentReaction currentReaction = _localCommentReactions[commentId] ??
         CommentReaction(
           reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
 
     // 먼저 UI 업데이트 (즉시 반응 위해)
@@ -548,8 +548,8 @@ class _CommentListWidgetState extends State<CommentListWidget> {
     final CommentReaction currentReaction = _localCommentReactions[commentId] ??
         CommentReaction(
           reactionType: null,
-          likeCount: comment.likeCount ?? 0,
-          dislikeCount: comment.dislikeCount ?? 0,
+          likeCount: comment.like_count ?? 0,
+          dislikeCount: comment.dislike_count ?? 0,
         );
 
     // 먼저 UI 업데이트 (즉시 반응 위해)

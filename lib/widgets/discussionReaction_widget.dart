@@ -35,9 +35,9 @@ class DiscussionReactionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 토론방 반응 데이터 계산
-    final int positiveCount = discussionRoom?.positiveCount ?? 0;
-    final int neutralCount = discussionRoom?.neutralCount ?? 0;
-    final int negativeCount = discussionRoom?.negativeCount ?? 0;
+    final int positiveCount = discussionRoom?.positive_count ?? 0;
+    final int neutralCount = discussionRoom?.neutral_count ?? 0;
+    final int negativeCount = discussionRoom?.negative_count ?? 0;
     final int totalCount = positiveCount + neutralCount + negativeCount;
 
     // 반응 바 있는지 여부 확인
