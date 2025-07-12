@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
@@ -12,12 +14,14 @@ class DiscussionHistoryTabComponent extends StatefulWidget {
   State<DiscussionHistoryTabComponent> createState() => _DiscussionHistoryTabComponentState();
 }
 
-class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComponent> {
+class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComponent> 
+    with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<DiscussionRoom> _recentClosedRooms = [];
   List<DiscussionRoom> _hallOfFameRooms = [];
   bool _isLoading = true;
   String? _error;
+  late AnimationController _floatingController;
   
   // 통계 데이터
   int _totalDiscussions = 2847;
@@ -35,8 +39,18 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
   @override
   void initState() {
     super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true);
     _loadRecentClosedRooms();
     _loadHallOfFameData();
+  }
+
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadRecentClosedRooms() async {
@@ -131,6 +145,8 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     }
@@ -150,42 +166,176 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _loadRecentClosedRooms();
-        await _loadHallOfFameData();
-      },
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 토론방 상세검색 섹션
-            _buildSectionTitle('토론방 상세검색', '🔍', Color(0xFF6B73FF)),
-            SizedBox(height: 16.h),
-            _buildDetailedSearchSection(),
-            
-            SizedBox(height: 24.h),
-            
-            // 랜덤 토론방 탐색 섹션
-            _buildSectionTitle('랜덤 토론방 탐색', '🎲', Color(0xFFFF8A65)),
-            SizedBox(height: 16.h),
-            _buildRandomExplorationSection(),
-            
-            SizedBox(height: 24.h),
-            
-            // 명예의 전당 섹션
-            _buildSectionTitle('명예의 전당', '🏆', Color(0xFFFFB74D)),
-            SizedBox(height: 16.h),
-            _buildHallOfFameSection(),
-          ],
+    return Stack(
+      children: [
+        // 배경 그라데이션 애니메이션
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: Duration(seconds: 3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Color(0xFF0F172A),
+                        Color(0xFF1E293B),
+                        Color(0xFF0F172A),
+                      ]
+                    : [
+                        Color(0xFFF8FAFC),
+                        Color(0xFFE0E7FF),
+                        Color(0xFFF8FAFC),
+                      ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
         ),
+        
+        // 플로팅 오브 효과
+        ...List.generate(2, (index) => 
+          Positioned(
+            top: 150.h + (index * 300.h),
+            left: index.isEven ? -30.w : null,
+            right: index.isOdd ? -30.w : null,
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    index.isEven ? _floatingController.value * 20 : -_floatingController.value * 20,
+                    _floatingController.value * 15,
+                  ),
+                  child: Container(
+                    width: 100.w,
+                    height: 100.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.2),
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        
+        RefreshIndicator(
+          onRefresh: () async {
+            await _loadRecentClosedRooms();
+            await _loadHallOfFameData();
+          },
+          child: CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              // 히어로 섹션
+              SliverToBoxAdapter(
+                child: _buildHistoryDiscussionHeader(),
+              ),
+              
+              // 토론방 상세검색 섹션
+              SliverToBoxAdapter(
+                child: _buildDetailedSearchSection(),
+              ),
+              
+              // 랜덤 토론방 탐색 섹션
+              SliverToBoxAdapter(
+                child: _buildRandomExplorationSection(),
+              ),
+              
+              // 명예의 전당 섹션
+              SliverToBoxAdapter(
+                child: _buildHallOfFameSection(),
+              ),
+              
+              // 하단 여백
+              SliverToBoxAdapter(
+                child: SizedBox(height: 100.h),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // HISTORY 토론방 히어로 섹션 - TimeMachine 스타일
+  Widget _buildHistoryDiscussionHeader() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 구조화된 타이틀
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFFB74D), Color(0xFFFF9800)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFFB74D).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.history_rounded,
+                  color: Colors.white,
+                  size: 28.sp,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "토론 히스토리",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "과거 토론을 탐색하고 명예의 전당을 둘러보세요",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ).animate()
+              .fadeIn(duration: 600.ms)
+              .slideX(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+        ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, String? emoji, Color color) {
+  Widget _buildOriginalSectionTitle(String title, String? emoji, Color color) {
     return Row(
       children: [
         Container(

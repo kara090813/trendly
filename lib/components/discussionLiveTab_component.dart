@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
@@ -12,13 +14,15 @@ class DiscussionLiveTabComponent extends StatefulWidget {
   State<DiscussionLiveTabComponent> createState() => _DiscussionLiveTabComponentState();
 }
 
-class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent> {
+class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent> 
+    with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<DiscussionRoom> _allLiveRooms = [];
   List<DiscussionRoom> _filteredRooms = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String? _error;
+  late AnimationController _floatingController;
   
   // 검색 및 필터링
   String _searchQuery = '';
@@ -39,6 +43,10 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   @override
   void initState() {
     super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true);
     _loadLiveRooms();
     _scrollController.addListener(_onScroll);
     
@@ -53,6 +61,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
 
   @override
   void dispose() {
+    _floatingController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -230,6 +239,8 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     }
@@ -249,197 +260,59 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadLiveRooms,
-      child: Column(
-        children: [
-          // 라이브 인디케이터와 카테고리
-          _buildLiveHeader(),
-          
-          // 카테고리 선택
-          _buildCategorySelector(),
-          
-          // 정렬 옵션
-          _buildSortingOptions(),
-          
-          // 리스트
-          Expanded(
-            child: ListView.separated(
-              controller: _scrollController,
-              padding: EdgeInsets.zero,
-              itemCount: _filteredRooms.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (context, index) => Container(
-                height: 0.5,
-                color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
-              ),
-              itemBuilder: (context, index) {
-                if (index == _filteredRooms.length) {
-                  return Container(
-                    padding: EdgeInsets.all(16.h),
-                    alignment: Alignment.center,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.0,
-                    ),
-                  );
-                }
-                return _buildCommunityListItem(_filteredRooms[index]);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLiveHeader() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+    return Stack(
+      children: [
+        // 배경 그라데이션 애니메이션
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: Duration(seconds: 3),
             decoration: BoxDecoration(
-              color: Color(0xFF4CAF50),
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFF4CAF50).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6.w,
-                  height: 6.w,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                Text(
-                  _selectedCategory == '전체' 
-                    ? 'LIVE ${_getCategoryCount('전체')}'
-                    : 'LIVE ${_getCategoryCount(_selectedCategory)}/${_getCategoryCount('전체')}',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Spacer(),
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: BoxDecoration(
-              color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Icon(
-              Icons.search,
-              color: AppTheme.getTextColor(context),
-              size: 20.sp,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategorySelector() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.filter_list, size: 16.sp, color: AppTheme.getTextColor(context)),
-              SizedBox(width: 8.w),
-              Text(
-                '카테고리',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.getTextColor(context),
-                ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Color(0xFF0F172A),
+                        Color(0xFF1E293B),
+                        Color(0xFF0F172A),
+                      ]
+                    : [
+                        Color(0xFFF8FAFC),
+                        Color(0xFFE0E7FF),
+                        Color(0xFFF8FAFC),
+                      ],
+                stops: [0.0, 0.5, 1.0],
               ),
-            ],
+            ),
           ),
-          SizedBox(height: 12.h),
-          Container(
-            height: 40.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                final isSelected = category == _selectedCategory;
-                
-                return Container(
-                  margin: EdgeInsets.only(right: 8.w),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _onCategoryChanged(category),
-                      borderRadius: BorderRadius.circular(20.r),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          color: isSelected 
-                            ? _getCategoryColor(category).withOpacity(0.15)
-                            : (AppTheme.isDark(context) ? Colors.grey[850] : Colors.grey[100]),
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
-                            color: isSelected 
-                              ? _getCategoryColor(category)
-                              : (AppTheme.isDark(context) ? Colors.grey[700]! : Colors.grey[300]!),
-                            width: isSelected ? 1.5 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (category != '전체')
-                              Container(
-                                width: 6.w,
-                                height: 6.w,
-                                margin: EdgeInsets.only(right: 6.w),
-                                decoration: BoxDecoration(
-                                  color: _getCategoryColor(category),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            Text(
-                              category,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                color: isSelected 
-                                  ? _getCategoryColor(category)
-                                  : AppTheme.getTextColor(context),
-                              ),
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '${_getCategoryCount(category)}',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w500,
-                                color: isSelected 
-                                  ? _getCategoryColor(category).withOpacity(0.8)
-                                  : Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
+        ),
+        
+        // 플로팅 오브 효과
+        ...List.generate(2, (index) => 
+          Positioned(
+            top: 150.h + (index * 300.h),
+            left: index.isEven ? -30.w : null,
+            right: index.isOdd ? -30.w : null,
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    index.isEven ? _floatingController.value * 20 : -_floatingController.value * 20,
+                    _floatingController.value * 15,
+                  ),
+                  child: Container(
+                    width: 100.w,
+                    height: 100.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.2),
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.0),
+                        ],
                       ),
                     ),
                   ),
@@ -447,188 +320,142 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildSortingOptions() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Row(
-        children: [
-          Icon(Icons.sort, size: 16.sp, color: AppTheme.getTextColor(context)),
-          SizedBox(width: 8.w),
-          Text(
-            '정렬',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.getTextColor(context),
-            ),
-          ),
-          Spacer(),
-          PopupMenuButton<String>(
-            onSelected: _onSortChanged,
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                value: 'new',
-                child: Text('최신순'),
+        ),
+        
+        RefreshIndicator(
+          onRefresh: _loadLiveRooms,
+          child: CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            controller: _scrollController,
+            slivers: [
+              // 히어로 섹션
+              SliverToBoxAdapter(
+                child: _buildLiveDiscussionHeader(),
               ),
-              PopupMenuItem<String>(
-                value: 'pop',
-                child: Text('인기순'),
+              
+              // 실시간 토론방 리스트 섹션 (카테고리 통합)
+              SliverToBoxAdapter(
+                child: _buildCompactLiveRoomsList(),
+              ),
+              
+              // 하단 여백
+              SliverToBoxAdapter(
+                child: SizedBox(height: 100.h),
               ),
             ],
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    _sortOption == 'new' ? '최신순' : '인기순',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.getTextColor(context),
-                    ),
-                  ),
-                  SizedBox(width: 4.w),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16.sp,
-                    color: AppTheme.getTextColor(context),
-                  ),
-                ],
-              ),
-            ),
           ),
+        ),
+      ],
+    );
+  }
+
+  // LIVE 토론방 히어로 섹션 - TimeMachine 스타일
+  Widget _buildLiveDiscussionHeader() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 구조화된 타이틀
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF059669)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF10B981).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.radio_button_checked,
+                  color: Colors.white,
+                  size: 28.sp,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "LIVE 토론방",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "실시간 진행 중인 토론에 참여하세요",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // LIVE 인디케이터
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF10B981).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6.w,
+                      height: 6.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'LIVE ${_getCategoryCount('전체')}',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ).animate()
+              .fadeIn(duration: 600.ms)
+              .slideX(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
         ],
       ),
     );
   }
 
-  Widget _buildCommunityListItem(DiscussionRoom room) {
-    final category = room.category;
-    final categoryColor = _getCategoryColor(category);
-    final totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.push('/discussion/${room.id}'),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          child: Row(
-            children: [
-              // 카테고리 세로바
-              Container(
-                width: 3.w,
-                height: 35.h, // 약 60% 높이
-                decoration: BoxDecoration(
-                  color: categoryColor.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(1.5.r),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              
-              // 메인 컨텐츠
-              Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 제목
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              room.keyword,
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.getTextColor(context),
-                                height: 1.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12.sp,
-                            color: Colors.grey[400],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 6.h),
-                      // 메타 정보
-                      Row(
-                        children: [
-                          // 카테고리 태그
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                            decoration: BoxDecoration(
-                              color: categoryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            child: Text(
-                              category,
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: categoryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          // 작성 시간
-                          Text(
-                            _getTimeAgo(room.created_at),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                          Spacer(),
-                          // 통계 정보
-                          Row(
-                            children: [
-                              Icon(Icons.chat_bubble_outline, size: 12.sp, color: Colors.grey[400]),
-                              SizedBox(width: 3.w),
-                              Text(
-                                '${room.comment_count ?? 0}',
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              SizedBox(width: 10.w),
-                              Icon(Icons.people_outline, size: 12.sp, color: Colors.grey[400]),
-                              SizedBox(width: 3.w),
-                              Text(
-                                '${totalReactions}',
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-  }
+
+
   
   String _getTimeAgo(DateTime? dateTime) {
     if (dateTime == null) return '';
@@ -646,4 +473,486 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       return '방금 전';
     }
   }
+
+  // 카테고리 선택 섹션 - TimeMachine 스타일
+
+  // 컴팩트 실시간 토론방 리스트 (게시물 스타일)
+  Widget _buildCompactLiveRoomsList() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 헤더와 카테고리 필터
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "실시간 토론방",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Spacer(),
+                    // 정렬 옵션
+                    PopupMenuButton<String>(
+                      onSelected: _onSortChanged,
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        PopupMenuItem<String>(
+                          value: 'new',
+                          child: Text('최신순'),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'pop',
+                          child: Text('인기순'),
+                        ),
+                      ],
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                        decoration: BoxDecoration(
+                          color: isDark ? Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(
+                            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.sort,
+                              size: 14.sp,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              _sortOption == 'new' ? '최신순' : '인기순',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              size: 16.sp,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "현재 진행 중인 토론에 참여하세요",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 200.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+          ),
+          
+          SizedBox(height: 20.h),
+          
+          // 카테고리 필터 (가로 스크롤)
+          Container(
+            height: 40.h,
+            margin: EdgeInsets.only(left: 24.w),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = category == _selectedCategory;
+                
+                return Container(
+                  margin: EdgeInsets.only(right: 8.w),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _onCategoryChanged(category),
+                      borderRadius: BorderRadius.circular(20.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          gradient: isSelected ? LinearGradient(
+                            colors: [Color(0xFF10B981), Color(0xFF059669)],
+                          ) : null,
+                          color: isSelected ? null : (isDark ? Color(0xFF1E293B) : Colors.white),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: isSelected 
+                              ? Colors.transparent
+                              : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                            width: 1,
+                          ),
+                          boxShadow: isSelected ? [
+                            BoxShadow(
+                              color: Color(0xFF10B981).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ] : [],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (category != '전체')
+                              Container(
+                                width: 6.w,
+                                height: 6.w,
+                                margin: EdgeInsets.only(right: 6.w),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.white : _getCategoryColor(category),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            Text(
+                              category,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                color: isSelected 
+                                  ? Colors.white
+                                  : AppTheme.getTextColor(context),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${_getCategoryCount(category)}',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected 
+                                  ? Colors.white.withOpacity(0.8)
+                                  : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 400.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
+          
+          SizedBox(height: 24.h),
+          
+          // 실시간 토론방 리스트
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 24.w),
+            decoration: BoxDecoration(
+              color: isDark ? Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: _filteredRooms.isEmpty
+                ? _buildEmptyState()
+                : Column(
+                    children: [
+                      ..._filteredRooms.asMap().entries.map((entry) {
+                        final int index = entry.key;
+                        final DiscussionRoom room = entry.value;
+                        final isLast = index == _filteredRooms.length - 1;
+                        return _buildCompactPostItem(room, index * 50, isLast);
+                      }),
+                      if (_isLoadingMore)
+                        Container(
+                          padding: EdgeInsets.all(16.w),
+                          child: SizedBox(
+                            width: 20.w,
+                            height: 20.w,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 600.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
+        ],
+      ),
+    );
+  }
+
+  // 완전 컴팩트한 한 줄 토론방 아이템
+  Widget _buildCompactPostItem(DiscussionRoom room, int delay, bool isLast) {
+    final bool isDark = AppTheme.isDark(context);
+    final String category = room.category ?? '기타';
+    final Color categoryColor = _getCategoryColor(category);
+    final int totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
+    
+    return Container(
+      decoration: BoxDecoration(
+        border: isLast ? null : Border(
+          bottom: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/discussion/${room.id}'),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+            child: Row(
+              children: [
+                // 카테고리 컬러 인디케이터
+                Container(
+                  width: 3.w,
+                  height: 24.h,
+                  decoration: BoxDecoration(
+                    color: categoryColor,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                
+                SizedBox(width: 12.w),
+                
+                // 카테고리 태그
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: categoryColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: categoryColor.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    category,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w700,
+                      color: categoryColor,
+                    ),
+                  ),
+                ),
+                
+                SizedBox(width: 12.w),
+                
+                // 토론방 제목 (메인 컨텐츠)
+                Expanded(
+                  child: Text(
+                    room.keyword,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.getTextColor(context),
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                
+                SizedBox(width: 12.w),
+                
+                // 통계 정보 (댓글 수)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 12.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    SizedBox(width: 3.w),
+                    Text(
+                      '${room.comment_count ?? 0}',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(width: 12.w),
+                
+                // 반응 수
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 12.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    SizedBox(width: 3.w),
+                    Text(
+                      '$totalReactions',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(width: 12.w),
+                
+                // LIVE 인디케이터
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 3.w,
+                        height: 3.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 3.w),
+                      Text(
+                        'LIVE',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(width: 8.w),
+                
+                // 시간
+                Text(
+                  _getTimeAgo(room.created_at),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                
+                SizedBox(width: 8.w),
+                
+                // 화살표 아이콘
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12.sp,
+                  color: isDark ? Colors.grey[500] : Colors.grey[400],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate(delay: Duration(milliseconds: delay))
+        .fadeIn(duration: 600.ms)
+        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+  }
+
+  // 빈 상태 위젯
+  Widget _buildEmptyState() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      padding: EdgeInsets.all(40.w),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF10B981).withOpacity(0.1), Color(0xFF059669).withOpacity(0.05)],
+              ),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Icon(
+              Icons.forum_outlined,
+              size: 48.sp,
+              color: Color(0xFF10B981),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            '진행 중인 토론방이 없습니다',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.getTextColor(context),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            '새로운 토론방이 시작되면 알려드릴게요',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
 }

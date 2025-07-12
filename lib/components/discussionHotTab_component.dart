@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
@@ -13,17 +15,29 @@ class DiscussionHotTabComponent extends StatefulWidget {
   State<DiscussionHotTabComponent> createState() => _DiscussionHotTabComponentState();
 }
 
-class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
+class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> 
+    with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   List<DiscussionRoom> _hotRooms = [];
   Map<int, String> _roomCategories = {};
   bool _isLoading = true;
   String? _error;
+  late AnimationController _floatingController;
 
   @override
   void initState() {
     super.initState();
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true);
     _loadHotRooms();
+  }
+
+  @override
+  void dispose() {
+    _floatingController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadHotRooms() async {
@@ -151,6 +165,8 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     if (_isLoading) {
       return Center(child: CircularProgressIndicator());
     }
@@ -170,19 +186,162 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadHotRooms,
-      child: CustomScrollView(
-        slivers: [
-          // 상위 3개 토론방 스와이프 섹션
-          SliverToBoxAdapter(
-            child: _buildTopThreeSection(),
+    return Stack(
+      children: [
+        // 배경 그라데이션 애니메이션
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: Duration(seconds: 3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Color(0xFF0F172A),
+                        Color(0xFF1E293B),
+                        Color(0xFF0F172A),
+                      ]
+                    : [
+                        Color(0xFFF8FAFC),
+                        Color(0xFFE0E7FF),
+                        Color(0xFFF8FAFC),
+                      ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
           ),
-          
-          // 4-10위 리스트 섹션
-          SliverToBoxAdapter(
-            child: _buildRemainingSection(),
+        ),
+        
+        // 플로팅 오브 효과
+        ...List.generate(2, (index) => 
+          Positioned(
+            top: 150.h + (index * 300.h),
+            left: index.isEven ? -30.w : null,
+            right: index.isOdd ? -30.w : null,
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    index.isEven ? _floatingController.value * 20 : -_floatingController.value * 20,
+                    _floatingController.value * 15,
+                  ),
+                  child: Container(
+                    width: 100.w,
+                    height: 100.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.2),
+                          (index == 0 ? Colors.blue : Colors.purple)
+                              .withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
+        ),
+        
+        RefreshIndicator(
+          onRefresh: _loadHotRooms,
+          child: CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              // 히어로 섹션
+              SliverToBoxAdapter(
+                child: _buildHotDiscussionHeader(),
+              ),
+              
+              // 상위 3개 토론방 스와이프 섹션
+              SliverToBoxAdapter(
+                child: _buildTopThreeSection(),
+              ),
+              
+              // 4-10위 리스트 섹션
+              SliverToBoxAdapter(
+                child: _buildRemainingSection(),
+              ),
+              
+              // 하단 여백
+              SliverToBoxAdapter(
+                child: SizedBox(height: 100.h),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // HOT 토론방 히어로 섹션 - TimeMachine 스타일
+  Widget _buildHotDiscussionHeader() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 구조화된 타이틀
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFF6B35).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.local_fire_department,
+                  color: Colors.white,
+                  size: 28.sp,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "HOT 토론방",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "실시간 인기 토론을 확인하세요",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ).animate()
+              .fadeIn(duration: 600.ms)
+              .slideX(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
         ],
       ),
     );
@@ -192,55 +351,67 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     if (_hotRooms.length < 3) return SizedBox.shrink();
     
     final topThree = _hotRooms.take(3).toList();
+    final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.all(20.w),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.local_fire_department, color: Color(0xFFFF6B35), size: 24.sp),
-              SizedBox(width: 8.w),
-              Text(
-                'HOT 토론방 TOP 3',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ),
-              Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFF6B35).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
+          // 모던 섹션 헤더
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Icon(
-                      Icons.swipe,
-                      size: 14.sp,
-                      color: Color(0xFFFF6B35),
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
                     ),
-                    SizedBox(width: 4.w),
+                    SizedBox(width: 12.w),
                     Text(
-                      '좌우 스와이프',
+                      "TOP 3 토론방",
                       style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF6B35),
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "실시간 최고 인기 토론",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 200.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
-          SizedBox(height: 16.h),
+          
+          SizedBox(height: 24.h),
+          
           Container(
-            height: 260.h,
+            height: 280.h,
             child: PageView.builder(
               controller: PageController(viewportFraction: 0.85),
               itemCount: topThree.length,
@@ -251,7 +422,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                 );
               },
             ),
-          ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 400.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
         ],
       ),
     );
@@ -572,45 +745,104 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     if (_hotRooms.length <= 3) return SizedBox.shrink();
     
     final remaining = _hotRooms.skip(3).toList();
+    final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20.w),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 4.w,
-                height: 20.h,
-                decoration: BoxDecoration(
-                  color: AppTheme.getTextColor(context),
-                  borderRadius: BorderRadius.circular(2.r),
+          // 모던 섹션 헤더
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 24.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "4-10위 랭킹",
+                      style: TextStyle(
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.getTextColor(context),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                '4-10위 HOT 토론방',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getTextColor(context),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: Text(
+                    "인기 상승 토론방",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ).animate()
+                .fadeIn(duration: 600.ms, delay: 600.ms)
+                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
-          SizedBox(height: 16.h),
-          ...remaining.asMap().entries.map((entry) {
-            final index = entry.key + 4; // 4등부터 시작
-            final room = entry.value;
-            return _buildCompactCard(room, index);
-          }).toList(),
+          
+          SizedBox(height: 24.h),
+          
+          // 리스트 컨테이너
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  ...remaining.asMap().entries.map((entry) {
+                    final index = entry.key + 4; // 4등부터 시작
+                    final room = entry.value;
+                    final isLast = entry.key == remaining.length - 1;
+                    return _buildCompactCard(room, index, isLast);
+                  }).toList(),
+                ],
+              ),
+            ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 800.ms)
+              .slideY(begin: 0.03, end: 0, duration: 600.ms),
         ],
       ),
     );
   }
 
-  Widget _buildCompactCard(DiscussionRoom room, int rank) {
+  Widget _buildCompactCard(DiscussionRoom room, int rank, bool isLast) {
     final isDark = AppTheme.isDark(context);
     final cardColor = isDark ? Color(0xFF232B38) : Colors.white;
     final darkerCardColor = isDark ? Color(0xFF232B38) : Colors.white;
@@ -619,26 +851,13 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final categoryColor = _getCategoryColor(category);
     
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        gradient: isDark ? LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [darkerCardColor, cardColor],
-        ) : null,
-        color: isDark ? null : Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: isDark ? Colors.grey.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
-            blurRadius: isDark ? 4 : 6,
-            offset: Offset(0, 2),
+        border: isLast ? null : Border(
+          bottom: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -646,7 +865,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
           onTap: () => context.push('/discussion/${room.id}'),
           borderRadius: BorderRadius.circular(12.r),
           child: Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Column(
               children: [
                 // 1번줄: 키워드명 ----- 랭크원
@@ -758,7 +977,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
           ),
         ),
       ),
-    );
+    ).animate(delay: Duration(milliseconds: isLast ? 0 : rank * 150))
+        .fadeIn(duration: 600.ms)
+        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
   Widget _buildCompactReactionBar(DiscussionRoom room) {
