@@ -9,6 +9,7 @@ class DiscussionRoom with _$DiscussionRoom {
   const factory DiscussionRoom({
     required int id,
     required String keyword,
+    required String category,
     @Default([]) List<int> keyword_id_list,
     @Default(false) bool is_closed,
     required DateTime created_at,

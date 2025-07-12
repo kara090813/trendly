@@ -53,42 +53,51 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
   Widget build(BuildContext context) {
     final bool isDark = AppTheme.isDark(context);
     
-    final metrics = [
+    final keywords = [
       {
-        'title': '종합 1위 키워드',
-        'value': widget.summaryData['topKeyword'] ?? '포켓몬 우유',
-        'subtitle': widget.summaryData['topKeywordStats'] ?? '15.2만 검색',
-        'icon': Icons.emoji_events_rounded,
-        'gradient': [Color(0xFFFFD700), Color(0xFFFFA500)],
-        'bgGradient': isDark 
-            ? [Color(0xFF1A1625), Color(0xFF2D1B3D)]
-            : [Color(0xFFFFF9E6), Color(0xFFFFF3D1)],
+        'rank': 1,
+        'keyword': widget.summaryData['keyword1'] ?? '포켓몬 우유',
+        'stats': widget.summaryData['keyword1Stats'] ?? '15.2만 검색',
         'countValue': 152000,
-        'suffix': '검색',
+        'category': '연예',
+        'gradient': isDark 
+            ? [Color(0xFFFFD700), Color(0xFFB8860B)]
+            : [Color(0xFFFFD700), Color(0xFFFFA500)],
+        'bgGradient': isDark 
+            ? [Color(0xFF2A2419), Color(0xFF3D3526)]
+            : [Color(0xFFFFFDF7), Color(0xFFFFF8E1)],
+        'rankColor': isDark ? Color(0xFFFFD700) : Color(0xFFB8860B),
+        'textColor': isDark ? Color(0xFFFFD700) : Color(0xFF8B6914),
       },
       {
-        'title': '최다 카테고리',
-        'value': widget.summaryData['topCategory'] ?? '연예',
-        'subtitle': widget.summaryData['topCategoryStats'] ?? '전체 40%',
-        'icon': Icons.category_rounded,
-        'gradient': [Color(0xFF11998E), Color(0xFF38EF7D)],
+        'rank': 2,
+        'keyword': widget.summaryData['keyword2'] ?? '갤럭시 S25',
+        'stats': widget.summaryData['keyword2Stats'] ?? '12.8만 검색',
+        'countValue': 128000,
+        'category': '기술',
+        'gradient': isDark 
+            ? [Color(0xFFC0C0C0), Color(0xFF8C8C8C)]
+            : [Color(0xFFC0C0C0), Color(0xFF9E9E9E)],
         'bgGradient': isDark 
-            ? [Color(0xFF0D2818), Color(0xFF1A3D2E)]
-            : [Color(0xFFE8FDF2), Color(0xFFE0F7E9)],
-        'countValue': 40,
-        'suffix': '%',
+            ? [Color(0xFF252525), Color(0xFF383838)]
+            : [Color(0xFFFAFAFA), Color(0xFFF0F0F0)],
+        'rankColor': isDark ? Color(0xFFC0C0C0) : Color(0xFF757575),
+        'textColor': isDark ? Color(0xFFC0C0C0) : Color(0xFF616161),
       },
       {
-        'title': '인기 토론방',
-        'value': widget.summaryData['topDiscussion'] ?? '갤럭시 S25',
-        'subtitle': _extractReactionCount(widget.summaryData['topDiscussionStats'] ?? '반응 3,291개'),
-        'icon': Icons.forum_rounded,
-        'gradient': [Color(0xFFF093FB), Color(0xFFF5576C)],
+        'rank': 3,
+        'keyword': widget.summaryData['keyword3'] ?? '방탄소년단',
+        'stats': widget.summaryData['keyword3Stats'] ?? '9.6만 검색',
+        'countValue': 96000,
+        'category': '연예',
+        'gradient': isDark 
+            ? [Color(0xFFCD7F32), Color(0xFFA0522D)]
+            : [Color(0xFFCD7F32), Color(0xFFB87333)],
         'bgGradient': isDark 
-            ? [Color(0xFF2A1B2E), Color(0xFF3D1A28)]
-            : [Color(0xFFFDF2F8), Color(0xFFFCE7F3)],
-        'countValue': 3291,
-        'suffix': '개',
+            ? [Color(0xFF2A1F18), Color(0xFF3D2E21)]
+            : [Color(0xFFFFF9F5), Color(0xFFFFF2E6)],
+        'rankColor': isDark ? Color(0xFFCD7F32) : Color(0xFF8B4513),
+        'textColor': isDark ? Color(0xFFCD7F32) : Color(0xFF8B4513),
       },
     ];
 
@@ -118,7 +127,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                     ),
                     SizedBox(width: 12.w),
                     Text(
-                      "주요 지표",
+                      "이날의 키워드 Top3",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -132,7 +141,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                 Padding(
                   padding: EdgeInsets.only(left: 16.w),
                   child: Text(
-                    "핵심 데이터 요약",
+                    "가장 화제가 된 키워드 순위",
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -146,48 +155,24 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                 .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
           ),
           
-          SizedBox(height: 24.h),
+          SizedBox(height: 28.h),
           
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Column(
-              children: [
-                // 첫 번째 행 - 1위 키워드 (전체 너비)
-                _buildMetricCard(
-                  context: context,
-                  metric: metrics[0],
-                  index: 0,
-                  isDark: isDark,
-                  isFullWidth: true,
-                ),
-                
-                SizedBox(height: 12.h),
-                
-                // 두 번째 행 - 나머지 2개 (50% 너비씩)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetricCard(
-                        context: context,
-                        metric: metrics[1],
-                        index: 1,
-                        isDark: isDark,
-                        isFullWidth: false,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: _buildMetricCard(
-                        context: context,
-                        metric: metrics[2],
-                        index: 2,
-                        isDark: isDark,
-                        isFullWidth: false,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              children: keywords.asMap().entries.map((entry) {
+                int index = entry.key;
+                Map<String, dynamic> keyword = entry.value;
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index < keywords.length - 1 ? 10.h : 0),
+                  child: _buildKeywordRankCard(
+                    context: context,
+                    keyword: keyword,
+                    index: index,
+                    isDark: isDark,
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -195,31 +180,29 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
     );
   }
 
-  Widget _buildMetricCard({
+  Widget _buildKeywordRankCard({
     required BuildContext context,
-    required Map<String, dynamic> metric,
+    required Map<String, dynamic> keyword,
     required int index,
     required bool isDark,
-    bool isFullWidth = true,
   }) {
     return GestureDetector(
       onTapDown: (_) => HapticFeedback.lightImpact(),
       onTap: () {
-        // 탭 시 확대 애니메이션
         HapticFeedback.mediumImpact();
       },
       child: AnimatedBuilder(
         animation: _countAnimation,
         builder: (context, child) {
           return Container(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: List<Color>.from(metric['bgGradient']),
+                colors: List<Color>.from(keyword['bgGradient']),
               ),
-              borderRadius: BorderRadius.circular(24.r),
+              borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
                 color: isDark 
                     ? Colors.white.withOpacity(0.1)
@@ -230,232 +213,145 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                 BoxShadow(
                   color: isDark
                       ? Colors.black.withOpacity(0.3)
-                      : (metric['gradient'][0] as Color).withOpacity(0.1),
-                  blurRadius: 20,
+                      : (keyword['gradient'][0] as Color).withOpacity(0.15),
+                  blurRadius: 16,
                   spreadRadius: 0,
-                  offset: Offset(0, 8),
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
-      child: isFullWidth ? Row(
-        children: [
-          // 아이콘
-          Container(
-            padding: EdgeInsets.all(14.w),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: List<Color>.from(metric['gradient']),
-              ),
-              borderRadius: BorderRadius.circular(18.r),
-              boxShadow: [
-                BoxShadow(
-                  color: (metric['gradient'][0] as Color).withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 0,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              metric['icon'],
-              color: Colors.white,
-              size: 28.sp,
-            ),
-          ),
-          
-          SizedBox(width: 16.w),
-          
-          // 텍스트 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                Text(
-                  metric['title'] ?? '',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                
-                SizedBox(height: 6.h),
-                
-                Text(
-                  metric['value'] ?? '',
-                  style: TextStyle(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.getTextColor(context),
-                    height: 1.2,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                
-                SizedBox(height: 8.h),
-                
+                // 순위 배지
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  width: 48.w,
+                  height: 48.w,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: List<Color>.from(metric['gradient']),
+                      colors: List<Color>.from(keyword['gradient']),
                     ),
-                    borderRadius: BorderRadius.circular(20.r),
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (keyword['gradient'][0] as Color).withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 0,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Center(
+                    child: Text(
+                      '${keyword['rank']}',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                SizedBox(width: 16.w),
+                
+                // 컨텐츠 영역
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (metric['countValue'] != null) ...[
-                        Text(
-                          _formatNumber(
-                            (metric['countValue'] * _countAnimation.value).round()
-                          ),
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                      // 카테고리 배지
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                        decoration: BoxDecoration(
+                          color: (keyword['rankColor'] as Color).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: (keyword['rankColor'] as Color).withOpacity(0.3),
+                            width: 1,
                           ),
                         ),
-                        if (metric['suffix'] != null)
+                        child: Text(
+                          keyword['category'] ?? '기타',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: keyword['textColor'],
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: 6.h),
+                      
+                      // 키워드 제목
+                      Text(
+                        keyword['keyword'] ?? '',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.getTextColor(context),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      
+                      SizedBox(height: 6.h),
+                      
+                      // 통계 정보
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.trending_up_rounded,
+                            size: 14.sp,
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          ),
+                          SizedBox(width: 4.w),
                           Text(
-                            metric['suffix'],
+                            _formatNumber(
+                              (keyword['countValue'] * _countAnimation.value).round()
+                            ),
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w700,
+                              color: keyword['textColor'],
                             ),
                           ),
-                      ] else
-                        Text(
-                          metric['subtitle'] ?? '',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                          Text(
+                            ' 검색',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ) : Column(
-        children: [
-          // 아이콘
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: List<Color>.from(metric['gradient']),
-              ),
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [
-                BoxShadow(
-                  color: (metric['gradient'][0] as Color).withOpacity(0.4),
-                  blurRadius: 10,
-                  spreadRadius: 0,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Icon(
-              metric['icon'],
-              color: Colors.white,
-              size: 24.sp,
-            ),
-          ),
-          
-          SizedBox(height: 12.h),
-          
-          // 텍스트 정보
-          Column(
-            children: [
-              Text(
-                metric['title'] ?? '',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              SizedBox(height: 6.h),
-              
-              Text(
-                metric['value'] ?? '',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.getTextColor(context),
-                  height: 1.2,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-              
-              SizedBox(height: 8.h),
-              
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: List<Color>.from(metric['gradient']),
+                
+                // 오른쪽 장식 요소
+                Container(
+                  padding: EdgeInsets.all(6.w),
+                  decoration: BoxDecoration(
+                    color: (keyword['rankColor'] as Color).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
-                  borderRadius: BorderRadius.circular(16.r),
+                  child: Icon(
+                    Icons.keyboard_arrow_right_rounded,
+                    size: 18.sp,
+                    color: keyword['textColor'],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (metric['countValue'] != null) ...[
-                      Text(
-                        _formatNumber(
-                          (metric['countValue'] * _countAnimation.value).round()
-                        ),
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (metric['suffix'] != null)
-                        Text(
-                          metric['suffix'],
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                    ] else
-                      Text(
-                        metric['subtitle'] ?? '',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
           );
         },
       ),
-    ).animate(delay: Duration(milliseconds: 100 * index + 500))
-        .fadeIn(duration: 600.ms)
-        .slideX(begin: 0.2, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
-        .scale(begin: Offset(0.9, 0.9), end: Offset(1, 1), duration: 600.ms)
-        .shimmer(duration: 2000.ms, delay: 1200.ms);
+    ).animate(delay: Duration(milliseconds: 150 * index + 500))
+        .fadeIn(duration: 700.ms)
+        .slideX(begin: 0.3, end: 0, duration: 700.ms, curve: Curves.easeOutCubic)
+        .scale(begin: Offset(0.95, 0.95), end: Offset(1, 1), duration: 700.ms);
   }
   
   String _formatNumber(int number) {
@@ -469,13 +365,4 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
     return number.toString();
   }
 
-  String _extractReactionCount(String stats) {
-    List<String> parts = stats.split(' • ');
-    for (String part in parts) {
-      if (part.contains('반응')) {
-        return part.trim();
-      }
-    }
-    return stats;
-  }
 }

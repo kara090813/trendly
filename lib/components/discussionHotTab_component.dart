@@ -33,30 +33,15 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     });
 
     try {
-      // 활성화된 토론방 중 인기순 상위 10개 가져오기
-      final activeRooms = await _apiService.getActiveDiscussionRooms();
-      
-      // 인기순 정렬 (댓글 + 반응 수 기준)
-      activeRooms.sort((a, b) {
-        final aTotal = (a.comment_count ?? 0) + 
-                       (a.positive_count ?? 0) + 
-                       (a.neutral_count ?? 0) + 
-                       (a.negative_count ?? 0);
-        final bTotal = (b.comment_count ?? 0) + 
-                       (b.positive_count ?? 0) + 
-                       (b.neutral_count ?? 0) + 
-                       (b.negative_count ?? 0);
-        return bTotal.compareTo(aTotal);
-      });
-
-      final topRooms = activeRooms.take(10).toList();
+      // 인기 토론방 10개 가져오기
+      final hotRooms = await _apiService.getHotDiscussionRooms();
       
       // 카테고리 정보 로드
-      await _loadCategoriesForRooms(topRooms);
+      await _loadCategoriesForRooms(hotRooms);
 
       if (mounted) {
         setState(() {
-          _hotRooms = topRooms;
+          _hotRooms = hotRooms;
           _isLoading = false;
         });
       }
@@ -111,17 +96,37 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     return _roomCategories[room.id] ?? '기타';
   }
 
-  String _getTestSummary(String keyword) {
-    final summaries = [
-      "사용자들 사이에서 다양한 의견이 오가고 있는 중입니다",
-      "찬반 논의가 활발히 진행되고 있어요",
-      "많은 관심을 받으며 열띤 토론이 벌어지고 있습니다",
-      "의견이 분분한 가운데 건설적인 대화가 이어지고 있어요",
-      "다각도로 분석하며 심도깊은 토론이 진행중입니다",
-      "사회적 관심사로 떠오르며 활발한 의견 교환이 이루어지고 있어요",
-      "전문가와 일반인들의 다양한 시각이 공유되고 있습니다",
-    ];
-    return summaries[keyword.hashCode % summaries.length];
+  String _getRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inMinutes < 1) {
+      return '방금 전';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}분 전';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}시간 전';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}일 전';
+    } else if (difference.inDays < 30) {
+      return '${(difference.inDays / 7).floor()}주 전';
+    } else if (difference.inDays < 365) {
+      return '${(difference.inDays / 30).floor()}개월 전';
+    } else {
+      return '${(difference.inDays / 365).floor()}년 전';
+    }
+  }
+  
+  int _getUniqueParticipants(DiscussionRoom room) {
+    // 댓글 수와 반응 수를 기반으로 참여자 수 추정
+    // 실제로는 백엔드에서 고유 사용자 수를 제공해야 함
+    final comments = room.comment_count ?? 0;
+    final reactions = _getTotalReactions(room);
+    
+    // 대략적인 추정: 댓글 작성자 + 반응만 한 사용자 (중복 고려)
+    // 댓글 작성자의 70%가 반응도 했다고 가정
+    final estimatedParticipants = comments + (reactions * 0.3).round();
+    return estimatedParticipants > 0 ? estimatedParticipants : 0;
   }
 
   Color _getCategoryColor(String category) {
@@ -138,17 +143,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
   }
 
   int _getTotalReactions(DiscussionRoom room) {
-    var positive = room.positive_count ?? 0;
-    var neutral = room.neutral_count ?? 0;
-    var negative = room.negative_count ?? 0;
-    
-    // 실제 데이터가 없으면 테스트 데이터 사용
-    if (positive == 0 && neutral == 0 && negative == 0) {
-      positive = 45 + (room.id % 30);
-      neutral = 20 + (room.id % 15);
-      negative = 10 + (room.id % 20);
-    }
-    
+    final positive = room.positive_count ?? 0;
+    final neutral = room.neutral_count ?? 0;
+    final negative = room.negative_count ?? 0;
     return positive + neutral + negative;
   }
 
@@ -384,7 +381,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                           SizedBox(width: 8.w),
                           Expanded(
                             child: Text(
-                              '아직 토론이 활발하지 않아요. 첫 번째 의견을 남겨보세요!',
+                              room.comment_summary != null && room.comment_summary!.isNotEmpty 
+                                ? room.comment_summary!
+                                : '아직 토론이 활발하지 않아요. 첫 번째 의견을 남겨보세요!',
                               style: TextStyle(
                                 color: textColor.withOpacity(0.8),
                                 fontSize: 12.sp,
@@ -411,10 +410,10 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                         SizedBox(width: 16.w),
                         Icon(Icons.group, size: 14.sp, color: textColor.withOpacity(0.6)),
                         SizedBox(width: 4.w),
-                        Text('1', 
+                        Text('${_getUniqueParticipants(room)}', 
                           style: TextStyle(fontSize: 12.sp, color: textColor.withOpacity(0.6))),
                         Spacer(),
-                        Text('7시간 전', 
+                        Text(_getRelativeTime(room.updated_at ?? room.created_at), 
                           style: TextStyle(fontSize: 12.sp, color: textColor.withOpacity(0.6))),
                       ],
                     ),
@@ -431,27 +430,31 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final isDark = AppTheme.isDark(context);
     final textColor = isDark ? Colors.white : Colors.black;
     
-    // 테스트 데이터 사용 (실제 데이터가 0인 경우)
-    var positive = room.positive_count ?? 0;
-    var neutral = room.neutral_count ?? 0;
-    var negative = room.negative_count ?? 0;
-    
-    // 실제 데이터가 없으면 테스트 데이터 사용
-    if (positive == 0 && neutral == 0 && negative == 0) {
-      positive = 35; // 기본값
-      neutral = 30;   
-      negative = 35; 
-    }
-    
+    final positive = room.positive_count ?? 0;
+    final neutral = room.neutral_count ?? 0;
+    final negative = room.negative_count ?? 0;
     final total = positive + neutral + negative;
     
     if (total == 0) {
-      return Container(
-        height: 8.h,
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(4.r),
-        ),
+      return Column(
+        children: [
+          Text(
+            '아직 참여자가 없어요',
+            style: TextStyle(
+              color: textColor.withOpacity(0.5),
+              fontSize: 11.sp,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            height: 8.h,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[800] : Colors.grey[300],
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+          ),
+        ],
       );
     }
     
@@ -612,6 +615,8 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final cardColor = isDark ? Color(0xFF232B38) : Colors.white;
     final darkerCardColor = isDark ? Color(0xFF232B38) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
+    final category = room.category;
+    final categoryColor = _getCategoryColor(category);
     
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -689,7 +694,32 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 8.h),
+                // 카테고리 태그
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: categoryColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: categoryColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        category,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: categoryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
                 // 2번줄: 프로그레스바
                 _buildCompactReactionBar(room),
                 SizedBox(height: 12.h),
@@ -715,7 +745,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
                     ),
                     Spacer(),
                     Text(
-                      '17분 전',
+                      _getRelativeTime(room.updated_at ?? room.created_at),
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: textColor.withOpacity(0.5),
@@ -735,25 +765,16 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent> {
     final isDark = AppTheme.isDark(context);
     final textColor = isDark ? Colors.white : Colors.black;
     
-    // 테스트 데이터 사용 (실제 데이터가 0인 경우)
-    var positive = room.positive_count ?? 0;
-    var neutral = room.neutral_count ?? 0;
-    var negative = room.negative_count ?? 0;
-    
-    // 실제 데이터가 없으면 테스트 데이터 사용
-    if (positive == 0 && neutral == 0 && negative == 0) {
-      positive = 16 + (room.id % 20);
-      neutral = 27 + (room.id % 15);
-      negative = 55 + (room.id % 10);
-    }
-    
+    final positive = room.positive_count ?? 0;
+    final neutral = room.neutral_count ?? 0;
+    final negative = room.negative_count ?? 0;
     final total = positive + neutral + negative;
     
     if (total == 0) {
       return Container(
         height: 6.h,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: isDark ? Colors.grey[700] : Colors.grey[300],
           borderRadius: BorderRadius.circular(3.r),
         ),
       );

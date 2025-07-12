@@ -163,31 +163,22 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           children: [
             // 토론방 상세검색 섹션
             _buildSectionTitle('토론방 상세검색', '🔍', Color(0xFF6B73FF)),
-            SizedBox(height: 12.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: _buildDetailedSearchSection(),
-            ),
+            SizedBox(height: 16.h),
+            _buildDetailedSearchSection(),
             
             SizedBox(height: 24.h),
             
             // 랜덤 토론방 탐색 섹션
             _buildSectionTitle('랜덤 토론방 탐색', '🎲', Color(0xFFFF8A65)),
-            SizedBox(height: 12.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: _buildRandomExplorationSection(),
-            ),
+            SizedBox(height: 16.h),
+            _buildRandomExplorationSection(),
             
             SizedBox(height: 24.h),
             
             // 명예의 전당 섹션
             _buildSectionTitle('명예의 전당', '🏆', Color(0xFFFFB74D)),
-            SizedBox(height: 12.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: _buildHallOfFameSection(),
-            ),
+            SizedBox(height: 16.h),
+            _buildHallOfFameSection(),
           ],
         ),
       ),
@@ -229,21 +220,17 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     final isDark = AppTheme.isDark(context);
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF232B38) : Colors.white,
+        color: isDark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
-          color: isDark 
-            ? Colors.grey.withOpacity(0.3)
-            : Colors.grey.withOpacity(0.4),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.4),
-            blurRadius: isDark ? 4 : 6,
-            offset: Offset(0, 2),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -251,23 +238,21 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         children: [
           // 헤더 영역
           Container(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: isDark 
-                ? Color(0xFF6B73FF).withOpacity(0.12)
-                : Color(0xFF6B73FF).withOpacity(0.2),
+              color: Color(0xFF6B73FF).withOpacity(0.1),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 48.w,
-                  height: 48.w,
+                  width: 44.w,
+                  height: 44.w,
                   decoration: BoxDecoration(
                     color: Color(0xFF6B73FF),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  child: Icon(Icons.search_outlined, color: Colors.white, size: 24.sp),
+                  child: Icon(Icons.search_outlined, color: Colors.white, size: 22.sp),
                 ),
                 SizedBox(width: 16.w),
                 Expanded(
@@ -277,16 +262,16 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       Text(
                         '토론방 검색',
                         style: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.getTextColor(context),
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 2.h),
                       Text(
                         '키워드, 날짜, 카테고리별 검색',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           color: AppTheme.getTextColor(context).withOpacity(0.6),
                         ),
                       ),
@@ -299,50 +284,37 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           
           // 콘텐츠 영역
           Padding(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(20.w),
             child: Column(
               children: [
                 // 실시간 통계
                 Container(
-                  padding: EdgeInsets.all(20.w),
+                  padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: isDark 
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.white,
+                    color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(
-                      color: isDark 
-                        ? Colors.grey.withOpacity(0.3)
-                        : Colors.grey.withOpacity(0.3),
+                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
                       width: 1,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark 
-                          ? Colors.black.withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: Row(
                     children: [
                       _buildCompactStat('전체', _totalDiscussions.toString(), Color(0xFF6B73FF)),
-                      Container(width: 1.w, height: 40.h, color: isDark ? Colors.grey.withOpacity(0.3) : Colors.grey.withOpacity(0.3)),
+                      Container(width: 1.w, height: 30.h, color: isDark ? Colors.grey.withOpacity(0.3) : Colors.grey.withOpacity(0.3)),
                       _buildCompactStat('오늘', _todayCreated.toString(), Color(0xFF00BFA5)),
-                      Container(width: 1.w, height: 40.h, color: isDark ? Colors.grey.withOpacity(0.3) : Colors.grey.withOpacity(0.3)),
+                      Container(width: 1.w, height: 30.h, color: isDark ? Colors.grey.withOpacity(0.3) : Colors.grey.withOpacity(0.3)),
                       _buildCompactStat('활성', _activeDiscussions.toString(), Color(0xFFFF5722)),
                     ],
                   ),
                 ),
                 
-                SizedBox(height: 20.h),
+                SizedBox(height: 16.h),
                 
                 // 검색 버튼
                 SizedBox(
                   width: double.infinity,
-                  height: 56.h,
+                  height: 48.h,
                   child: ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -353,19 +325,20 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       backgroundColor: Color(0xFF6B73FF),
                       foregroundColor: Colors.white,
                       elevation: 0,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search, size: 20.sp),
+                        Icon(Icons.search, size: 18.sp),
                         SizedBox(width: 8.w),
                         Text(
                           '고급 검색하기',
                           style: TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -493,21 +466,17 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     final isDark = AppTheme.isDark(context);
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF232B38) : Colors.white,
+        color: isDark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
-          color: isDark 
-            ? Colors.grey.withOpacity(0.3)
-            : Colors.grey.withOpacity(0.4),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.4),
-            blurRadius: isDark ? 4 : 6,
-            offset: Offset(0, 2),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -515,23 +484,21 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         children: [
           // 헤더 영역
           Container(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: isDark 
-                ? Color(0xFFFF8A65).withOpacity(0.12)
-                : Color(0xFFFF8A65).withOpacity(0.2),
+              color: Color(0xFFFF8A65).withOpacity(0.1),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 48.w,
-                  height: 48.w,
+                  width: 44.w,
+                  height: 44.w,
                   decoration: BoxDecoration(
                     color: Color(0xFFFF8A65),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  child: Icon(Icons.explore_outlined, color: Colors.white, size: 24.sp),
+                  child: Icon(Icons.explore_outlined, color: Colors.white, size: 22.sp),
                 ),
                 SizedBox(width: 16.w),
                 Expanded(
@@ -541,16 +508,16 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       Text(
                         '랜덤 탐색',
                         style: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.getTextColor(context),
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 2.h),
                       Text(
                         '새로운 토론을 발견해보세요',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           color: AppTheme.getTextColor(context).withOpacity(0.6),
                         ),
                       ),
@@ -563,32 +530,19 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           
           // 콘텐츠 영역
           Padding(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(20.w),
             child: Column(
               children: [
                 // 오늘의 추천
                 Container(
-                  padding: EdgeInsets.all(20.w),
+                  padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: isDark 
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.white,
+                    color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(
-                      color: isDark 
-                        ? Colors.grey.withOpacity(0.3)
-                        : Colors.grey.withOpacity(0.3),
+                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
                       width: 1,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark 
-                          ? Colors.black.withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -598,7 +552,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                           Container(
                             padding: EdgeInsets.all(6.w),
                             decoration: BoxDecoration(
-                              color: Color(0xFFFF8A65).withOpacity(0.1),
+                              color: Color(0xFFFF8A65).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Icon(Icons.star_outline, color: Color(0xFFFF8A65), size: 16.sp),
@@ -635,31 +589,32 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   ),
                 ),
                 
-                SizedBox(height: 20.h),
+                SizedBox(height: 16.h),
                 
                 // 랜덤 탐색 버튼
                 SizedBox(
                   width: double.infinity,
-                  height: 56.h,
+                  height: 48.h,
                   child: ElevatedButton(
                     onPressed: _goToRandomRoom,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFFF8A65),
                       foregroundColor: Colors.white,
                       elevation: 0,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.shuffle, size: 20.sp),
+                        Icon(Icons.shuffle, size: 18.sp),
                         SizedBox(width: 8.w),
                         Text(
                           '랜덤 탐색하기',
                           style: TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -679,21 +634,17 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     final isDark = AppTheme.isDark(context);
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF232B38) : Colors.white,
+        color: isDark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
-          color: isDark 
-            ? Colors.grey.withOpacity(0.3)
-            : Colors.grey.withOpacity(0.4),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.4),
-            blurRadius: isDark ? 4 : 6,
-            offset: Offset(0, 2),
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -701,23 +652,21 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         children: [
           // 헤더 영역
           Container(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: isDark 
-                ? Color(0xFFFFB74D).withOpacity(0.12)
-                : Color(0xFFFFB74D).withOpacity(0.2),
+              color: Color(0xFFFFB74D).withOpacity(0.1),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 48.w,
-                  height: 48.w,
+                  width: 44.w,
+                  height: 44.w,
                   decoration: BoxDecoration(
                     color: Color(0xFFFFB74D),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  child: Icon(Icons.emoji_events_outlined, color: Colors.white, size: 24.sp),
+                  child: Icon(Icons.emoji_events_outlined, color: Colors.white, size: 22.sp),
                 ),
                 SizedBox(width: 16.w),
                 Expanded(
@@ -727,16 +676,16 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       Text(
                         '명예의 전당',
                         style: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.getTextColor(context),
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 2.h),
                       Text(
                         '전설적인 토론들을 살펴보세요',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           color: AppTheme.getTextColor(context).withOpacity(0.6),
                         ),
                       ),
@@ -749,7 +698,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           
           // 콘텐츠 영역
           Padding(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.all(20.w),
             child: Column(
               children: [
                 // 카테고리 목록
@@ -760,7 +709,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   Color(0xFFE91E63),
                   'popular',
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 12.h),
                 _buildHallOfFameCategory(
                   '가장 치열',
                   '댓글이 가장 많았던 토론',
@@ -768,7 +717,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   Color(0xFFFF5722),
                   'intense',
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 12.h),
                 _buildHallOfFameCategory(
                   '최장 지속',
                   '가장 오래 계속된 토론',
@@ -1737,36 +1686,23 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: isDark 
-            ? Colors.black.withOpacity(0.2)
-            : Colors.white,
+          color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isDark 
-              ? color.withOpacity(0.25)
-              : color.withOpacity(0.15),
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark 
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.3),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 40.w,
-              height: 40.w,
+              width: 36.w,
+              height: 36.w,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12.r),
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10.r),
               ),
-              child: Icon(icon, color: color, size: 20.sp),
+              child: Icon(icon, color: color, size: 18.sp),
             ),
             SizedBox(width: 16.w),
             Expanded(
@@ -1794,9 +1730,9 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              size: 16.sp,
+              size: 14.sp,
               color: isDark 
-                ? Colors.white.withOpacity(0.6)
+                ? Colors.white.withOpacity(0.5)
                 : Colors.black.withOpacity(0.4),
             ),
           ],

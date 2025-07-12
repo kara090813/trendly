@@ -158,10 +158,119 @@ class ApiService {
   }
 
   /// 활성화된 토론방 목록 가져오기 (is_closed가 False인 토론방)
-  /// GET /discussion/active/
-  Future<List<DiscussionRoom>> getActiveDiscussionRooms() async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
+  /// GET /discussion/active?sort=[new|pop]&page=N&category=all
+  Future<List<DiscussionRoom>> getActiveDiscussionRooms({
+    String? sort, // 'new' or 'pop', null for default
+    int page = 1,
+    String category = 'all',
+  }) async {
+    final Map<String, String> queryParams = {
+      'page': page.toString(),
+      'category': category,
+    };
+    
+    if (sort != null) {
+      queryParams['sort'] = sort;
+    }
+    
+    final String url = Uri.parse('$_baseUrl/discussion/active')
+        .replace(queryParameters: queryParams)
+        .toString();
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((json) => DiscussionRoom.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load active discussion rooms: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// 활성화된 토론방의 카테고리 목록 가져오기
+  /// GET /discussion/category/
+  Future<List<String>> getDiscussionCategories() async {
+    final String url = '$_baseUrl/discussion/category/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.cast<String>();
+      } else {
+        throw Exception('Failed to load discussion categories: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// 토론방 개수 가져오기
+  /// GET /discussion/count?isActive=[true|false]&category=all
+  Future<int> getDiscussionCount({
+    bool isActive = true,
+    String category = 'all',
+  }) async {
+    final Map<String, String> queryParams = {
+      'isActive': isActive.toString(),
+      'category': category,
+    };
+    
+    final String url = Uri.parse('$_baseUrl/discussion/count')
+        .replace(queryParameters: queryParams)
+        .toString();
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody) as int;
+      } else {
+        throw Exception('Failed to load discussion count: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// 인기 토론방 목록 가져오기 (active 상태인 토론방 10개)
+  /// GET /discussion/hot/
+  Future<List<DiscussionRoom>> getHotDiscussionRooms() async {
+    final String url = '$_baseUrl/discussion/hot/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((json) => DiscussionRoom.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load hot discussion rooms: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 전체 토론방 목록 가져오기
@@ -243,8 +352,26 @@ class ApiService {
   /// 특정 댓글의 서브댓글 가져오기
   /// GET /discussion/subcomment/<int:parent_comment_id>/[new/pop]/
   Future<List<Comment>> getSubComments(int parentCommentId, {bool isPopular = false}) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
+    final String url = isPopular 
+        ? '$_baseUrl/discussion/subcomment/$parentCommentId/pop'
+        : '$_baseUrl/discussion/subcomment/$parentCommentId/new';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((json) => Comment.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load sub comments: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 댓글 작성하기
@@ -337,22 +464,74 @@ class ApiService {
   /// 특정 댓글 ID로 댓글 정보 가져오기
   /// GET /comment/<int:comment_id>/
   Future<Comment> getCommentById(int commentId) async {
-    final String url = '$_baseUrl';
-    return Future.error('Not implemented');
+    final String url = '$_baseUrl/comment/$commentId/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return Comment.fromJson(data);
+      } else {
+        throw Exception('Failed to load comment: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 댓글 추천 +1
   /// POST /comment/<int:comment_id>/like/
   Future<bool> likeComment(int commentId, {bool isCancel = false}) async {
-    final String url = '$_baseUrl';
-    return Future.value(false);
+    final String url = '$_baseUrl/comment/$commentId/like/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'is_cancel': isCancel,
+        }),
+      );
+      
+      if (response.statusCode == 202) {
+        return true;
+      } else if (response.statusCode == 400) {
+        return false;
+      } else {
+        throw Exception('Failed to like comment: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 댓글 비추천 +1
   /// POST /comment/<int:comment_id>/dislike/
   Future<bool> dislikeComment(int commentId, {bool isCancel = false}) async {
-    final String url = '$_baseUrl';
-    return Future.value(false);
+    final String url = '$_baseUrl/comment/$commentId/dislike/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'is_cancel': isCancel,
+        }),
+      );
+      
+      if (response.statusCode == 202) {
+        return true;
+      } else {
+        throw Exception('Failed to dislike comment: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 관심 키워드 저장 (로컬 저장소 활용)

@@ -10,6 +10,7 @@ _$DiscussionRoomImpl _$$DiscussionRoomImplFromJson(Map<String, dynamic> json) =>
     _$DiscussionRoomImpl(
       id: (json['id'] as num).toInt(),
       keyword: json['keyword'] as String,
+      category: json['category'] as String,
       keyword_id_list: (json['keyword_id_list'] as List<dynamic>?)
               ?.map((e) => (e as num).toInt())
               .toList() ??
@@ -39,6 +40,7 @@ Map<String, dynamic> _$$DiscussionRoomImplToJson(
     <String, dynamic>{
       'id': instance.id,
       'keyword': instance.keyword,
+      'category': instance.category,
       'keyword_id_list': instance.keyword_id_list,
       'is_closed': instance.is_closed,
       'created_at': instance.created_at.toIso8601String(),

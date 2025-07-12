@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE9E9EC),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: Column(
         children: [
           // 메인 컨텐츠 영역

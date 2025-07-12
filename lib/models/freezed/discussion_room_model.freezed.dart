@@ -22,6 +22,7 @@ DiscussionRoom _$DiscussionRoomFromJson(Map<String, dynamic> json) {
 mixin _$DiscussionRoom {
   int get id => throw _privateConstructorUsedError;
   String get keyword => throw _privateConstructorUsedError;
+  String get category => throw _privateConstructorUsedError;
   List<int> get keyword_id_list => throw _privateConstructorUsedError;
   bool get is_closed => throw _privateConstructorUsedError;
   DateTime get created_at => throw _privateConstructorUsedError;
@@ -54,6 +55,7 @@ abstract class $DiscussionRoomCopyWith<$Res> {
   $Res call(
       {int id,
       String keyword,
+      String category,
       List<int> keyword_id_list,
       bool is_closed,
       DateTime created_at,
@@ -84,6 +86,7 @@ class _$DiscussionRoomCopyWithImpl<$Res, $Val extends DiscussionRoom>
   $Res call({
     Object? id = null,
     Object? keyword = null,
+    Object? category = null,
     Object? keyword_id_list = null,
     Object? is_closed = null,
     Object? created_at = null,
@@ -104,6 +107,10 @@ class _$DiscussionRoomCopyWithImpl<$Res, $Val extends DiscussionRoom>
       keyword: null == keyword
           ? _value.keyword
           : keyword // ignore: cast_nullable_to_non_nullable
+              as String,
+      category: null == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
               as String,
       keyword_id_list: null == keyword_id_list
           ? _value.keyword_id_list
@@ -164,6 +171,7 @@ abstract class _$$DiscussionRoomImplCopyWith<$Res>
   $Res call(
       {int id,
       String keyword,
+      String category,
       List<int> keyword_id_list,
       bool is_closed,
       DateTime created_at,
@@ -192,6 +200,7 @@ class __$$DiscussionRoomImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? keyword = null,
+    Object? category = null,
     Object? keyword_id_list = null,
     Object? is_closed = null,
     Object? created_at = null,
@@ -212,6 +221,10 @@ class __$$DiscussionRoomImplCopyWithImpl<$Res>
       keyword: null == keyword
           ? _value.keyword
           : keyword // ignore: cast_nullable_to_non_nullable
+              as String,
+      category: null == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
               as String,
       keyword_id_list: null == keyword_id_list
           ? _value._keyword_id_list
@@ -267,6 +280,7 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
   const _$DiscussionRoomImpl(
       {required this.id,
       required this.keyword,
+      required this.category,
       final List<int> keyword_id_list = const [],
       this.is_closed = false,
       required this.created_at,
@@ -288,6 +302,8 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
   final int id;
   @override
   final String keyword;
+  @override
+  final String category;
   final List<int> _keyword_id_list;
   @override
   @JsonKey()
@@ -331,7 +347,7 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
 
   @override
   String toString() {
-    return 'DiscussionRoom(id: $id, keyword: $keyword, keyword_id_list: $keyword_id_list, is_closed: $is_closed, created_at: $created_at, updated_at: $updated_at, closed_at: $closed_at, comment_count: $comment_count, comment_summary: $comment_summary, positive_count: $positive_count, neutral_count: $neutral_count, negative_count: $negative_count, sentiment_snapshot: $sentiment_snapshot)';
+    return 'DiscussionRoom(id: $id, keyword: $keyword, category: $category, keyword_id_list: $keyword_id_list, is_closed: $is_closed, created_at: $created_at, updated_at: $updated_at, closed_at: $closed_at, comment_count: $comment_count, comment_summary: $comment_summary, positive_count: $positive_count, neutral_count: $neutral_count, negative_count: $negative_count, sentiment_snapshot: $sentiment_snapshot)';
   }
 
   @override
@@ -341,6 +357,8 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
             other is _$DiscussionRoomImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.keyword, keyword) || other.keyword == keyword) &&
+            (identical(other.category, category) ||
+                other.category == category) &&
             const DeepCollectionEquality()
                 .equals(other._keyword_id_list, _keyword_id_list) &&
             (identical(other.is_closed, is_closed) ||
@@ -371,6 +389,7 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
       runtimeType,
       id,
       keyword,
+      category,
       const DeepCollectionEquality().hash(_keyword_id_list),
       is_closed,
       created_at,
@@ -404,6 +423,7 @@ abstract class _DiscussionRoom implements DiscussionRoom {
   const factory _DiscussionRoom(
       {required final int id,
       required final String keyword,
+      required final String category,
       final List<int> keyword_id_list,
       final bool is_closed,
       required final DateTime created_at,
@@ -423,6 +443,8 @@ abstract class _DiscussionRoom implements DiscussionRoom {
   int get id;
   @override
   String get keyword;
+  @override
+  String get category;
   @override
   List<int> get keyword_id_list;
   @override

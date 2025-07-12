@@ -16,7 +16,6 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   final ApiService _apiService = ApiService();
   List<DiscussionRoom> _allLiveRooms = [];
   List<DiscussionRoom> _filteredRooms = [];
-  Map<int, String> _roomCategories = {};
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String? _error;
@@ -26,12 +25,16 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   String _selectedCategory = '전체';
   final TextEditingController _searchController = TextEditingController();
   List<String> _categories = ['전체'];
+  Map<String, int> _categoryCounts = {}; // 카테고리별 카운트 저장
   
   // 페이징 관련
-  int _currentPage = 1;
-  final int _pageSize = 10;
+  int _currentPage = 1; // API가 0부터 시작
+  final int _pageSize = 20; // API가 20개씩 반환
   bool _hasMoreData = true;
   final ScrollController _scrollController = ScrollController();
+  
+  // 정렬 옵션
+  String _sortOption = 'new'; // 'new' or 'pop'
 
   @override
   void initState() {
@@ -44,7 +47,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
-      _applyFilters();
+      // TODO: 검색 기능 구현시 서버 API 호출
     });
   }
 
@@ -56,8 +59,11 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   }
 
   void _onScroll() {
-    // 실시간 탭에서는 모든 데이터를 한번에 로드하므로 무한 스크롤 불필요
-    // 필요시 여기에 추가 로직 구현
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && _hasMoreData) {
+        _loadMoreRooms();
+      }
+    }
   }
 
   Future<void> _loadLiveRooms() async {
@@ -66,33 +72,46 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       _error = null;
       _currentPage = 1;
       _hasMoreData = true;
+      _allLiveRooms = [];
+      _filteredRooms = [];
     });
 
     try {
-      // 활성화된 토론방 모두 가져오기
-      final activeRooms = await _apiService.getActiveDiscussionRooms();
+      // 병렬로 카테고리 목록, 전체 카운트, 첫 페이지 데이터 로드
+      final results = await Future.wait([
+        _apiService.getDiscussionCategories(),
+        _apiService.getDiscussionCount(isActive: true, category: 'all'), // 전체 카운트 (category='all')
+        _apiService.getActiveDiscussionRooms(
+          sort: _sortOption,
+          page: _currentPage,
+          category: _selectedCategory == '전체' ? 'all' : _selectedCategory,
+        ),
+      ]);
       
-      // 카테고리 정보 로드
-      await _loadCategoriesForRooms(activeRooms);
+      final categories = results[0] as List<String>;
+      final totalCount = results[1] as int;
+      final activeRooms = results[2] as List<DiscussionRoom>;
       
-      // 카테고리 목록 추출
-      final categorySet = <String>{};
-      for (var room in activeRooms) {
-        final category = _roomCategories[room.id] ?? '기타';
-        categorySet.add(category);
-      }
+      // API가 20개를 반환하므로, 반환된 개수가 20개 미만이면 더 이상 데이터가 없음
+      _hasMoreData = activeRooms.length == _pageSize;
       
-      // 전체를 맨 앞에 배치하고 나머지는 정렬
-      final sortedCategories = categorySet.toList()..sort();
+      // 카테고리 목록 설정
+      final sortedCategories = categories..sort();
       final finalCategories = ['전체', ...sortedCategories];
+      
+      // 전체 카운트를 먼저 저장
+      _categoryCounts['전체'] = totalCount;
+      
+      // 나머지 카테고리별 카운트 로드 (병렬 처리)
+      await _loadCategoryCounts(finalCategories);
 
       if (mounted) {
         setState(() {
-          _allLiveRooms = activeRooms;
           _categories = finalCategories;
+          _allLiveRooms = activeRooms;
+          _filteredRooms = activeRooms;
           _isLoading = false;
         });
-        _applyFilters();
       }
     } catch (e) {
       if (mounted) {
@@ -103,77 +122,82 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       }
     }
   }
-
-  void _applyFilters() {
-    List<DiscussionRoom> filtered = List.from(_allLiveRooms);
+  
+  Future<void> _loadCategoryCounts(List<String> categories) async {
+    final Map<String, int> counts = Map.from(_categoryCounts); // 기존 카운트 복사 (전체 카운트 포함)
     
-    // 카테고리 필터
-    if (_selectedCategory != '전체') {
-      filtered = filtered.where((room) {
-        final category = _roomCategories[room.id] ?? '기타';
-        return category == _selectedCategory;
-      }).toList();
+    // 병렬로 모든 카테고리의 카운트 로드 (전체는 이미 로드했으므로 제외)
+    final futures = <Future<void>>[];
+    
+    for (var category in categories) {
+      if (category != '전체') { // 전체는 이미 로드했으므로 스킵
+        futures.add(
+          _apiService.getDiscussionCount(isActive: true, category: category).then((count) {
+            counts[category] = count;
+          }),
+        );
+      }
     }
     
-    // 검색 필터
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((room) {
-        return room.keyword.toLowerCase().contains(_searchQuery);
-      }).toList();
+    await Future.wait(futures);
+    
+    if (mounted) {
+      setState(() {
+        _categoryCounts = counts;
+      });
     }
+  }
+  
+  Future<void> _loadMoreRooms() async {
+    if (!_hasMoreData || _isLoadingMore) return;
     
     setState(() {
-      _filteredRooms = filtered;
+      _isLoadingMore = true;
     });
+    
+    try {
+      _currentPage++;
+      final moreRooms = await _apiService.getActiveDiscussionRooms(
+        sort: _sortOption,
+        page: _currentPage,
+        category: _selectedCategory == '전체' ? 'all' : _selectedCategory,
+      );
+      
+      // API가 20개를 반환하므로, 반환된 개수가 20개 미만이면 더 이상 데이터가 없음
+      _hasMoreData = moreRooms.length == _pageSize;
+      
+      if (mounted) {
+        setState(() {
+          _allLiveRooms.addAll(moreRooms);
+          _filteredRooms.addAll(moreRooms);
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+          _currentPage--; // 실패시 페이지 번호 복구
+        });
+      }
+    }
   }
+
 
   void _onCategoryChanged(String category) {
     setState(() {
       _selectedCategory = category;
     });
-    _applyFilters();
+    _loadLiveRooms(); // 카테고리 변경시 새로 로드
+  }
+  
+  void _onSortChanged(String sort) {
+    setState(() {
+      _sortOption = sort;
+    });
+    _loadLiveRooms(); // 정렬 변경시 새로 로드
   }
 
-  Future<void> _loadCategoriesForRooms(List<DiscussionRoom> rooms) async {
-    final Map<int, int> roomToKeywordMap = {};
-    final List<int> keywordIds = [];
-
-    for (var room in rooms) {
-      if (room.keyword_id_list.isNotEmpty) {
-        final lastKeywordId = room.keyword_id_list.last;
-        roomToKeywordMap[room.id] = lastKeywordId;
-        keywordIds.add(lastKeywordId);
-      }
-    }
-
-    if (keywordIds.isEmpty) return;
-
-    try {
-      final keywords = await _apiService.getKeywordsByIds(keywordIds);
-
-      final Map<int, String> keywordCategories = {};
-      for (var keyword in keywords) {
-        keywordCategories[keyword.id] = keyword.category;
-      }
-
-      final Map<int, String> tempCategories = Map.from(_roomCategories);
-      roomToKeywordMap.forEach((roomId, keywordId) {
-        tempCategories[roomId] = keywordCategories[keywordId] ?? '기타';
-      });
-
-      if (mounted) {
-        setState(() {
-          _roomCategories = tempCategories;
-        });
-      }
-    } catch (e) {
-      print('카테고리 정보 일괄 로드 실패: $e');
-    }
-  }
-
-  String _getCategoryForRoom(DiscussionRoom room) {
-    return _roomCategories[room.id] ?? '기타';
-  }
 
   // 카테고리 색상 팔레트
   final List<Color> _categoryColors = [
@@ -200,11 +224,8 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   }
 
   int _getCategoryCount(String category) {
-    if (category == '전체') return _allLiveRooms.length;
-    return _allLiveRooms.where((room) {
-      final roomCategory = _roomCategories[room.id] ?? '기타';
-      return roomCategory == category;
-    }).length;
+    // API로부터 받은 카운트 사용, 없으면 0 반환
+    return _categoryCounts[category] ?? 0;
   }
 
   @override
@@ -246,12 +267,21 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
             child: ListView.separated(
               controller: _scrollController,
               padding: EdgeInsets.zero,
-              itemCount: _filteredRooms.length,
+              itemCount: _filteredRooms.length + (_isLoadingMore ? 1 : 0),
               separatorBuilder: (context, index) => Container(
                 height: 0.5,
                 color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[200],
               ),
               itemBuilder: (context, index) {
+                if (index == _filteredRooms.length) {
+                  return Container(
+                    padding: EdgeInsets.all(16.h),
+                    alignment: Alignment.center,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                    ),
+                  );
+                }
                 return _buildCommunityListItem(_filteredRooms[index]);
               },
             ),
@@ -293,8 +323,8 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 SizedBox(width: 6.w),
                 Text(
                   _selectedCategory == '전체' 
-                    ? 'LIVE ${_allLiveRooms.length}'
-                    : 'LIVE ${_filteredRooms.length}/${_allLiveRooms.length}',
+                    ? 'LIVE ${_getCategoryCount('전체')}'
+                    : 'LIVE ${_getCategoryCount(_selectedCategory)}/${_getCategoryCount('전체')}',
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
@@ -438,29 +468,42 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
             ),
           ),
           Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  '최신순',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
+          PopupMenuButton<String>(
+            onSelected: _onSortChanged,
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'new',
+                child: Text('최신순'),
+              ),
+              PopupMenuItem<String>(
+                value: 'pop',
+                child: Text('인기순'),
+              ),
+            ],
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    _sortOption == 'new' ? '최신순' : '인기순',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.getTextColor(context),
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16.sp,
                     color: AppTheme.getTextColor(context),
                   ),
-                ),
-                SizedBox(width: 4.w),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 16.sp,
-                  color: AppTheme.getTextColor(context),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -469,7 +512,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   }
 
   Widget _buildCommunityListItem(DiscussionRoom room) {
-    final category = _getCategoryForRoom(room);
+    final category = room.category;
     final categoryColor = _getCategoryColor(category);
     final totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
     
