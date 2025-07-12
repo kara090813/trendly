@@ -5,60 +5,199 @@ import 'dart:ui';
 import 'dart:math' as math;
 import '../app_theme.dart';
 
-class TimeMachineWordCloudSection extends StatefulWidget {
+class TimeMachineWordCloudSection extends StatelessWidget {
   final Map<String, Color> categoryColors;
   final String? wordCloudImagePath;
+  final List<String>? keywords; // 동적 키워드 리스트
 
   const TimeMachineWordCloudSection({
     Key? key,
     required this.categoryColors,
     this.wordCloudImagePath,
+    this.keywords,
   }) : super(key: key);
 
-  @override
-  State<TimeMachineWordCloudSection> createState() => _TimeMachineWordCloudSectionState();
-}
-
-class _TimeMachineWordCloudSectionState extends State<TimeMachineWordCloudSection> 
-    with TickerProviderStateMixin {
-  late AnimationController _particleController;
-  late AnimationController _pulseController;
-  final List<WordParticle> _particles = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _particleController = AnimationController(
-      duration: Duration(seconds: 8),
-      vsync: this,
-    )..repeat();
+  List<WordCloudItem> _generateDynamicLayout() {
+    // 기본 키워드 (없을 경우 사용)
+    final defaultKeywords = [
+      '포켓몬', '갤럭시', 'AI', '트렌드', '뉴스', '키워드', '게임', '스마트폰', '기술', '엔터테인먼트',
+      '스포츠', '경제', '정치', '문화', '음악', '영화', '드라마', '웹툰', '유튜브', '인스타그램',
+      '틱톡', '카카오톡', '넷플릭스', '디즈니', '아마존', '구글', '애플', '테슬라', '비트코인', '메타버스'
+    ];
     
-    _pulseController = AnimationController(
-      duration: Duration(milliseconds: 2000),
-      vsync: this,
-    )..repeat(reverse: true);
+    final keywordList = keywords ?? defaultKeywords;
+    final wordCount = keywordList.length;
     
-    _initializeParticles();
+    // 순위별 크기 계산 (1위가 가장 큼)
+    double _getRankBasedSize(int rank, int totalCount) {
+      if (rank <= 3) {
+        return 24.0 - (rank - 1) * 2; // 1위:24px, 2위:22px, 3위:20px
+      } else if (rank <= 10) {
+        return 18.0 - (rank - 4) * 1; // 4위:18px -> 10위:12px
+      } else {
+        final ratio = (rank - 11) / (totalCount - 11).clamp(1, double.infinity);
+        return 12.0 - (ratio * 4); // 11위부터 점점 작아져서 8px까지
+      }
+    }
+    
+    // 동적 위치 생성 (겹치지 않는 배치)
+    final items = <WordCloudItem>[];
+    final random = math.Random(DateTime.now().millisecondsSinceEpoch ~/ 1000); // 시간 기반 시드
+    final placedRects = <Rect>[];
+    
+    for (int i = 0; i < wordCount; i++) {
+      final rank = i + 1;
+      final fontSize = _getRankBasedSize(rank, wordCount);
+      final keyword = keywordList[i];
+      
+      // 텍스트 크기 추정
+      final estimatedWidth = keyword.length * fontSize * 0.6;
+      final estimatedHeight = fontSize * 1.2;
+      
+      // 겹치지 않는 위치 찾기
+      Offset? position = _findSafePosition(
+        estimatedWidth,
+        estimatedHeight,
+        placedRects,
+        random,
+        rank,
+        wordCount,
+      );
+      
+      if (position != null) {
+        final rect = Rect.fromLTWH(
+          position.dx - estimatedWidth / 2,
+          position.dy - estimatedHeight / 2,
+          estimatedWidth,
+          estimatedHeight,
+        );
+        placedRects.add(rect);
+        
+        items.add(WordCloudItem(
+          keyword,
+          position.dx,
+          position.dy,
+          fontSize,
+          rank,
+          color: categoryColors.values.elementAt(i % categoryColors.length),
+        ));
+      }
+    }
+    
+    return items;
   }
-
-  @override
-  void dispose() {
-    _particleController.dispose();
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  void _initializeParticles() {
-    final keywords = ['포켓몬', '갤럭시', 'AI', '트렌드', '뉴스', '키워드'];
-    for (int i = 0; i < keywords.length; i++) {
-      _particles.add(WordParticle(
-        text: keywords[i],
-        color: widget.categoryColors.values.elementAt(i % widget.categoryColors.length),
-        initialX: math.Random().nextDouble(),
-        initialY: math.Random().nextDouble(),
-        speed: 0.3 + math.Random().nextDouble() * 0.4,
-        size: 12 + math.Random().nextDouble() * 8,
-      ));
+  
+  Offset? _findSafePosition(
+    double width,
+    double height,
+    List<Rect> placedRects,
+    math.Random random,
+    int rank,
+    int totalCount,
+  ) {
+    const int maxAttempts = 100; // 시도 횟수 줄여서 더 빠르게 배치
+    
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+      double x = 0.5, y = 0.5; // 기본값 초기화
+      
+      // 랭킹별 배치 전략
+      if (rank <= 3) {
+        // 상위 3위 - 중앙 핵심 영역
+        x = 0.35 + random.nextDouble() * 0.3; // 35-65%
+        y = 0.25 + random.nextDouble() * 0.5; // 25-75%
+      } else if (rank <= 8) {
+        // 4-8위 - 중앙 확장 영역
+        x = 0.25 + random.nextDouble() * 0.5; // 25-75%
+        y = 0.2 + random.nextDouble() * 0.6; // 20-80%
+      } else if (rank <= 15) {
+        // 9-15위 - 중간 영역 (중앙 피하기)
+        if (random.nextBool()) {
+          // 좌우 영역
+          x = random.nextBool() ? 
+              0.05 + random.nextDouble() * 0.25 : // 5-30% (왼쪽)
+              0.7 + random.nextDouble() * 0.25;   // 70-95% (오른쪽)
+          y = 0.1 + random.nextDouble() * 0.8; // 10-90%
+        } else {
+          // 상하 영역
+          x = 0.1 + random.nextDouble() * 0.8; // 10-90%
+          y = random.nextBool() ?
+              0.05 + random.nextDouble() * 0.2 : // 5-25% (위)
+              0.75 + random.nextDouble() * 0.2;  // 75-95% (아래)
+        }
+      } else {
+        // 16위 이후 - 가장자리 영역
+        final side = random.nextInt(4);
+        switch (side) {
+          case 0: // 왼쪽
+            x = 0.05 + random.nextDouble() * 0.15; // 5-20%
+            y = 0.05 + random.nextDouble() * 0.9;  // 5-95%
+            break;
+          case 1: // 오른쪽
+            x = 0.8 + random.nextDouble() * 0.15;  // 80-95%
+            y = 0.05 + random.nextDouble() * 0.9;  // 5-95%
+            break;
+          case 2: // 위
+            x = 0.05 + random.nextDouble() * 0.9;  // 5-95%
+            y = 0.05 + random.nextDouble() * 0.15; // 5-20%
+            break;
+          case 3: // 아래
+            x = 0.05 + random.nextDouble() * 0.9;  // 5-95%
+            y = 0.8 + random.nextDouble() * 0.15;  // 80-95%
+            break;
+        }
+      }
+      
+      // 경계 보정
+      x = x.clamp(0.05, 0.95);
+      y = y.clamp(0.05, 0.95);
+      
+      final newRect = Rect.fromLTWH(
+        x - width / 2,
+        y - height / 2,
+        width,
+        height,
+      );
+      
+      // 경계 체크
+      if (newRect.left < 0.05 || newRect.right > 0.95 ||
+          newRect.top < 0.05 || newRect.bottom > 0.95) {
+        continue;
+      }
+      
+      // 겹침 체크 (상위 랭크는 더 엄격하게, 하위 랭크는 관대하게)
+      bool hasOverlap = false;
+      final overlapThreshold = rank <= 10 ? 0.01 : 0.005; // 상위 랭크는 더 큰 여백
+      
+      for (final placedRect in placedRects) {
+        if (newRect.overlaps(placedRect.inflate(overlapThreshold))) {
+          hasOverlap = true;
+          break;
+        }
+      }
+      
+      if (!hasOverlap) {
+        return Offset(x, y);
+      }
+    }
+    
+    // 실패 시 랭킹별 기본 위치 반환
+    if (rank <= 3) {
+      return Offset(0.5, 0.4); // 중앙
+    } else if (rank <= 8) {
+      return Offset(
+        0.3 + (rank - 4) * 0.1, // 30-70%로 분산
+        0.3 + random.nextDouble() * 0.4,
+      );
+    } else {
+      // 가장자리 배치
+      final side = (rank - 9) % 4;
+      switch (side) {
+        case 0: return Offset(0.1, 0.5);
+        case 1: return Offset(0.9, 0.5);
+        case 2: return Offset(0.5, 0.1);
+        case 3: return Offset(0.5, 0.9);
+        default: return Offset(0.5, 0.5);
+      }
     }
   }
 
@@ -177,54 +316,15 @@ class _TimeMachineWordCloudSectionState extends State<TimeMachineWordCloudSectio
                     ),
                   ),
                   
-                  // 애니메이션 파티클
-                  AnimatedBuilder(
-                    animation: _particleController,
-                    builder: (context, child) {
-                      return CustomPaint(
-                        painter: WordCloudPainter(
-                          particles: _particles,
-                          animationValue: _particleController.value,
-                          pulseValue: _pulseController.value,
-                          isDark: isDark,
-                        ),
-                        size: Size.infinite,
-                      );
-                    },
+                  // 동적 워드클라우드
+                  CustomPaint(
+                    painter: StaticWordCloudPainter(
+                      items: _generateDynamicLayout(),
+                      isDark: isDark,
+                    ),
+                    size: Size.infinite,
                   ),
                   
-                  // 중앙 AI 로고
-                  Center(
-                    child: AnimatedBuilder(
-                      animation: _pulseController,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: 1.0 + (_pulseController.value * 0.1),
-                          child: Container(
-                            padding: EdgeInsets.all(20.w),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0xFF3B82F6).withOpacity(0.4),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.auto_awesome_rounded,
-                              color: Colors.white,
-                              size: 32.sp,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                   
                   // 글래스 오버레이
                   Container(
@@ -302,7 +402,7 @@ class _TimeMachineWordCloudSectionState extends State<TimeMachineWordCloudSectio
                 Wrap(
                   spacing: 16.w,
                   runSpacing: 12.h,
-                  children: widget.categoryColors.entries.map((entry) {
+                  children: categoryColors.entries.map((entry) {
                     return Container(
                       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                       decoration: BoxDecoration(
@@ -456,61 +556,53 @@ class _TimeMachineWordCloudSectionState extends State<TimeMachineWordCloudSectio
   }
 }
 
-class WordParticle {
+class WordCloudItem {
   final String text;
-  final Color color;
-  final double initialX;
-  final double initialY;
-  final double speed;
+  final double x;
+  final double y;
   final double size;
+  final int rank;
+  Color? color;
 
-  WordParticle({
-    required this.text,
-    required this.color,
-    required this.initialX,
-    required this.initialY,
-    required this.speed,
-    required this.size,
-  });
+  WordCloudItem(this.text, this.x, this.y, this.size, this.rank, {this.color});
 }
 
-class WordCloudPainter extends CustomPainter {
-  final List<WordParticle> particles;
-  final double animationValue;
-  final double pulseValue;
+class StaticWordCloudPainter extends CustomPainter {
+  final List<WordCloudItem> items;
   final bool isDark;
 
-  WordCloudPainter({
-    required this.particles,
-    required this.animationValue,
-    required this.pulseValue,
+  StaticWordCloudPainter({
+    required this.items,
     required this.isDark,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < particles.length; i++) {
-      final particle = particles[i];
-      
-      // 원형 궤도 계산
-      final angle = (animationValue * math.pi * 2 * particle.speed) + (i * math.pi * 2 / particles.length);
-      final radius = (size.width * 0.25) + (math.sin(animationValue * math.pi * 2 + i) * 20);
-      
-      final x = size.width * 0.5 + math.cos(angle) * radius;
-      final y = size.height * 0.5 + math.sin(angle) * radius;
+    final margin = 20.0;
+    final safeWidth = size.width - (margin * 2);
+    final safeHeight = size.height - (margin * 2);
+    
+    // 랭킹 순으로 정렬 (하위 랭크부터 그려서 상위 랭크가 위에 오도록)
+    final sortedItems = List<WordCloudItem>.from(items);
+    sortedItems.sort((a, b) => b.rank.compareTo(a.rank)); // 내림차순 (높은 랭크부터)
+    
+    for (final item in sortedItems) {
+      // 위치 계산 (비율을 실제 픽셀로 변환)
+      final x = margin + (item.x * safeWidth);
+      final y = margin + (item.y * safeHeight);
       
       // 텍스트 스타일
       final textPainter = TextPainter(
         text: TextSpan(
-          text: particle.text,
+          text: item.text,
           style: TextStyle(
-            color: particle.color.withOpacity(0.7 + pulseValue * 0.3),
-            fontSize: particle.size + (pulseValue * 4),
-            fontWeight: FontWeight.w600,
+            color: item.color?.withOpacity(0.9) ?? Colors.blue.withOpacity(0.9),
+            fontSize: item.size,
+            fontWeight: FontWeight.w700,
             shadows: [
               Shadow(
-                color: particle.color.withOpacity(0.3),
-                blurRadius: 8,
+                color: item.color?.withOpacity(0.3) ?? Colors.blue.withOpacity(0.3),
+                blurRadius: 6,
                 offset: Offset(0, 2),
               ),
             ],
@@ -521,18 +613,20 @@ class WordCloudPainter extends CustomPainter {
       
       textPainter.layout();
       
-      // 텍스트 중심 맞추기
+      // 중앙 정렬
       final offset = Offset(
         x - textPainter.width / 2,
         y - textPainter.height / 2,
       );
       
-      // 글로우 효과
-      final glowPaint = Paint()
-        ..color = particle.color.withOpacity(0.2)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10);
-      
-      canvas.drawCircle(Offset(x, y), 15 + pulseValue * 5, glowPaint);
+      // 글로우 효과 (크기에 따라 조정)
+      if (item.size >= 18) {
+        final glowPaint = Paint()
+          ..color = item.color?.withOpacity(0.15) ?? Colors.blue.withOpacity(0.15)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, item.size * 0.5);
+        
+        canvas.drawCircle(Offset(x, y), item.size * 0.8, glowPaint);
+      }
       
       // 텍스트 그리기
       textPainter.paint(canvas, offset);
@@ -540,5 +634,5 @@ class WordCloudPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
