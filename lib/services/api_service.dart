@@ -8,6 +8,7 @@ import '../models/_models.dart';
 class ApiService {
   // 기본 API URL
   static const String _baseUrl = 'https://trendly.servehttp.com:10443/api';
+  // static const String _baseUrl = 'http://localhost:8000/api';
 
   // 싱글톤 패턴 구현
   static final ApiService _instance = ApiService._internal();

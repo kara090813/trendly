@@ -52,7 +52,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppTheme.isDark(context);
-    
+    print(widget.summaryData);
     final keywords = [
       {
         'rank': 1,

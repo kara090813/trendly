@@ -151,20 +151,10 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
                 .fadeIn(duration: 600.ms, delay: 200.ms)
                 .slideY(begin: 0.03, end: 0, duration: 600.ms),
             ),
-            
-            // 워드클라우드 섹션
-            SliverToBoxAdapter(
-              child: TimeMachineWordCloudSection(
-                categoryColors: categoryColors,
-                wordCloudImagePath: 'assets/img/items/word_cloud.png',
-              ).animate()
-                .fadeIn(duration: 600.ms, delay: 400.ms)
-                .slideY(begin: 0.03, end: 0, duration: 600.ms),
-            ),
-            
+
             // 하단 여백
             SliverToBoxAdapter(
-              child: SizedBox(height: 100.h),
+              child: SizedBox(height: 20.h),
             ),
           ],
         ),
@@ -346,7 +336,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
   Map<String, dynamic> _getDailySummaryData() {
     return {
       'topKeyword': '천국보다 아름다운',
-      'topKeywordStats': '15.2만 검색',
+      'topKeywordStats': '12회 등장 평균등수 3등',
       'topCategory': '연예',
       'topCategoryStats': '전체 40%',
       'topDiscussion': '갤럭시 S25',

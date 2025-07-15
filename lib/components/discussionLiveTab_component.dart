@@ -194,17 +194,55 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
 
 
   void _onCategoryChanged(String category) {
-    setState(() {
-      _selectedCategory = category;
-    });
-    _loadLiveRooms(); // 카테고리 변경시 새로 로드
+    if (_selectedCategory == category) return; // 같은 카테고리면 무시
+    
+    _selectedCategory = category;
+    _currentPage = 1;
+    _hasMoreData = true;
+    _isLoadingMore = false;
+    
+    // 필터 상태만 즉시 업데이트하고 데이터는 별도로 로드
+    setState(() {});
+    _loadFilteredRooms();
   }
   
   void _onSortChanged(String sort) {
-    setState(() {
-      _sortOption = sort;
-    });
-    _loadLiveRooms(); // 정렬 변경시 새로 로드
+    if (_sortOption == sort) return; // 같은 정렬이면 무시
+    
+    _sortOption = sort;
+    _currentPage = 1;
+    _hasMoreData = true;
+    _isLoadingMore = false;
+    
+    // 정렬 상태만 즉시 업데이트하고 데이터는 별도로 로드
+    setState(() {});
+    _loadFilteredRooms();
+  }
+
+  // 필터 변경시에만 토론방 데이터를 다시 로드
+  Future<void> _loadFilteredRooms() async {
+    try {
+      final rooms = await _apiService.getActiveDiscussionRooms(
+        sort: _sortOption,
+        page: _currentPage,
+        category: _selectedCategory == '전체' ? 'all' : _selectedCategory,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _allLiveRooms = rooms;
+          _filteredRooms = rooms;
+          _hasMoreData = rooms.length >= _pageSize;
+          _error = null; // 성공시 에러 초기화
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = '토론방 정보를 불러오는 중 오류가 발생했습니다: $e';
+        });
+      }
+    }
   }
 
 
@@ -333,9 +371,14 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 child: _buildLiveDiscussionHeader(),
               ),
               
-              // 실시간 토론방 리스트 섹션 (카테고리 통합)
+              // 필터 섹션
               SliverToBoxAdapter(
-                child: _buildCompactLiveRoomsList(),
+                child: _buildFixedFilterSection(),
+              ),
+              
+              // 토론방 리스트 섹션
+              SliverToBoxAdapter(
+                child: _buildOptimizedRoomsList(),
               ),
               
               // 하단 여백
@@ -474,116 +517,109 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
     }
   }
 
-  // 카테고리 선택 섹션 - TimeMachine 스타일
-
-  // 컴팩트 실시간 토론방 리스트 (게시물 스타일)
-  Widget _buildCompactLiveRoomsList() {
+  // 고정 필터 섹션 (카테고리 + 정렬)
+  Widget _buildFixedFilterSection() {
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더와 카테고리 필터
+          // 섹션 헤더
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 4.w,
-                      height: 24.h,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF10B981), Color(0xFF059669)],
-                        ),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
+                Container(
+                  width: 4.w,
+                  height: 24.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF10B981), Color(0xFF059669)],
                     ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      "실시간 토론방",
-                      style: TextStyle(
-                        fontSize: 28.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.getTextColor(context),
-                        letterSpacing: -0.5,
-                      ),
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  "실시간 토론방",
+                  style: TextStyle(
+                    fontSize: 28.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.getTextColor(context),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Spacer(),
+                // 정렬 옵션
+                PopupMenuButton<String>(
+                  onSelected: _onSortChanged,
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'new',
+                      child: Text('최신순'),
                     ),
-                    Spacer(),
-                    // 정렬 옵션
-                    PopupMenuButton<String>(
-                      onSelected: _onSortChanged,
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                        PopupMenuItem<String>(
-                          value: 'new',
-                          child: Text('최신순'),
-                        ),
-                        PopupMenuItem<String>(
-                          value: 'pop',
-                          child: Text('인기순'),
-                        ),
-                      ],
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                        decoration: BoxDecoration(
-                          color: isDark ? Color(0xFF1E293B) : Colors.white,
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(
-                            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.sort,
-                              size: 14.sp,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              _sortOption == 'new' ? '최신순' : '인기순',
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                            ),
-                            SizedBox(width: 4.w),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 16.sp,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          ],
-                        ),
-                      ),
+                    PopupMenuItem<String>(
+                      value: 'pop',
+                      child: Text('인기순'),
                     ),
                   ],
-                ),
-                SizedBox(height: 8.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 16.w),
-                  child: Text(
-                    "현재 진행 중인 토론에 참여하세요",
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: isDark ? Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.sort,
+                          size: 14.sp,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          _sortOption == 'new' ? '최신순' : '인기순',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 16.sp,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
-            ).animate()
-                .fadeIn(duration: 600.ms, delay: 200.ms)
-                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+            ),
+          ),
+          
+          SizedBox(height: 8.h),
+          
+          Padding(
+            padding: EdgeInsets.only(left: 40.w),
+            child: Text(
+              "현재 진행 중인 토론에 참여하세요",
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           
           SizedBox(height: 20.h),
@@ -670,61 +706,62 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 );
               },
             ),
-          ).animate()
-              .fadeIn(duration: 600.ms, delay: 400.ms)
-              .slideY(begin: 0.03, end: 0, duration: 600.ms),
-          
-          SizedBox(height: 24.h),
-          
-          // 실시간 토론방 리스트
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 24.w),
-            decoration: BoxDecoration(
-              color: isDark ? Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: _filteredRooms.isEmpty
-                ? _buildEmptyState()
-                : Column(
-                    children: [
-                      ..._filteredRooms.asMap().entries.map((entry) {
-                        final int index = entry.key;
-                        final DiscussionRoom room = entry.value;
-                        final isLast = index == _filteredRooms.length - 1;
-                        return _buildCompactPostItem(room, index * 50, isLast);
-                      }),
-                      if (_isLoadingMore)
-                        Container(
-                          padding: EdgeInsets.all(16.w),
-                          child: SizedBox(
-                            width: 20.w,
-                            height: 20.w,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-          ).animate()
-              .fadeIn(duration: 600.ms, delay: 600.ms)
-              .slideY(begin: 0.03, end: 0, duration: 600.ms),
+          ),
         ],
       ),
     );
   }
+
+  // 최적화된 토론방 리스트 (스크롤 가능하지만 데이터만 업데이트)
+  Widget _buildOptimizedRoomsList() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: isDark ? Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: _filteredRooms.isEmpty
+          ? _buildEmptyState()
+          : Column(
+              children: [
+                ..._filteredRooms.asMap().entries.map((entry) {
+                  final int index = entry.key;
+                  final DiscussionRoom room = entry.value;
+                  final isLast = index == _filteredRooms.length - 1;
+                  return _buildCompactPostItem(room, index * 50, isLast);
+                }),
+                if (_isLoadingMore)
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    child: SizedBox(
+                      width: 20.w,
+                      height: 20.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+    ).animate()
+        .fadeIn(duration: 600.ms, delay: 600.ms)
+        .slideY(begin: 0.03, end: 0, duration: 600.ms);
+  }
+
 
   // 완전 컴팩트한 한 줄 토론방 아이템
   Widget _buildCompactPostItem(DiscussionRoom room, int delay, bool isLast) {
@@ -747,7 +784,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
         child: InkWell(
           onTap: () => context.push('/discussion/${room.id}'),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Row(
               children: [
                 // 카테고리 컬러 인디케이터
@@ -847,51 +884,6 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 ),
                 
                 SizedBox(width: 12.w),
-                
-                // LIVE 인디케이터
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF10B981),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 3.w,
-                        height: 3.w,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      SizedBox(width: 3.w),
-                      Text(
-                        'LIVE',
-                        style: TextStyle(
-                          fontSize: 9.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                SizedBox(width: 8.w),
-                
-                // 시간
-                Text(
-                  _getTimeAgo(room.created_at),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: isDark ? Colors.grey[500] : Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                
-                SizedBox(width: 8.w),
                 
                 // 화살표 아이콘
                 Icon(
