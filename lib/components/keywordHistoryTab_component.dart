@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import '../app_theme.dart';
 import '../widgets/_widgets.dart';
+import '../services/api_service.dart';
+import '../models/_models.dart';
+import 'package:intl/intl.dart';
 
 class KeywordHistoryTabComponent extends StatefulWidget {
   const KeywordHistoryTabComponent({Key? key}) : super(key: key);
@@ -20,6 +23,13 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
   late AnimationController _floatingController;
   String _sortType = 'date'; // 정렬 타입: date(날짜순), rank(순위순)
   bool _sortAscending = false; // 정렬 방향: false(내림차순), true(오름차순)
+  
+  // API 관련 변수
+  final ApiService _apiService = ApiService();
+  List<Keyword> _keywordHistory = [];
+  bool _isLoading = false;
+  String _selectedKeyword = '포켓몬 우유'; // 기본 키워드
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,6 +38,9 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
       vsync: this,
       duration: Duration(seconds: 3),
     )..repeat(reverse: true);
+    
+    // 기본 키워드로 히스토리 로드
+    _loadKeywordHistory();
   }
 
   @override
@@ -36,121 +49,344 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
     super.dispose();
   }
 
-  // 키워드 히스토리 스냅샷 데이터 (같은 키워드의 다른 날짜별 기록)
-  final List<Map<String, dynamic>> _keywordSnapshots = [
-    {
-      'date': '2025.02.13',
-      'rank': 1,
-      'category': '연예',
-      'peakTime': '21:30',
-      'summary': '포켓몬빵 우유맛 출시로 SNS 화제',
-      'isWeekPeak': true, // 주간 최고 순위 여부
-    },
-    {
-      'date': '2025.02.10',
-      'rank': 3,
-      'category': '연예',
-      'peakTime': '14:20',
-      'summary': '포켓몬빵 재출시 소식으로 관심 급증',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2025.01.28',
-      'rank': 7,
-      'category': '연예',
-      'peakTime': '19:45',
-      'summary': '유튜버 먹방 영상으로 화제 재점화',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2025.01.15',
-      'rank': 2,
-      'category': '연예',
-      'peakTime': '16:10',
-      'summary': '연예인 SNS 인증샷으로 트렌드 확산',
-      'isWeekPeak': true,
-    },
-    {
-      'date': '2024.12.24',
-      'rank': 5,
-      'category': '연예',
-      'peakTime': '11:30',
-      'summary': '크리스마스 특집 상품 출시 발표',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2024.12.10',
-      'rank': 4,
-      'category': '연예',
-      'peakTime': '22:15',
-      'summary': '콜라보 상품 예약 판매 시작',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2024.11.28',
-      'rank': 6,
-      'category': '연예',
-      'peakTime': '18:00',
-      'summary': '포켓몬 애니메이션 콜라보 방영',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2024.11.15',
-      'rank': 1,
-      'category': '연예',
-      'peakTime': '20:30',
-      'summary': '한정판 굿즈 품절 대란으로 화제',
-      'isWeekPeak': true,
-    },
-    {
-      'date': '2024.11.28',
-      'rank': 6,
-      'category': '연예',
-      'peakTime': '18:00',
-      'summary': '포켓몬 애니메이션 콜라보 방영',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2024.11.15',
-      'rank': 1,
-      'category': '연예',
-      'peakTime': '20:30',
-      'summary': '한정판 굿즈 품절 대란으로 화제',
-      'isWeekPeak': true,
-    },
-    {
-      'date': '2024.11.28',
-      'rank': 6,
-      'category': '연예',
-      'peakTime': '18:00',
-      'summary': '포켓몬 애니메이션 콜라보 방영',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2024.11.15',
-      'rank': 1,
-      'category': '연예',
-      'peakTime': '20:30',
-      'summary': '한정판 굿즈 품절 대란으로 화제',
-      'isWeekPeak': true,
-    },
-    {
-      'date': '2024.11.28',
-      'rank': 6,
-      'category': '연예',
-      'peakTime': '18:00',
-      'summary': '포켓몬 애니메이션 콜라보 방영',
-      'isWeekPeak': false,
-    },
-    {
-      'date': '2024.11.15',
-      'rank': 1,
-      'category': '연예',
-      'peakTime': '20:30',
-      'summary': '한정판 굿즈 품절 대란으로 화제',
-      'isWeekPeak': true,
-    },
-  ];
+  /// 키워드 히스토리 로드
+  Future<void> _loadKeywordHistory() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final List<Keyword> history = await _apiService.getKeywordHistory(_selectedKeyword);
+      setState(() {
+        _keywordHistory = history;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// 키워드 히스토리에서 스냅샷 데이터 생성
+  List<Map<String, dynamic>> get _keywordSnapshots {
+    if (_keywordHistory.isEmpty) return [];
+    
+    return _keywordHistory.map((keyword) {
+      final dateFormatter = DateFormat('yyyy.MM.dd');
+      final timeFormatter = DateFormat('HH:mm');
+      
+      return {
+        'date': dateFormatter.format(keyword.created_at),
+        'rank': keyword.rank,
+        'peakTime': timeFormatter.format(keyword.created_at),
+        'isWeekPeak': _isWeekPeak(keyword), // 주간 최고 순위 여부
+        'keywordId': keyword.id,
+        'discussionRoomId': keyword.current_discussion_room,
+      };
+    }).toList();
+  }
+
+  /// 주간 최고 순위인지 확인
+  bool _isWeekPeak(Keyword keyword) {
+    final currentWeek = _getWeekNumber(keyword.created_at);
+    final sameWeekKeywords = _keywordHistory.where((k) => 
+      _getWeekNumber(k.created_at) == currentWeek
+    ).toList();
+    
+    if (sameWeekKeywords.isEmpty) return false;
+    
+    final bestRank = sameWeekKeywords.map((k) => k.rank).reduce((a, b) => a < b ? a : b);
+    return keyword.rank == bestRank;
+  }
+
+  /// 날짜로부터 주 번호 계산
+  int _getWeekNumber(DateTime date) {
+    final startOfYear = DateTime(date.year, 1, 1);
+    final daysSinceStart = date.difference(startOfYear).inDays;
+    return (daysSinceStart / 7).floor();
+  }
+
+  /// 기간별 그래프 데이터 생성
+  List<FlSpot> _generateGraphSpots() {
+    if (_keywordHistory.isEmpty) return [];
+
+    // Y축을 뒤집기 위한 함수 (실제 순위 1-10을 차트용 10-1로 변환)
+    double convertRank(double rank) => 11 - rank;
+
+    switch (_selectedTimePeriod) {
+      case '일간':
+        return _generateDailySpots(convertRank);
+      case '주간':
+        return _generateWeeklySpots(convertRank);
+      case '월간':
+        return _generateMonthlySpots(convertRank);
+      case '전체':
+        return _generateYearlySpots(convertRank);
+      default:
+        return [];
+    }
+  }
+
+  /// 일간 데이터 생성 (최근 7일)
+  List<FlSpot> _generateDailySpots(double Function(double) convertRank) {
+    final now = DateTime.now();
+    final Map<int, List<Keyword>> dailyGroups = {};
+
+    // 최근 7일의 데이터만 필터링
+    final recentKeywords = _keywordHistory.where((k) {
+      final daysDiff = now.difference(k.created_at).inDays;
+      return daysDiff >= 0 && daysDiff < 7;
+    }).toList();
+
+    // 일별로 그룹화
+    for (var keyword in recentKeywords) {
+      final daysAgo = now.difference(keyword.created_at).inDays;
+      dailyGroups[daysAgo] ??= [];
+      dailyGroups[daysAgo]!.add(keyword);
+    }
+
+    final List<FlSpot> spots = [];
+    for (int day = 6; day >= 0; day--) {
+      if (dailyGroups[day] != null && dailyGroups[day]!.isNotEmpty) {
+        final bestRank = dailyGroups[day]!
+            .map((k) => k.rank)
+            .reduce((a, b) => a < b ? a : b);
+        spots.add(FlSpot((6 - day).toDouble(), convertRank(bestRank.toDouble())));
+      }
+    }
+
+    return spots;
+  }
+
+  /// 주간 데이터 생성 (최근 4주)
+  List<FlSpot> _generateWeeklySpots(double Function(double) convertRank) {
+    final Map<int, List<Keyword>> weeklyGroups = {};
+
+    // 주별로 그룹화
+    for (var keyword in _keywordHistory) {
+      final week = _getWeekNumber(keyword.created_at);
+      weeklyGroups[week] ??= [];
+      weeklyGroups[week]!.add(keyword);
+    }
+
+    final List<FlSpot> spots = [];
+    final sortedWeeks = weeklyGroups.keys.toList()..sort();
+    
+    // 최근 4주만 표시
+    final recentWeeks = sortedWeeks.length > 4 ? sortedWeeks.sublist(sortedWeeks.length - 4) : sortedWeeks;
+    
+    for (int i = 0; i < recentWeeks.length; i++) {
+      final week = recentWeeks[i];
+      final keywords = weeklyGroups[week]!;
+      final bestRank = keywords.map((k) => k.rank).reduce((a, b) => a < b ? a : b);
+      spots.add(FlSpot(i.toDouble(), convertRank(bestRank.toDouble())));
+    }
+
+    return spots;
+  }
+
+  /// 월간 데이터 생성 (최근 12개월)
+  List<FlSpot> _generateMonthlySpots(double Function(double) convertRank) {
+    final Map<String, List<Keyword>> monthlyGroups = {};
+
+    // 월별로 그룹화
+    for (var keyword in _keywordHistory) {
+      final monthKey = '${keyword.created_at.year}-${keyword.created_at.month.toString().padLeft(2, '0')}';
+      monthlyGroups[monthKey] ??= [];
+      monthlyGroups[monthKey]!.add(keyword);
+    }
+
+    final List<FlSpot> spots = [];
+    final sortedMonths = monthlyGroups.keys.toList()..sort();
+    
+    // 최근 12개월만 표시
+    final recentMonths = sortedMonths.length > 12 ? sortedMonths.sublist(sortedMonths.length - 12) : sortedMonths;
+    
+    for (int i = 0; i < recentMonths.length; i++) {
+      final month = recentMonths[i];
+      final keywords = monthlyGroups[month]!;
+      final bestRank = keywords.map((k) => k.rank).reduce((a, b) => a < b ? a : b);
+      spots.add(FlSpot(i.toDouble(), convertRank(bestRank.toDouble())));
+    }
+
+    return spots;
+  }
+
+  /// 연간 데이터 생성 (전체 기간)
+  List<FlSpot> _generateYearlySpots(double Function(double) convertRank) {
+    final Map<int, List<Keyword>> yearlyGroups = {};
+
+    // 연도별로 그룹화
+    for (var keyword in _keywordHistory) {
+      final year = keyword.created_at.year;
+      yearlyGroups[year] ??= [];
+      yearlyGroups[year]!.add(keyword);
+    }
+
+    final List<FlSpot> spots = [];
+    final sortedYears = yearlyGroups.keys.toList()..sort();
+    
+    for (int i = 0; i < sortedYears.length; i++) {
+      final year = sortedYears[i];
+      final keywords = yearlyGroups[year]!;
+      final bestRank = keywords.map((k) => k.rank).reduce((a, b) => a < b ? a : b);
+      spots.add(FlSpot(i.toDouble(), convertRank(bestRank.toDouble())));
+    }
+
+    return spots;
+  }
+
+  /// 기간별 X축 라벨 생성
+  Map<double, String> _generateXAxisLabels() {
+    final Map<double, String> labels = {};
+
+    switch (_selectedTimePeriod) {
+      case '일간':
+        // 최근 7일
+        for (int i = 0; i < 7; i++) {
+          final date = DateTime.now().subtract(Duration(days: 6 - i));
+          labels[i.toDouble()] = '${date.month}/${date.day}';
+        }
+        break;
+      case '주간':
+        // 최근 4주
+        for (int i = 0; i < 4; i++) {
+          labels[i.toDouble()] = '${i + 1}주';
+        }
+        break;
+      case '월간':
+        // 최근 12개월
+        final now = DateTime.now();
+        for (int i = 0; i < 12; i++) {
+          final month = DateTime(now.year, now.month - 11 + i);
+          labels[i.toDouble()] = '${month.month}월';
+        }
+        break;
+      case '전체':
+        // 전체 연도
+        final years = _keywordHistory.map((k) => k.created_at.year).toSet().toList()..sort();
+        for (int i = 0; i < years.length; i++) {
+          labels[i.toDouble()] = '${years[i]}년';
+        }
+        break;
+    }
+
+    return labels;
+  }
+
+  /// 키워드 검색 다이얼로그 표시
+  void _showKeywordSearchDialog() {
+    final TextEditingController searchController = TextEditingController();
+    final bool isDark = AppTheme.isDark(context);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          title: Text(
+            '키워드 검색',
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.getTextColor(context),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '검색할 키워드를 입력하세요',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: '예: 포켓몬 우유',
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: Color(0xFF3B82F6),
+                      width: 2,
+                    ),
+                  ),
+                ),
+                style: TextStyle(
+                  color: AppTheme.getTextColor(context),
+                  fontSize: 16.sp,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                '취소',
+                style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  fontSize: 16.sp,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final keyword = searchController.text.trim();
+                if (keyword.isNotEmpty) {
+                  Navigator.of(context).pop();
+                  _changeKeyword(keyword);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF3B82F6),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              child: Text(
+                '검색',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 키워드 변경 및 히스토리 재로드
+  void _changeKeyword(String keyword) {
+    setState(() {
+      _selectedKeyword = keyword;
+    });
+    _loadKeywordHistory();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -316,10 +552,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           // 키워드 선택 카드
           GestureDetector(
             onTap: () {
-              // 키워드 검색 기능
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('키워드 검색 기능은 개발 중입니다')),
-              );
+              _showKeywordSearchDialog();
             },
             child: Container(
               width: double.infinity,
@@ -380,7 +613,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "포켓몬 우유",
+                          _selectedKeyword,
                           style: TextStyle(
                             fontSize: 24.sp,
                             fontWeight: FontWeight.w700,
@@ -446,6 +679,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   setState(() {
                     _selectedTimePeriod = period;
                   });
+                  // 기간 변경 시 UI만 업데이트 (데이터는 동일)
                 },
                 child: AnimatedContainer(
                   duration: Duration(milliseconds: 200),
@@ -853,7 +1087,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             // 해당 날짜의 키워드 상세 페이지로 이동
             context.pushNamed(
               'keywordDetail',
-              pathParameters: {'id': '1'}, // 실제 키워드 ID
+              pathParameters: {'id': snapshot['keywordId'].toString()}, // 실제 키워드 ID
               queryParameters: {'date': snapshot['date']}, // 특정 날짜
             );
           },
@@ -960,17 +1194,35 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     
                     SizedBox(height: 8.h),
                     
-                    // 요약 정보
-                    Text(
-                      snapshot['summary'],
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: isDark ? Colors.grey[300] : Colors.grey[700],
-                        height: 1.3,
+                    // 토론방 정보 표시
+                    if (snapshot['discussionRoomId'] != null)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.forum_rounded,
+                            size: 14.sp,
+                            color: isDark ? Colors.blue[300] : Colors.blue[600],
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '토론방 활성화',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: isDark ? Colors.blue[300] : Colors.blue[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        '${snapshot['date']} ${snapshot['peakTime']}에 ${snapshot['rank']}위 기록',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          height: 1.3,
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                   ],
                 ),
               ),
@@ -1229,7 +1481,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         Navigator.of(context).pop();
                         context.pushNamed(
                           'keywordDetail',
-                          pathParameters: {'id': '1'},
+                          pathParameters: {'id': snapshot['keywordId'].toString()},
                           queryParameters: {'date': snapshot['date']},
                         );
                       },
@@ -1312,15 +1564,33 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                     ],
                                   ),
                                   SizedBox(height: 8.h),
-                                  Text(
-                                    snapshot['summary'],
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                  if (snapshot['discussionRoomId'] != null)
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.forum_rounded,
+                                          size: 14.sp,
+                                          color: isDark ? Colors.blue[300] : Colors.blue[600],
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          '토론방 활성화 상태',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: isDark ? Colors.blue[300] : Colors.blue[600],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    Text(
+                                      '토론방 없음',
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                      ),
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
                                 ],
                               ),
                             ),
@@ -1391,94 +1661,105 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
   }
 
 
-  // 동적 라인 차트 (x축 단위 조정 가능)
+  // 동적 라인 차트 (실제 키워드 데이터 기반)
   Widget _buildDynamicLineChart() {
-    // 데이터 포인트 정의 - 여기서는 x축을 시간 기준으로 설정
-    List<FlSpot> spots = [];
-    Map<double, String> xAxisLabels = {};
+    // 로딩 상태 처리
+    if (_isLoading) {
+      return Container(
+        height: 280.h,
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+          ),
+        ),
+      );
+    }
 
-    // Y축을 뒤집기 위한 함수 (실제 순위 1-10을 차트용 10-1로 변환)
-    double convertRank(double rank) => 11 - rank;
+    // 에러 상태 처리
+    if (_errorMessage != null) {
+      return Container(
+        height: 280.h,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 48.sp,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                '데이터를 불러올 수 없습니다',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: AppTheme.getTextColor(context),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                _errorMessage!,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.red,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-    // 선택된 시간 주기에 따라 다른 데이터 표시
-    if (_selectedTimePeriod == '일간') {
-      // x축이 시간 (0-24시), Y축은 변환된 순위
-      spots = [
-        FlSpot(0, convertRank(8)),
-        FlSpot(3, convertRank(5)),
-        FlSpot(6, convertRank(3)),
-        FlSpot(9, convertRank(1)),
-        FlSpot(12, convertRank(2)),
-        FlSpot(15, convertRank(6)),
-        FlSpot(18, convertRank(4)),
-        FlSpot(21, convertRank(2)),
-        FlSpot(24, convertRank(7)),
-      ];
-      xAxisLabels = {
-        0: '0시',
-        6: '6시',
-        12: '12시',
-        18: '18시',
-        24: '24시',
-      };
-    } else if (_selectedTimePeriod == '주간') {
-      // x축이 요일 (0-6, 월-일)
-      spots = [
-        FlSpot(0, convertRank(8)),
-        FlSpot(1, convertRank(5)),
-        FlSpot(2, convertRank(3)),
-        FlSpot(3, convertRank(1)),
-        FlSpot(4, convertRank(4)),
-        FlSpot(5, convertRank(7)),
-        FlSpot(6, convertRank(2)),
-      ];
-      xAxisLabels = {
-        0: '월',
-        1: '화',
-        2: '수',
-        3: '목',
-        4: '금',
-        5: '토',
-        6: '일',
-      };
-    } else if (_selectedTimePeriod == '월간') {
-      // x축이 날짜 (1-30일)
-      spots = [
-        FlSpot(1, convertRank(10)),
-        FlSpot(5, convertRank(8)),
-        FlSpot(10, convertRank(5)),
-        FlSpot(15, convertRank(1)),
-        FlSpot(20, convertRank(3)),
-        FlSpot(25, convertRank(8)),
-        FlSpot(30, convertRank(2)),
-      ];
-      xAxisLabels = {
-        1: '1일',
-        10: '10일',
-        20: '20일',
-        30: '30일',
-      };
-    } else {
-      // 전체 - x축이 월 (1-12월)
-      spots = [
-        FlSpot(1, convertRank(9)),
-        FlSpot(3, convertRank(6)),
-        FlSpot(5, convertRank(4)),
-        FlSpot(7, convertRank(1)),
-        FlSpot(9, convertRank(3)),
-        FlSpot(11, convertRank(2)),
-      ];
-      xAxisLabels = {
-        1: '1월',
-        4: '4월',
-        7: '7월',
-        10: '10월',
-      };
+    // 데이터가 없을 때 처리
+    if (_keywordHistory.isEmpty) {
+      return Container(
+        height: 280.h,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.timeline_rounded,
+                color: Colors.grey,
+                size: 48.sp,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                '키워드 데이터가 없습니다',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 실제 데이터 기반으로 그래프 생성
+    final List<FlSpot> spots = _generateGraphSpots();
+    final Map<double, String> xAxisLabels = _generateXAxisLabels();
+
+    if (spots.isEmpty) {
+      return Container(
+        height: 280.h,
+        child: Center(
+          child: Text(
+            '선택한 기간에 해당하는 데이터가 없습니다',
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
     }
 
     // x축 최소/최대값 설정
-    double minX = spots.first.x;
-    double maxX = spots.last.x;
+    double minX = spots.isNotEmpty ? spots.first.x : 0;
+    double maxX = spots.isNotEmpty ? spots.last.x : 1;
 
     // y축 설정 (변환된 값으로 1~10, 실제로는 10~1)
     double minY = 1;

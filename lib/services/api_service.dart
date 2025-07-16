@@ -100,9 +100,30 @@ class ApiService {
 
   /// 특정 키워드의 히스토리 가져오기
   /// POST /keyword/history/
-  Future<List<Map<String, dynamic>>> getKeywordHistory(String keyword) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
+  Future<List<Keyword>> getKeywordHistory(String keyword) async {
+    final String url = '$_baseUrl/keyword/history/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'keyword': keyword,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((json) => Keyword.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        throw Exception('해당 키워드의 히스토리가 존재하지 않습니다.');
+      } else {
+        throw Exception('Failed to load keyword history: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 임의의 키워드 n개 가져오기
@@ -582,6 +603,307 @@ class ApiService {
       print('관심 키워드 가져오기 오류: $e');
       return [];
     }
+  }
+
+  /// 특정 날짜의 키워드 캡슐 데이터 조회
+  /// GET /api/capsule/<str:date_str>/
+  Future<CapsuleModel> getCapsule(String dateStr) async {
+    final String url = '$_baseUrl/capsule/$dateStr/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        
+        // 디버깅을 위한 로깅
+        print('API Response: $data');
+        
+        // 필수 필드 확인 및 기본값 설정
+        final top3Keywords = (data['top3_keywords'] as List<dynamic>?)
+            ?.map((item) => {
+                  'keyword': item['keyword']?.toString() ?? '',
+                  'score': (item['score'] as num?)?.toDouble() ?? 0.0,
+                  'appearance_count': (item['appearance_count'] as num?)?.toInt() ?? 0,
+                  'avg_rank': (item['avg_rank'] as num?)?.toDouble() ?? 0.0,
+                  'last_keyword_id': item['last_keyword_id'] as int?,
+                })
+            .toList() ?? [];
+        
+        final hourlyKeywords = (data['hourly_keywords'] as List<dynamic>?)
+            ?.map((item) => {
+                  'time': item['time']?.toString() ?? '00:00',
+                  'keywords': (item['keywords'] as List<dynamic>?)
+                      ?.map((keywordItem) {
+                        if (keywordItem is String) {
+                          // 간단한 문자열 형태의 키워드
+                          return {
+                            'id': 0,
+                            'keyword': keywordItem,
+                            'rank': 1,
+                            'category': '기타',
+                            'type2': null,
+                          };
+                        } else if (keywordItem is Map<String, dynamic>) {
+                          // 복잡한 객체 형태의 키워드
+                          return {
+                            'id': keywordItem['id'] ?? 0,
+                            'keyword': keywordItem['keyword']?.toString() ?? '',
+                            'rank': keywordItem['rank'] ?? 1,
+                            'category': keywordItem['category']?.toString() ?? '기타',
+                            'type2': keywordItem['type2']?.toString(),
+                          };
+                        }
+                        return {
+                          'id': 0,
+                          'keyword': keywordItem.toString(),
+                          'rank': 1,
+                          'category': '기타',
+                          'type2': null,
+                        };
+                      })
+                      .toList() ?? [],
+                })
+            .toList() ?? [];
+        
+        final capsuleData = {
+          'date': data['date']?.toString() ?? dateStr,
+          'top3_keywords': top3Keywords,
+          'hourly_keywords': hourlyKeywords,
+          'created_at': data['created_at']?.toString() ?? DateTime.now().toIso8601String(),
+        };
+        
+        return CapsuleModel.fromJson(capsuleData);
+      } else if (response.statusCode == 404) {
+        // 404 오류 처리 - 실제 API 오류 확인
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        try {
+          final Map<String, dynamic> errorData = json.decode(decodedBody);
+          if (errorData['error'] == '해당 날짜의 캡슐이 존재하지 않습니다.') {
+            throw Exception('해당 날짜의 캡슐이 존재하지 않습니다.');
+          }
+        } catch (e) {
+          // JSON 파싱 실패시 기본 404 처리
+        }
+        // 개발 중에는 테스트 데이터 반환
+        print('404 Error - returning test data');
+        return _getTestCapsuleData(dateStr);
+      } else if (response.statusCode == 400) {
+        throw Exception('올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)');
+      } else {
+        throw Exception('서버 오류: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('API Error: $e');
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Network error: $e');
+    }
+  }
+  
+  /// 테스트용 캡슐 데이터 생성
+  CapsuleModel _getTestCapsuleData(String dateStr) {
+    final testData = {
+      'date': dateStr,
+      'top3_keywords': [
+        {
+          'keyword': '포켓몬 우유',
+          'score': 85.5,
+          'appearance_count': 12,
+          'avg_rank': 2.5,
+          'last_keyword_id': 1001,
+        },
+        {
+          'keyword': '갤럭시 S25',
+          'score': 78.0,
+          'appearance_count': 10,
+          'avg_rank': 3.2,
+          'last_keyword_id': 1002,
+        },
+        {
+          'keyword': '천국보다 아름다운',
+          'score': 72.3,
+          'appearance_count': 8,
+          'avg_rank': 4.1,
+          'last_keyword_id': 1003,
+        },
+      ],
+      'hourly_keywords': [
+        {
+          'time': '00:00',
+          'keywords': [
+            {
+              'id': 6938,
+              'keyword': '김준호 김지민 결혼식',
+              'rank': 1,
+              'category': '연예/문화',
+              'type2': '김준호와 김지민이 많은 동료들의 축복 속에 결혼식을 올렸다.\n결혼식에는 1200명이 넘는 하객이 참석하여 성황을 이루었다.\n코미디언 동료들뿐 아니라 유재석, 이찬원 등 다양한 분야의 유명인들이 참석하여 두 사람의 결혼을 축하했다.',
+            },
+            {
+              'id': 6939,
+              'keyword': '포켓몬 우유',
+              'rank': 2,
+              'category': '연예/문화',
+              'type2': '포켓몬 우유가 인기를 끌고 있다.',
+            },
+            {
+              'id': 6940,
+              'keyword': '갤럭시 S25',
+              'rank': 3,
+              'category': 'IT',
+              'type2': '갤럭시 S25의 새로운 기능들이 공개되었다.',
+            },
+            {
+              'id': 6941,
+              'keyword': '이재명',
+              'rank': 4,
+              'category': '정치',
+              'type2': '이재명 관련 정치 이슈가 화제가 되고 있다.',
+            },
+          ],
+        },
+        {
+          'time': '00:05',
+          'keywords': [
+            {
+              'id': 6942,
+              'keyword': '천국보다 아름다운',
+              'rank': 1,
+              'category': '연예/문화',
+              'type2': '천국보다 아름다운 드라마가 인기를 끌고 있다.',
+            },
+            {
+              'id': 6943,
+              'keyword': '포켓몬 우유',
+              'rank': 2,
+              'category': '연예/문화',
+              'type2': '포켓몬 우유 관련 이슈가 계속되고 있다.',
+            },
+            {
+              'id': 6944,
+              'keyword': '파워에이드',
+              'rank': 3,
+              'category': '경제',
+              'type2': '파워에이드 관련 경제 뉴스가 있다.',
+            },
+            {
+              'id': 6945,
+              'keyword': '소금 우유',
+              'rank': 4,
+              'category': '문화',
+              'type2': '소금 우유 트렌드가 화제다.',
+            },
+          ],
+        },
+        {
+          'time': '08:00',
+          'keywords': [
+            {
+              'id': 6946,
+              'keyword': '갤럭시 S25',
+              'rank': 1,
+              'category': 'IT',
+              'type2': '갤럭시 S25 출시 관련 소식이 전해졌다.',
+            },
+            {
+              'id': 6947,
+              'keyword': '김소현 복귀',
+              'rank': 2,
+              'category': '연예/문화',
+              'type2': '김소현의 복귀 소식이 화제가 되고 있다.',
+            },
+            {
+              'id': 6948,
+              'keyword': '링스틱',
+              'rank': 3,
+              'category': 'IT',
+              'type2': '링스틱 관련 기술 뉴스가 있다.',
+            },
+            {
+              'id': 6949,
+              'keyword': '투싹',
+              'rank': 4,
+              'category': '스포츠',
+              'type2': '투싹 관련 스포츠 소식이 전해졌다.',
+            },
+          ],
+        },
+        {
+          'time': '16:00',
+          'keywords': [
+            {
+              'id': 6950,
+              'keyword': '갤럭시탭',
+              'rank': 1,
+              'category': 'IT',
+              'type2': '갤럭시탭 새로운 모델이 공개되었다.',
+            },
+            {
+              'id': 6951,
+              'keyword': '새마음',
+              'rank': 2,
+              'category': '사회',
+              'type2': '새마음 관련 사회 이슈가 있다.',
+            },
+            {
+              'id': 6952,
+              'keyword': '포켓몬 우유',
+              'rank': 3,
+              'category': '연예/문화',
+              'type2': '포켓몬 우유 열풍이 계속되고 있다.',
+            },
+            {
+              'id': 6953,
+              'keyword': '천국보다 아름다운',
+              'rank': 4,
+              'category': '연예/문화',
+              'type2': '천국보다 아름다운 드라마의 인기가 지속되고 있다.',
+            },
+          ],
+        },
+        {
+          'time': '20:00',
+          'keywords': [
+            {
+              'id': 6954,
+              'keyword': '이재명',
+              'rank': 1,
+              'category': '정치',
+              'type2': '이재명 관련 정치 소식이 저녁 시간에 화제가 되었다.',
+            },
+            {
+              'id': 6955,
+              'keyword': '크레딧카드 개코',
+              'rank': 2,
+              'category': '연예/문화',
+              'type2': '크레딧카드 개코 관련 이슈가 있다.',
+            },
+            {
+              'id': 6956,
+              'keyword': '갤럭시 S25',
+              'rank': 3,
+              'category': 'IT',
+              'type2': '갤럭시 S25 관련 추가 소식이 전해졌다.',
+            },
+            {
+              'id': 6957,
+              'keyword': '파워에이드',
+              'rank': 4,
+              'category': '경제',
+              'type2': '파워에이드 관련 경제 소식이 저녁에 화제가 되었다.',
+            },
+          ],
+        },
+      ],
+      'created_at': DateTime.now().toIso8601String(),
+    };
+    
+    return CapsuleModel.fromJson(testData);
   }
 
   /// API 요청 취소 및 자원 해제

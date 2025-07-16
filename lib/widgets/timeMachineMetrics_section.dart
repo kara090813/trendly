@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../app_theme.dart';
+import 'package:go_router/go_router.dart';
 
 class TimeMachineMetricsSection extends StatefulWidget {
   final Map<String, dynamic> summaryData;
@@ -53,53 +54,78 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
   Widget build(BuildContext context) {
     final bool isDark = AppTheme.isDark(context);
     print(widget.summaryData);
-    final keywords = [
-      {
-        'rank': 1,
-        'keyword': widget.summaryData['keyword1'] ?? '포켓몬 우유',
-        'stats': widget.summaryData['keyword1Stats'] ?? '15.2만 검색',
-        'countValue': 152000,
-        'category': '연예',
-        'gradient': isDark 
+    final top3Data = widget.summaryData['top3_keywords'] as List<dynamic>? ?? [];
+    
+    final List<Map<String, dynamic>> keywords = [];
+    for (int i = 0; i < 3; i++) {
+      final data = i < top3Data.length ? top3Data[i] : null;
+      final rank = i + 1;
+      
+      // 순위별 색상 설정
+      List<Color> gradient;
+      List<Color> bgGradient;
+      Color rankColor;
+      Color textColor;
+      
+      if (rank == 1) {
+        gradient = isDark 
             ? [Color(0xFFFFD700), Color(0xFFB8860B)]
-            : [Color(0xFFFFD700), Color(0xFFFFA500)],
-        'bgGradient': isDark 
+            : [Color(0xFFFFD700), Color(0xFFFFA500)];
+        bgGradient = isDark 
             ? [Color(0xFF2A2419), Color(0xFF3D3526)]
-            : [Color(0xFFFFFDF7), Color(0xFFFFF8E1)],
-        'rankColor': isDark ? Color(0xFFFFD700) : Color(0xFFB8860B),
-        'textColor': isDark ? Color(0xFFFFD700) : Color(0xFF8B6914),
-      },
-      {
-        'rank': 2,
-        'keyword': widget.summaryData['keyword2'] ?? '갤럭시 S25',
-        'stats': widget.summaryData['keyword2Stats'] ?? '12.8만 검색',
-        'countValue': 128000,
-        'category': '기술',
-        'gradient': isDark 
+            : [Color(0xFFFFFDF7), Color(0xFFFFF8E1)];
+        rankColor = isDark ? Color(0xFFFFD700) : Color(0xFFB8860B);
+        textColor = isDark ? Color(0xFFFFD700) : Color(0xFF8B6914);
+      } else if (rank == 2) {
+        gradient = isDark 
             ? [Color(0xFFC0C0C0), Color(0xFF8C8C8C)]
-            : [Color(0xFFC0C0C0), Color(0xFF9E9E9E)],
-        'bgGradient': isDark 
+            : [Color(0xFFC0C0C0), Color(0xFF9E9E9E)];
+        bgGradient = isDark 
             ? [Color(0xFF252525), Color(0xFF383838)]
-            : [Color(0xFFFAFAFA), Color(0xFFF0F0F0)],
-        'rankColor': isDark ? Color(0xFFC0C0C0) : Color(0xFF757575),
-        'textColor': isDark ? Color(0xFFC0C0C0) : Color(0xFF616161),
-      },
-      {
-        'rank': 3,
-        'keyword': widget.summaryData['keyword3'] ?? '방탄소년단',
-        'stats': widget.summaryData['keyword3Stats'] ?? '9.6만 검색',
-        'countValue': 96000,
-        'category': '연예',
-        'gradient': isDark 
+            : [Color(0xFFFAFAFA), Color(0xFFF0F0F0)];
+        rankColor = isDark ? Color(0xFFC0C0C0) : Color(0xFF757575);
+        textColor = isDark ? Color(0xFFC0C0C0) : Color(0xFF616161);
+      } else {
+        gradient = isDark 
             ? [Color(0xFFCD7F32), Color(0xFFA0522D)]
-            : [Color(0xFFCD7F32), Color(0xFFB87333)],
-        'bgGradient': isDark 
+            : [Color(0xFFCD7F32), Color(0xFFB87333)];
+        bgGradient = isDark 
             ? [Color(0xFF2A1F18), Color(0xFF3D2E21)]
-            : [Color(0xFFFFF9F5), Color(0xFFFFF2E6)],
-        'rankColor': isDark ? Color(0xFFCD7F32) : Color(0xFF8B4513),
-        'textColor': isDark ? Color(0xFFCD7F32) : Color(0xFF8B4513),
-      },
-    ];
+            : [Color(0xFFFFF9F5), Color(0xFFFFF2E6)];
+        rankColor = isDark ? Color(0xFFCD7F32) : Color(0xFF8B4513);
+        textColor = isDark ? Color(0xFFCD7F32) : Color(0xFF8B4513);
+      }
+      
+      if (data != null) {
+        final appearanceCount = data['appearance_count'] ?? 0;
+        final avgRank = data['avg_rank']?.toStringAsFixed(1) ?? '0.0';
+        
+        keywords.add({
+          'rank': rank,
+          'keyword': data['keyword'] ?? '키워드 없음',
+          'stats': '${appearanceCount}회 등장, 평균 등수 ${avgRank}등',
+          'countValue': appearanceCount,
+          'category': '트렌드',
+          'gradient': gradient,
+          'bgGradient': bgGradient,
+          'rankColor': rankColor,
+          'textColor': textColor,
+          'last_keyword_id': data['last_keyword_id'],
+        });
+      } else {
+        keywords.add({
+          'rank': rank,
+          'keyword': '데이터 없음',
+          'stats': '0회 등장, 평균 등수 0.0등',
+          'countValue': 0,
+          'category': '기타',
+          'gradient': gradient,
+          'bgGradient': bgGradient,
+          'rankColor': rankColor,
+          'textColor': textColor,
+        });
+      }
+    }
 
     return Container(
       margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
@@ -190,6 +216,10 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
       onTapDown: (_) => HapticFeedback.lightImpact(),
       onTap: () {
         HapticFeedback.mediumImpact();
+        final lastKeywordId = keyword['last_keyword_id'];
+        if (lastKeywordId != null) {
+          context.push('/keyword/$lastKeywordId');
+        }
       },
       child: AnimatedBuilder(
         animation: _countAnimation,
@@ -306,22 +336,14 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                             color: isDark ? Colors.grey[400] : Colors.grey[600],
                           ),
                           SizedBox(width: 4.w),
-                          Text(
-                            _formatNumber(
-                              (keyword['countValue'] * _countAnimation.value).round()
-                            ),
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                              color: keyword['textColor'],
-                            ),
-                          ),
-                          Text(
-                            ' 검색',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          Expanded(
+                            child: Text(
+                              keyword['stats'] ?? '데이터 없음',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
                             ),
                           ),
                         ],
@@ -352,17 +374,6 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
         .fadeIn(duration: 700.ms)
         .slideX(begin: 0.3, end: 0, duration: 700.ms, curve: Curves.easeOutCubic)
         .scale(begin: Offset(0.95, 0.95), end: Offset(1, 1), duration: 700.ms);
-  }
-  
-  String _formatNumber(int number) {
-    if (number >= 100000) {
-      return '${(number / 10000).toStringAsFixed(1)}만';
-    } else if (number >= 10000) {
-      return '${(number / 10000).toStringAsFixed(1)}만';
-    } else if (number >= 1000) {
-      return '${(number / 1000).toStringAsFixed(1)}천';
-    }
-    return number.toString();
   }
 
 }

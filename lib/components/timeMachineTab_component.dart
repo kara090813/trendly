@@ -3,6 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/_widgets.dart';
+import '../services/api_service.dart';
+import '../models/_models.dart';
+import 'package:intl/intl.dart';
 
 class TimeMachineTabComponent extends StatefulWidget {
   const TimeMachineTabComponent({Key? key}) : super(key: key);
@@ -16,6 +19,12 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
     with TickerProviderStateMixin {
   DateTime _selectedDate = DateTime.now().subtract(const Duration(days: 1));
   late AnimationController _floatingController;
+  
+  CapsuleModel? _capsuleData;
+  bool _isLoading = true;
+  String? _errorMessage;
+  final ApiService _apiService = ApiService();
+  final Set<String> _unavailableDates = {};
 
   final Map<String, Color> categoryColors = {
     '정치': Color(0xFF4A90E2),
@@ -35,6 +44,67 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
       vsync: this,
       duration: Duration(seconds: 3),
     )..repeat(reverse: true);
+    
+    _loadCapsuleData();
+  }
+  
+  Future<void> _loadCapsuleData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    
+    try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+      print('Loading capsule data for date: $dateStr');
+      final capsule = await _apiService.getCapsule(dateStr);
+      print('Capsule data loaded successfully: ${capsule.date}');
+      setState(() {
+        _capsuleData = capsule;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading capsule data: $e');
+      final errorMessage = e.toString().replaceAll('Exception: ', '');
+      
+      // 해당 날짜의 캡슐이 존재하지 않을 경우 날짜를 사용할 수 없는 목록에 추가
+      if (errorMessage.contains('해당 날짜의 캡슐이 존재하지 않습니다')) {
+        final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+        _unavailableDates.add(dateStr);
+        // 자동으로 이전 날짜로 이동
+        _selectPreviousAvailableDate();
+        return;
+      }
+      
+      setState(() {
+        _errorMessage = errorMessage;
+        _isLoading = false;
+      });
+    }
+  }
+  
+  void _selectPreviousAvailableDate() async {
+    DateTime previousDate = _selectedDate.subtract(const Duration(days: 1));
+    final firstDate = DateTime(2020);
+    
+    // 사용 가능한 날짜를 찾을 때까지 이전 날짜로 이동
+    while (previousDate.isAfter(firstDate)) {
+      final dateStr = DateFormat('yyyy-MM-dd').format(previousDate);
+      if (!_unavailableDates.contains(dateStr)) {
+        setState(() {
+          _selectedDate = previousDate;
+        });
+        _loadCapsuleData();
+        return;
+      }
+      previousDate = previousDate.subtract(const Duration(days: 1));
+    }
+    
+    // 사용 가능한 날짜를 찾지 못한 경우
+    setState(() {
+      _errorMessage = '사용 가능한 데이터가 없습니다.';
+      _isLoading = false;
+    });
   }
 
   @override
@@ -109,9 +179,14 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           ),
         ),
         
-        CustomScrollView(
-          physics: BouncingScrollPhysics(),
-          slivers: [
+        if (_isLoading)
+          _buildLoadingWidget()
+        else if (_errorMessage != null)
+          _buildErrorWidget()
+        else
+          CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
             // 히어로 섹션
             SliverToBoxAdapter(
               child: TimeMachineHeroSection(
@@ -135,18 +210,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
               child: TimeMachineTrendsSection(
                 categoryColors: categoryColors,
                 getKeywordsForHour: _getKeywordsForHour,
-                availableTimes: [
-                  DateTime(2025, 1, 15, 0, 32),
-                  DateTime(2025, 1, 15, 1, 30),
-                  DateTime(2025, 1, 15, 2, 1),
-                  DateTime(2025, 1, 15, 8, 1),
-                  DateTime(2025, 1, 15, 16, 1),
-                  DateTime(2025, 1, 15, 18, 1),
-                  DateTime(2025, 1, 15, 19, 1),
-                  DateTime(2025, 1, 15, 20, 1),
-                  DateTime(2025, 1, 15, 21, 1),
-                  DateTime(2025, 1, 15, 23, 1)
-                ],
+                availableTimes: _getAvailableTimes(),
               ).animate()
                 .fadeIn(duration: 600.ms, delay: 200.ms)
                 .slideY(begin: 0.03, end: 0, duration: 600.ms),
@@ -227,7 +291,6 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                _buildQuickDateChip('오늘', now),
                 _buildQuickDateChip('어제', now.subtract(Duration(days: 1))),
                 _buildQuickDateChip('3일 전', now.subtract(Duration(days: 3))),
                 _buildQuickDateChip('1주일 전', now.subtract(Duration(days: 7))),
@@ -271,12 +334,13 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
                     child: CalendarDatePicker(
                       initialDate: _selectedDate,
                       firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
+                      lastDate: DateTime.now().subtract(const Duration(days: 1)),
                       onDateChanged: (date) {
                         setState(() {
                           _selectedDate = date;
                         });
                         Navigator.of(context).pop();
+                        _loadCapsuleData();
                       },
                     ),
                   ),
@@ -296,25 +360,36 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
     final isSelected = _selectedDate.year == date.year && 
                       _selectedDate.month == date.month && 
                       _selectedDate.day == date.day;
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    final isUnavailable = _unavailableDates.contains(dateStr);
     
     return Padding(
       padding: EdgeInsets.only(right: 8.w),
       child: GestureDetector(
         onTap: () {
+          if (isUnavailable) {
+            // 사용할 수 없는 날짜는 선택 불가
+            return;
+          }
           setState(() {
             _selectedDate = date;
           });
           Navigator.of(context).pop();
+          _loadCapsuleData();
         },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           decoration: BoxDecoration(
-            color: isSelected 
-              ? Color(0xFF3B82F6)
-              : (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+            color: isUnavailable 
+              ? Colors.grey.withOpacity(0.3)
+              : (isSelected 
+                  ? Color(0xFF3B82F6)
+                  : (isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05))),
             borderRadius: BorderRadius.circular(20.r),
             border: isSelected ? null : Border.all(
-              color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
+              color: isUnavailable 
+                ? Colors.grey.withOpacity(0.5)
+                : (isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1)),
               width: 1,
             ),
           ),
@@ -322,7 +397,9 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87),
+                color: isUnavailable 
+                  ? Colors.grey
+                  : (isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87)),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontSize: 14.sp,
               ),
@@ -334,44 +411,183 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
   }
 
   Map<String, dynamic> _getDailySummaryData() {
+    if (_capsuleData == null) {
+      return {
+        'topKeyword': '로딩 중...',
+        'topKeywordStats': '데이터를 불러오는 중입니다',
+        'topCategory': '기타',
+        'topCategoryStats': '전체 0%',
+        'topDiscussion': '데이터 없음',
+        'topDiscussionStats': '데이터 없음',
+        'insights': [
+          {
+            'icon': '⏳',
+            'text': '데이터를 불러오는 중입니다...',
+          },
+        ],
+      };
+    }
+    
+    final top3 = _capsuleData!.top3Keywords;
+    if (top3.isEmpty) {
+      return {
+        'topKeyword': '데이터 없음',
+        'topKeywordStats': '해당 날짜의 데이터가 없습니다',
+        'topCategory': '기타',
+        'topCategoryStats': '전체 0%',
+        'topDiscussion': '데이터 없음',
+        'topDiscussionStats': '데이터 없음',
+        'insights': [
+          {
+            'icon': '📊',
+            'text': '해당 날짜의 키워드 데이터가 없습니다.',
+          },
+        ],
+      };
+    }
+    
+    final topKeyword = top3.first;
     return {
-      'topKeyword': '천국보다 아름다운',
-      'topKeywordStats': '12회 등장 평균등수 3등',
-      'topCategory': '연예',
-      'topCategoryStats': '전체 40%',
-      'topDiscussion': '갤럭시 S25',
-      'topDiscussionStats': '댓글 1,847개 • 반응 3,291개',
+      'topKeyword': topKeyword.keyword,
+      'topKeywordStats': '${topKeyword.appearanceCount}회 등장 평균등수 ${topKeyword.avgRank.toStringAsFixed(1)}등',
+      'topCategory': '트렌드',
+      'topCategoryStats': '전체 ${(topKeyword.score).toStringAsFixed(1)}%',
+      'topDiscussion': topKeyword.keyword,
+      'topDiscussionStats': '점수 ${topKeyword.score.toStringAsFixed(1)}',
+      'top3_keywords': top3.map((keyword) => {
+        'keyword': keyword.keyword,
+        'appearance_count': keyword.appearanceCount,
+        'avg_rank': keyword.avgRank,
+        'score': keyword.score,
+        'last_keyword_id': keyword.lastKeywordId,
+      }).toList(),
       'insights': [
         {
           'icon': '🚀',
-          'text': '연예계 이슈가 급부상하며 포켓몬 관련 밈이 대세로 자리잡았습니다.',
-        },
-        {
-          'icon': '⏰',
-          'text': '오후 9시경 검색량이 집중되며 IT 기기 관련 토론이 활발했습니다.',
+          'text': '${topKeyword.keyword}가 가장 인기 있는 키워드로 ${topKeyword.appearanceCount}회 등장했습니다.',
         },
         {
           'icon': '📈',
-          'text': '전체적으로 엔터테인먼트 콘텐츠에 대한 관심도가 크게 증가했습니다.',
+          'text': '상위 3개 키워드의 평균 점수는 ${(top3.map((k) => k.score).reduce((a, b) => a + b) / top3.length).toStringAsFixed(1)}입니다.',
+        },
+        {
+          'icon': '⏰',
+          'text': '${_capsuleData!.hourlyKeywords.length}개의 시간대에서 키워드 데이터가 수집되었습니다.',
         },
       ],
     };
   }
 
   List<Map<String, dynamic>> _getKeywordsForHour(int hour) {
-    final baseKeywords = [
-      {'keyword': '포켓몬 우유', 'category': '연예', 'change': 5},
-      {'keyword': '갤럭시 S25', 'category': 'IT', 'change': -2},
-      {'keyword': '크레딧카드 개코', 'category': '연예', 'change': 8},
-      {'keyword': '파워에이드', 'category': '경제', 'change': 3},
-      {'keyword': '소금 우유', 'category': '문화', 'change': -1},
-      {'keyword': '김소현 복귀', 'category': '연예', 'change': 12},
-      {'keyword': '링스틱', 'category': 'IT', 'change': 4},
-      {'keyword': '투싹', 'category': '스포츠', 'change': -3},
-      {'keyword': '갤럭시탭', 'category': 'IT', 'change': 6},
-      {'keyword': '새마음', 'category': '사회', 'change': 1},
-    ];
-
-    return baseKeywords;
+    if (_capsuleData == null) {
+      return [];
+    }
+    
+    // 시간대별 키워드 찾기
+    final targetTime = '${hour.toString().padLeft(2, '0')}:00';
+    final hourlyData = _capsuleData!.hourlyKeywords
+        .where((h) => h.time.startsWith(targetTime.substring(0, 2)))
+        .toList();
+    
+    if (hourlyData.isEmpty) {
+      return [];
+    }
+    
+    // 첫 번째 시간대 데이터 사용
+    final keywords = hourlyData.first.keywords;
+    
+    // SimpleKeyword 모델을 Map 형태로 변환
+    return keywords.asMap().entries.map((entry) {
+      final index = entry.key;
+      final simpleKeyword = entry.value;
+      
+      return {
+        'keyword': simpleKeyword.keyword,
+        'category': simpleKeyword.category,
+        'rank': simpleKeyword.rank,
+        'id': simpleKeyword.id,
+        'type2': simpleKeyword.type2,
+        'change': (index % 2 == 0) ? (index + 1) : -(index + 1), // 임시 변화량
+      };
+    }).take(10).toList();
+  }
+  
+  List<DateTime> _getAvailableTimes() {
+    if (_capsuleData == null) {
+      return [];
+    }
+    
+    return _capsuleData!.hourlyKeywords.map((hourly) {
+      final timeParts = hourly.time.split(':');
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+      
+      return DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, hour, minute);
+    }).toList();
+  }
+  
+  Widget _buildErrorWidget() {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      margin: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48.w,
+            color: Colors.red,
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            '데이터를 불러올 수 없습니다',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.red,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            _errorMessage ?? '알 수 없는 오류가 발생했습니다',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.red.withOpacity(0.8),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16.h),
+          ElevatedButton(
+            onPressed: _loadCapsuleData,
+            child: Text('다시 시도'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLoadingWidget() {
+    return Container(
+      padding: EdgeInsets.all(40.w),
+      child: Center(
+        child: Column(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16.h),
+            Text(
+              '데이터를 불러오는 중...',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../app_theme.dart';
+import 'package:go_router/go_router.dart';
 
 class TimeMachineTrendsSection extends StatefulWidget {
   final Map<String, Color> categoryColors;
@@ -377,16 +378,23 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
     final String categoryText = keyword['category']?.toString() ?? '기타';
     final categoryColor = widget.categoryColors[categoryText] ?? Colors.grey;
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        border: isLast ? null : Border(
-          bottom: BorderSide(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
-            width: 1,
+    return GestureDetector(
+      onTap: () {
+        final keywordId = keyword['id'];
+        if (keywordId != null) {
+          context.push('/keyword/$keywordId');
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          border: isLast ? null : Border(
+            bottom: BorderSide(
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+              width: 1,
+            ),
           ),
         ),
-      ),
       child: Row(
         children: [
           // 순위 번호 - 단순화
@@ -450,6 +458,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
             ),
           ),
         ],
+      ),
       ),
     );
   }
