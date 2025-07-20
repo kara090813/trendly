@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:ui';
+import 'dart:async';
 import '../app_theme.dart';
 import '../widgets/_widgets.dart';
 import '../services/api_service.dart';
@@ -26,6 +27,13 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
   bool _isLoading = false;
   String _selectedKeyword = '강선우'; // 기본 키워드
   String? _errorMessage;
+  
+  // 자동완성 관련 변수
+  List<Map<String, dynamic>> _autocompleteResults = [];
+  bool _isLoadingAutocomplete = false;
+  List<Map<String, dynamic>> _popularKeywords = [];
+  Timer? _debounceTimer;
+  String _lastSearchQuery = '';
   
   // 페이징 관련
   int _currentPage = 0;
@@ -52,11 +60,14 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
     
     // 기본 키워드로 히스토리 로드
     _loadKeywordHistory();
+    // 인기 키워드 로드
+    _loadPopularKeywords();
   }
 
   @override
   void dispose() {
     _floatingController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -81,108 +92,126 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
     }
   }
 
-  /// 키워드 검색 다이얼로그 표시
-  void _showKeywordSearchDialog() {
-    final TextEditingController searchController = TextEditingController();
-    final bool isDark = AppTheme.isDark(context);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          title: Text(
-            '키워드 검색',
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.getTextColor(context),
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '검색할 키워드를 입력하세요',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: searchController,
-                decoration: InputDecoration(
-                  hintText: '예: 포켓몬 우유',
-                  hintStyle: TextStyle(
-                    color: isDark ? Colors.grey[500] : Colors.grey[400],
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: Color(0xFF3B82F6),
-                      width: 2,
-                    ),
-                  ),
-                ),
-                style: TextStyle(
-                  color: AppTheme.getTextColor(context),
-                  fontSize: 16.sp,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                '취소',
-                style: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  fontSize: 16.sp,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final keyword = searchController.text.trim();
-                if (keyword.isNotEmpty) {
-                  Navigator.of(context).pop();
-                  _changeKeyword(keyword);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF3B82F6),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              child: Text(
-                '검색',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  /// 인기 키워드 로드
+  Future<void> _loadPopularKeywords() async {
+    try {
+      final keywords = await _apiService.getPopularKeywords(limit: 20);
+      setState(() {
+        _popularKeywords = keywords;
+      });
+    } catch (e) {
+      print('Failed to load popular keywords: $e');
+    }
   }
+
+  /// 자동완성 검색 (디바운싱 적용)
+  void _searchAutocomplete(String query, [void Function(void Function())? modalSetState]) {
+    print('🔍 [UI] _searchAutocomplete called with: "$query"');
+    
+    // 이전 타이머 취소
+    _debounceTimer?.cancel();
+    print('🔍 [UI] Previous timer cancelled');
+    
+    // 빈 문자열이면 결과 초기화
+    if (query.trim().isEmpty) {
+      print('🔍 [UI] Empty query, clearing results');
+      setState(() {
+        _autocompleteResults = [];
+        _isLoadingAutocomplete = false;
+        _lastSearchQuery = '';
+      });
+      if (modalSetState != null) modalSetState(() {});
+      return;
+    }
+    
+    // 같은 쿼리면 중복 요청 방지
+    if (query.trim() == _lastSearchQuery) {
+      print('🔍 [UI] Duplicate query prevented: "$query"');
+      return;
+    }
+    
+    // 최소 2글자 이상만 검색
+    if (query.trim().length < 2) {
+      print('🔍 [UI] Query too short (${query.trim().length} chars), clearing results');
+      setState(() {
+        _autocompleteResults = [];
+        _isLoadingAutocomplete = false;
+      });
+      if (modalSetState != null) modalSetState(() {});
+      return;
+    }
+
+    // 로딩 상태 시작
+    print('🔍 [UI] Setting loading state to true');
+    setState(() {
+      _isLoadingAutocomplete = true;
+    });
+    if (modalSetState != null) modalSetState(() {});
+
+    // 500ms 후 실제 검색 실행
+    print('🔍 [UI] Starting 500ms timer for query: "${query.trim()}"');
+    _debounceTimer = Timer(Duration(milliseconds: 500), () async {
+      print('🔍 [UI] Timer fired, calling _performAutocompleteSearch');
+      await _performAutocompleteSearch(query.trim(), modalSetState);
+    });
+  }
+
+  /// 실제 자동완성 검색 수행
+  Future<void> _performAutocompleteSearch(String query, [void Function(void Function())? modalSetState]) async {
+    print('🔍 [UI] _performAutocompleteSearch starting for: "$query"');
+    
+    try {
+      _lastSearchQuery = query;
+      print('🔍 [UI] Set lastSearchQuery to: "$_lastSearchQuery"');
+      
+      print('🔍 [UI] Calling API...');
+      final results = await _apiService.getKeywordAutocomplete(query, limit: 8);
+      print('🔍 [UI] API call completed, results: $results');
+      
+      // 위젯이 여전히 마운트되어 있는지 확인
+      if (!mounted) {
+        print('🔍 [UI] Widget not mounted, skipping setState');
+        return;
+      }
+      
+      print('🔍 [UI] Setting results and loading=false');
+      setState(() {
+        _autocompleteResults = results;
+        _isLoadingAutocomplete = false;
+      });
+      
+      // 모달의 setState도 호출 (있다면)
+      if (modalSetState != null) {
+        print('🔍 [UI] Calling modal setState (success)');
+        modalSetState(() {});
+      }
+      
+      print('🔍 [UI] setState completed');
+    } catch (e) {
+      print('❌ [UI] Error in _performAutocompleteSearch: $e');
+      
+      // 위젯이 여전히 마운트되어 있는지 확인
+      if (!mounted) {
+        print('🔍 [UI] Widget not mounted after error, skipping setState');
+        return;
+      }
+      
+      print('🔍 [UI] Setting empty results and loading=false due to error');
+      setState(() {
+        _autocompleteResults = [];
+        _isLoadingAutocomplete = false;
+      });
+      
+      // 모달의 setState도 호출 (있다면)
+      if (modalSetState != null) {
+        print('🔍 [UI] Calling modal setState (error)');
+        modalSetState(() {});
+      }
+      
+      print('Failed to get autocomplete: $e');
+    }
+  }
+
 
   /// 키워드 변경 및 히스토리 재로드
   void _changeKeyword(String keyword) {
@@ -297,6 +326,427 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
 
   /// 총 페이지 수
   int get _totalPages => (_filteredHistory.length / _itemsPerPage).ceil();
+
+  /// 키워드 검색 모달 표시 (모던 디자인)
+  void _showKeywordSearchModal() {
+    final bool isDark = AppTheme.isDark(context);
+    final TextEditingController searchController = TextEditingController();
+    final FocusNode searchFocusNode = FocusNode();
+    
+    // 모달 열 때 자동완성 상태 초기화
+    _debounceTimer?.cancel();
+    setState(() {
+      _autocompleteResults = [];
+      _isLoadingAutocomplete = false;
+      _lastSearchQuery = '';
+    });
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(20.r),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // 모달 헤더
+                  Container(
+                    padding: EdgeInsets.all(20.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '키워드 검색',
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.getTextColor(context),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppTheme.getTextColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // 검색 입력 필드
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 20.w),
+                    decoration: BoxDecoration(
+                      color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(16.w),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF3B82F6),
+                            size: 24.sp,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: searchController,
+                            focusNode: searchFocusNode,
+                            autofocus: true,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppTheme.getTextColor(context),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '키워드를 입력하세요...',
+                              hintStyle: TextStyle(
+                                color: isDark ? Colors.grey[400] : Colors.grey[500],
+                                fontSize: 16.sp,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+                            ),
+                            onChanged: (value) {
+                              setModalState(() {});
+                              // 디바운싱된 자동완성 검색 (모달 setState 전달)
+                              _searchAutocomplete(value, setModalState);
+                            },
+                            onSubmitted: (value) {
+                              if (value.trim().isNotEmpty) {
+                                // 자동완성 상태 초기화
+                                _debounceTimer?.cancel();
+                                setState(() {
+                                  _selectedKeyword = value.trim();
+                                  _autocompleteResults = [];
+                                  _isLoadingAutocomplete = false;
+                                  _lastSearchQuery = '';
+                                });
+                                _loadKeywordHistory();
+                                Navigator.pop(context);
+                              }
+                            },
+                          ),
+                        ),
+                        if (searchController.text.isNotEmpty)
+                          IconButton(
+                            onPressed: () {
+                              searchController.clear();
+                              setModalState(() {});
+                            },
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              color: isDark ? Colors.grey[400] : Colors.grey[500],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  
+                  SizedBox(height: 20.h),
+                  
+                  // 검색 제안 영역 (향후 자동완성 기능)
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '인기 키워드',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.getTextColor(context),
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+                          
+                          // 인기 키워드 태그들 (API에서 로드)
+                          if (_popularKeywords.isNotEmpty)
+                            Wrap(
+                              spacing: 8.w,
+                              runSpacing: 8.h,
+                              children: _popularKeywords.take(10).map((keywordData) {
+                                final keyword = keywordData['keyword'] as String;
+                                final searchCount = keywordData['search_count'] as int;
+                                
+                                return GestureDetector(
+                                  onTap: () {
+                                    // 자동완성 상태 초기화
+                                    _debounceTimer?.cancel();
+                                    setState(() {
+                                      _selectedKeyword = keyword;
+                                      _autocompleteResults = [];
+                                      _isLoadingAutocomplete = false;
+                                      _lastSearchQuery = '';
+                                    });
+                                    _loadKeywordHistory();
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w,
+                                      vertical: 8.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF3B82F6).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                        color: Color(0xFF3B82F6).withOpacity(0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.trending_up_rounded,
+                                          size: 14.sp,
+                                          color: Color(0xFF3B82F6),
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          keyword,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF3B82F6),
+                                          ),
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          '($searchCount)',
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF3B82F6).withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                          else
+                            Container(
+                              padding: EdgeInsets.all(16.w),
+                              child: Text(
+                                '인기 키워드를 불러오는 중...',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          
+                          SizedBox(height: 32.h),
+                          
+                          // 자동완성 결과 영역
+                          Container(
+                            height: 200.h,
+                            decoration: BoxDecoration(
+                              color: isDark 
+                                  ? Color(0xFF0F172A).withOpacity(0.5)
+                                  : Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+                              ),
+                            ),
+                            child: _isLoadingAutocomplete
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 24.w,
+                                          height: 24.h,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+                                          ),
+                                        ),
+                                        SizedBox(height: 12.h),
+                                        Text(
+                                          '검색 중...',
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : _autocompleteResults.isNotEmpty
+                                    ? ListView.separated(
+                                        padding: EdgeInsets.all(8.w),
+                                        itemCount: _autocompleteResults.length,
+                                        separatorBuilder: (context, index) => Divider(
+                                          height: 1,
+                                          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                                        ),
+                                        itemBuilder: (context, index) {
+                                          final result = _autocompleteResults[index];
+                                          final keyword = result['keyword'] as String;
+                                          final searchCount = result['search_count'] as int;
+                                          
+                                          return Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: () {
+                                                // 자동완성 상태 초기화
+                                                _debounceTimer?.cancel();
+                                                setState(() {
+                                                  _selectedKeyword = keyword;
+                                                  _autocompleteResults = [];
+                                                  _isLoadingAutocomplete = false;
+                                                  _lastSearchQuery = '';
+                                                });
+                                                _loadKeywordHistory();
+                                                Navigator.pop(context);
+                                              },
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.search_rounded,
+                                                      size: 18.sp,
+                                                      color: Color(0xFF3B82F6),
+                                                    ),
+                                                    SizedBox(width: 12.w),
+                                                    Expanded(
+                                                      child: Text(
+                                                        keyword,
+                                                        style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: AppTheme.getTextColor(context),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Container(
+                                                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                                      decoration: BoxDecoration(
+                                                        color: Color(0xFF3B82F6).withOpacity(0.1),
+                                                        borderRadius: BorderRadius.circular(8.r),
+                                                      ),
+                                                      child: Text(
+                                                        '${searchCount}회',
+                                                        style: TextStyle(
+                                                          fontSize: 11.sp,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: Color(0xFF3B82F6),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.auto_awesome_rounded,
+                                              size: 32.sp,
+                                              color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                            ),
+                                            SizedBox(height: 8.h),
+                                            Text(
+                                              '자동완성 기능',
+                                              style: TextStyle(
+                                                fontSize: 16.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              '키워드를 입력하면 자동완성 제안이 표시됩니다',
+                                              style: TextStyle(
+                                                fontSize: 13.sp,
+                                                color: isDark ? Colors.grey[500] : Colors.grey[500],
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // 검색 버튼
+                  Container(
+                    padding: EdgeInsets.all(20.w),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (searchController.text.trim().isNotEmpty) {
+                            // 자동완성 상태 초기화
+                            _debounceTimer?.cancel();
+                            setState(() {
+                              _selectedKeyword = searchController.text.trim();
+                              _autocompleteResults = [];
+                              _isLoadingAutocomplete = false;
+                              _lastSearchQuery = '';
+                            });
+                            _loadKeywordHistory();
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF3B82F6),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        child: Text(
+                          '검색',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
   
   /// 필터 적용 및 페이지 초기화
   void _applyFilters() {
@@ -1091,112 +1541,142 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           
           SizedBox(height: 32.h),
           
-          // 키워드 선택 카드
-          GestureDetector(
-            onTap: () {
-              _showKeywordSearchDialog();
-            },
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [Color(0xFF1E293B), Color(0xFF0F172A)]
-                      : [Colors.white, Color(0xFFF8FAFC)],
-                ),
-                borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(
-                  color: isDark 
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.06),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black.withOpacity(0.3)
-                        : Colors.black.withOpacity(0.08),
-                    blurRadius: 20,
-                    spreadRadius: 0,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                      ),
-                      borderRadius: BorderRadius.circular(16.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF3B82F6).withOpacity(0.3),
-                          blurRadius: 12,
-                          spreadRadius: 0,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.trending_up_rounded,
-                      color: Colors.white,
-                      size: 24.sp,
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedKeyword,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.getTextColor(context),
-                            height: 1.2,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          "선택된 키워드",
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            color: Color(0xFF3B82F6),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF3B82F6).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(
-                      Icons.search_rounded,
-                      color: Color(0xFF3B82F6),
-                      size: 16.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ).animate()
-              .fadeIn(duration: 800.ms, delay: 200.ms)
-              .slideY(begin: 0.1, end: 0, duration: 800.ms, curve: Curves.easeOutCubic)
-              .scale(begin: Offset(0.95, 0.95), end: Offset(1, 1), duration: 800.ms, curve: Curves.easeOutCubic),
+          // 키워드 검색 바
+          _buildKeywordSearchBar(),
         ],
       ),
     );
+  }
+
+  // 키워드 검색 카드 (검색 필드 스타일)
+  Widget _buildKeywordSearchBar() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      child: GestureDetector(
+        onTap: _showKeywordSearchModal,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [Color(0xFF1E293B), Color(0xFF0F172A)]
+                  : [Colors.white, Color(0xFFF8FAFC)],
+            ),
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(
+              color: isDark 
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.06),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.black.withOpacity(0.08),
+                blurRadius: 20,
+                spreadRadius: 0,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // 검색 아이콘
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF3B82F6).withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: Colors.white,
+                  size: 24.sp,
+                ),
+              ),
+              
+              SizedBox(width: 16.w),
+              
+              // 검색 필드 (현재 검색 중인 키워드 표시)
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                  decoration: BoxDecoration(
+                    color: isDark 
+                        ? Color(0xFF0F172A).withOpacity(0.7)
+                        : Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.black.withOpacity(0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _selectedKeyword.isNotEmpty 
+                              ? _selectedKeyword 
+                              : '키워드를 검색해보세요...',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: _selectedKeyword.isNotEmpty 
+                                ? FontWeight.w600 
+                                : FontWeight.w500,
+                            color: _selectedKeyword.isNotEmpty
+                                ? AppTheme.getTextColor(context)
+                                : (isDark ? Colors.grey[400] : Colors.grey[500]),
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                      if (_isLoading) ...[
+                        SizedBox(width: 12.w),
+                        SizedBox(
+                          width: 16.w,
+                          height: 16.h,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+                          ),
+                        ),
+                      ] else if (_selectedKeyword.isNotEmpty) ...[
+                        SizedBox(width: 12.w),
+                        Icon(
+                          Icons.edit_rounded,
+                          size: 16.sp,
+                          color: Color(0xFF3B82F6),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate()
+        .fadeIn(duration: 800.ms, delay: 200.ms)
+        .slideY(begin: 0.1, end: 0, duration: 800.ms, curve: Curves.easeOutCubic)
+        .scale(begin: Offset(0.95, 0.95), end: Offset(1, 1), duration: 800.ms, curve: Curves.easeOutCubic);
   }
 
   // 키워드 통계 카드

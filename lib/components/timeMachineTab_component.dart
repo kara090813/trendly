@@ -56,15 +56,12 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
     
     try {
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      print('Loading capsule data for date: $dateStr');
       final capsule = await _apiService.getCapsule(dateStr);
-      print('Capsule data loaded successfully: ${capsule.date}');
       setState(() {
         _capsuleData = capsule;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading capsule data: $e');
       final errorMessage = e.toString().replaceAll('Exception: ', '');
       
       // 해당 날짜의 캡슐이 존재하지 않을 경우 날짜를 사용할 수 없는 목록에 추가

@@ -1,6 +1,16 @@
 # API Specifications
 ## Keyword-related APIs
-### K1. /api/keyword/search/
+### K1. /api/keyword/now/
+- 요청하면 가장 최근 키워드 인스턴스 10개를 리턴함
+- 요청 방식: GET
+- 응답 형식: JSON, [Keyword 10개]
+
+### K2. /api/keyword/get/<int:keyword_id>/
+- 키워드 ID를 요청하면 해당하는 키워드 인스턴스를 리턴함
+- 요청 방식: GET
+- 응답 형식: JSON, Keyword 1개
+
+### K. /api/keyword/search/
 - 요청하면 조건에 맞는 키워드들의 ID 목록을 리턴함
 - 요청 방식: POST
 - 요청 형식: JSON
@@ -18,12 +28,7 @@
 }
 ```
 
-### K2. /api/keyword/get/<int:keyword_id>/
-- 키워드 ID를 요청하면 해당하는 키워드 인스턴스를 리턴함
-- 요청 방식: GET
-- 응답 형식: JSON, Keyword 1개
-
-### K3. /api/keyword/get_keyword_many/
+### K. /api/keyword/get_keyword_many/
 - id_list에 나열된 키워드 리스트를 리턴함
 - 요청 방식: POST
 - 요청 형식: JSON
@@ -34,18 +39,13 @@
 ```
 - 응답 형식: Keyword n개
 
-### K4. /api/keyword/now/
-- 요청하면 가장 최근 키워드 인스턴스 10개를 리턴함
-- 요청 방식: GET
-- 응답 형식: JSON, [Keyword 10개]
-
-### K5. /api/keyword/time_machine/<str:time>/
+### K. /api/keyword/time_machine/<str:time>/
 - 요청하면 해당 시점에서 가장 가까운 랭크 1-10의 키워드 인스턴스 10개를 리턴함
 - 시간 형식은 time.toUtc().toIso8601String()
 - 요청 방식: GET
 - 응답 형식: JSON, [Keyword 10개]
 
-### K6. /api/random_keyword_history/
+### K. /api/random_keyword_history/
 - 요청하면 임의 키워드의 키워드 문자열과 순위를 리턴함
 - 요청 방식: GET
 - 응답 형식: JSON
@@ -56,34 +56,34 @@
 }
 ```
 
-### K7. /api/keyword/history/
-- 요청하면 특정 keyword의 일부 필드만 가진 KeywordModel 리스트를 리턴함(없으면 404)
+### K. /api/keyword/history/
+- 특정 키워드의 심플 버전 KeywordModel 인스턴스를 created_at 오름차순으로 반환 (없으면 404)
 - 요청 방식: POST
 - 요청 형식: JSON
 ```
 {
-  'keyword': '키워드명'
+  "keyword": "이재명"
 }
 ```
-- 응답 형식: 
+- 응답 형식: JSON
 ```
 [
   {
-    'id': 1,
-    'keyword': '이재명',
-    'rank': 1,
-    'created_at': '2025-05-16T13:15:32.123456Z'
+    "id": 1,
+    "keyword": "이재명",
+    "rank": 1,
+    "created_at": "2025-05-16T13:15:32.123456Z",
+    "current_discussion_room_id": 123
   }, 
   ...
 ]
-
 ```
-### K8. /api/keyword/random/<int:count>/
+### K. /api/keyword/random/<int:count>/
 - 요청하면 지정된 갯수의 임의 키워드를 반환함
 - 요청 방식: GET
 - 응답 방식: JSON
 - 응답 형식: [KeywordModel 리스트 n개]
-### K9. /api/keyword/history_simple/
+### K. /api/keyword/history_simple/
 - 특정 키워드의 간략화된 히스토리 정보 제공
 - 요청 방식: POST
 - 요청 형식: JSON
@@ -112,7 +112,7 @@
   ]]
 }
 ```
-### K10. /api/keyword/date_groups/<str:datestr>/
+### K. /api/keyword/date_groups/<str:datestr>/
 - 특정 날짜에 생성된 키워드를 10개씩 묶어서 전체 반환
 - 요청 방식: GET
 - 요청 형식: YYYY-MM-DD (예: 2025-01-15)
@@ -139,7 +139,7 @@
   "total_groups": 24
 }
 ```
-### K11. /api/keyword/daily_summary/<str:datestr>/
+### K. /api/keyword/daily_summary/<str:datestr>/
 - 특정 날짜의 일일 요약 리포트 제공
 - 요청 방식: GET
 - 요청 형식: YYYY-MM-DD (예: 2025-01-15)
@@ -174,24 +174,8 @@
 - 요청 방식: GET
 - 응답 형식: JSON, DiscussionRoom 1개
 - 요청하면 해당 토론방 인스턴스를 리턴
-### D2. /api/discussion/get-latest-keyword-by-room-id/<int:discussion_room_id>/
-- 요청 방식: GET
-- 응답 형식: JSON, Keyword 1개
-- 요청하면 해당 토론방과 동일한 키워드를 가진 가장 최신 키워드 인스턴스를 리턴
-### D3. /api/discussion/now/
-- 요청 방식: GET
-- 응답 형식: JSON, [DiscussionRoom 10개]
-- 요청하면 가장 최근 키워드 인스턴스 10개와 동일 키워드를 가진 토론방 10개 인스턴스를 리턴
-### D4. /api/discussion/all?page=N
-- 요청 방식: GET
-- 응답 형식: JSON, [DiscussionRoom n개]
-- 요청하면 모든 토론방 인스턴스를 페이지 당 최대 10개씩 리턴함
-### D5. /api/discussion/
-- 요청 방식: POST
-- 요청 형식: JSON, {"keyword": "원하는 키워드"}
-- 응답 형식: JSON, DiscussionRoom 1개
-- 요청하면 해당 키워드를 가진 토론방 중 가장 최근 1개의 인스턴스를 리턴
-### D6. /api/discussion/<int:discussion_room_id>/sentiment/
+
+### D2. /api/discussion/<int:discussion_room_id>/sentiment/
 - 요청 방식: POST
 - 요청 형식: JSON,
 ```
@@ -203,11 +187,51 @@
 ```
 - 응답 형식: 성공 시 202, 실패 시 400
 - 해당 토론방의 반응 조정
-### D7. /api/discussion/active/
+
+### D3. /api/discussion/hot/
+- 요청 방식: GET
+- 활성 상태인 토론방 10개를 (긍정+중립+부정+댓글수) 내림차순 정렬하여 반환
+
+### D4. /api/discussion/active
+- 요청 방식: GET
+- 요청 형식: ?sort=(new|pop)&page=N&category=all
+- 응답 형식: [DiscussionRoom 20개]
+- sort는 new, pop으로 각 갱신시각순, (댓글+긍정)순을 표현함
+- page는 Paginator(page 내 항목 수는 20개)에 의한 페이지를 표현함
+- category는 해당 토론방 키워드의 카테고리를 표현함
+
+### D5. /api/discussion/category/
+- 요청 방식: GET
+- 응답 형식: 결과는 스트링 리스트
+- active상태인 디스커션 모델 리스트에서 카테고리들 뭐있는지 리턴받음
+
+### D6. /api/discussion/count
+- 요청 방식: GET
+- 요청 형식: ?isActive=(true|false)&category=all
+- 응답 형식: 해당 카테고리에 속하는 활성 상태인 토론방 수(int)
+
+### D. /api/discussion/now/
+- 요청 방식: GET
+- 응답 형식: JSON, [DiscussionRoom 10개]
+- 요청하면 가장 최근 키워드 인스턴스 10개와 동일 키워드를 가진 토론방 10개 인스턴스를 리턴
+
+### D. /api/discussion/all?page=N
+- 요청 방식: GET
+- 응답 형식: JSON, [DiscussionRoom n개]
+- 요청하면 모든 토론방 인스턴스를 페이지 당 최대 10개씩 리턴함
+
+### D. /api/discussion/
+- 요청 방식: POST
+- 요청 형식: JSON, {"keyword": "원하는 키워드"}
+- 응답 형식: JSON, DiscussionRoom 1개
+- 요청하면 해당 키워드를 가진 토론방 중 가장 최근 1개의 인스턴스를 리턴
+
+<!-- ### D. /api/discussion/active/
 - 요청 방식: GET
 - 응답 형식: [DiscussionRoom n개]
-- is_closed가 False인 토론방 리스트 반환
-### D8. /api/discussion/get_random/<int:count>/<int:option>/
+- is_closed가 False인 토론방 리스트 반환 -->
+
+### D. /api/discussion/get_random/<int:count>/<int:option>/
 - 요청 방식: GET
 - 응답 형식: [DiscussionRoom n개]
 - 지정된 수의 임의로 선택된 DiscussionRoom 인스턴스 리스트를 반환함
@@ -215,11 +239,11 @@
   - Option 1: Any
   - Option 2: Open only
   - Option 3: Closed only
-### D9. /api/discussion/count/<str:option>
+### D. /api/discussion/count/<str:option>
 - 요청 방식: GET
 - 요청 형식: all, open, close을 option으로 가질 수 있다.
 - 응답 형식: 각각 all은 모든 토론방, open은 열린 토론방, close는 닫힌 토론방의 수를 반환함
-### D10. /api/discussion/paging
+### D. /api/discussion/paging
 - 요청 방식: GET
 - 요청 형식: ?option=N&sort=(new|pop)&page=N
 - 응답 형식: [DiscussionRoom 10개]
@@ -229,43 +253,13 @@
 - 예시: ?option=1&sort=pop&page=1은 열린 토론방을 인기순으로 정렬한 뒤 1~10위 항목을 반환함
 
 ## Comment-related APIs
-### C1. /api/comment/<int:comment_id>/
+### C1. /api/discussion/<int:discussion_room_id>/get_comment/
 - 요청 방식: GET
-- 응답 형식: 댓글 인스턴스 1개
-### C2. /api/comment/<int:comment_id>/like/
-- 요청 방식: POST
-- 요청 형식: JSON,
-```
-{
-  "is_cancel": true/false
-}
-```
-- 응답 형식: 성공 시 202, 실패 시 400
-- 특정 댓글의 추천 +1 (is_cancel이 true이면 추천 취소)
-### C3. /api/comment/<int:comment_id>/dislike/
-- 요청 방식: POST
-- 요청 형식: JSON,
-```
-{
-  "is_cancel": true/false
-}
-```
-- 응답 형식: 성공 시 202
-- 특정 댓글의 비추천 +1 (is_cancel이 true이면 비추 취소)
-### C4. /api/discussion/<int:discussion_room_id>/comment/
-- 요청 방식: GET
+- 요청 형식: 맨 뒤에 new를 붙이거나 생략이면 최신순, pop을 붙이면 추천순으로 리턴함
 - 응답 형식: JSON, [Comment n개]
-- 요청하면 해당 토론방 내 모든 댓글 인스턴스를 리턴함
-### C5. /api/discussion/<int:discussion_room_id>/get_comment/
-- 동의어: discussion/<int:discussion_room_id>/get_comment/new
-- 요청 방식: GET
-- 응답 형식: JSON, [Comment n개]
-- 요청하면 해당 토론방의 댓글 인스턴스들을 subcomment 제외하고 최신순으로 리턴함
-### C6. /api/discussion/<int:discussion_room_id>/get_comment/pop
-- 요청 방식: GET
-- 응답 형식: JSON, [Comment n개]
-- 요청하면 해당 토론방의 댓글 인스턴스들을 subcomment 제외하고 추천순으로 리턴함
-### C7. /api/discussion/<int:discussion_room_id>/add_comment/
+- 요청하면 해당 토론방의 댓글 인스턴스들을 subcomment 제외하고 new/pop에 따라 리턴함
+
+### C2. /api/discussion/<int:discussion_room_id>/add_comment/
 - 요청 방식: POST
 - 요청 형식: JSON, 
 ```
@@ -284,7 +278,8 @@
   - ip_addr은 서버에서 자동으로 HTTP 헤더에서 추출하여 설정
   - 토론방 댓글 수가 자동으로 +1 됨
   - 대댓글인 경우 부모 댓글의 sub_comment_count가 자동으로 +1 됨
-### C8. /api/discussion/<int:discussion_room_id>/del_comment/
+
+### C3. /api/discussion/<int:discussion_room_id>/del_comment/
 - 요청 방식: POST
 - 요청 형식: JSON, 
 ```
@@ -295,11 +290,105 @@
 ```
 - 응답 형식: 성공 시 HTTP 204
 - 요청하면 해당 댓글을 삭제하고 토론방 댓글 수를 -1
-### C9. /api/discussion/subcomment/<int:parent_comment_id>/new
+
+### C4. /api/comment/<int:comment_id>/
+- 요청 방식: GET
+- 응답 형식: 댓글 인스턴스 1개
+
+### C5. /api/comment/<int:comment_id>/like/
+- 요청 방식: POST
+- 요청 형식: JSON,
+```
+{
+  "is_cancel": true/false
+}
+```
+- 응답 형식: 성공 시 202, 실패 시 400
+- 특정 댓글의 추천 +1 (is_cancel이 true이면 추천 취소)
+
+### C6. /api/comment/<int:comment_id>/dislike/
+- 요청 방식: POST
+- 요청 형식: JSON,
+```
+{
+  "is_cancel": true/false
+}
+```
+- 응답 형식: 성공 시 202
+- 특정 댓글의 비추천 +1 (is_cancel이 true이면 비추 취소)
+
+### C7. /api/discussion/subcomment/<int:parent_comment_id>/new
 - 요청 방식: GET
 - 응답 형식: [Comment n개]
 - 특정 부모 댓글의 서브 댓글을 모두 가져옴(최신순)
-### C10. /api/discussion/subcomment/<int:parent_comment_id>/pop
+
+### C. /api/discussion/subcomment/<int:parent_comment_id>/pop
 - 요청 방식: GET
 - 응답 형식: [Comment n개]
 - 특정 부모 댓글의 서브 댓글을 모두 가져옴(추천순)
+
+## Capsule-related APIs
+### CAP1. /api/capsule/<str:date_str>/
+- 특정 날짜의 키워드 캡슐 데이터를 조회
+- 요청 방식: GET
+- 요청 형식: YYYY-MM-DD (예: 2025-01-15)
+- 응답 형식: JSON, CapsuleModel 1개
+- 오류 응답:
+  - 404: 해당 날짜의 캡슐이 존재하지 않습니다.
+  - 400: 올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)
+
+## SimpleKeyword-related APIs (자동완성 기능)
+### SK1. /api/keywords/autocomplete/
+- 키워드 자동완성 기능
+- 요청 방식: GET
+- 요청 파라미터:
+  - q: 검색어 (필수, 최소 1글자)
+  - limit: 반환할 결과 수 (선택, 기본값: 10)
+- 응답 형식: JSON
+```json
+{
+  "suggestions": [
+    {
+      "keyword": "삼성전자",
+      "search_count": 1523
+    },
+    {
+      "keyword": "삼성 갤럭시",
+      "search_count": 892
+    }
+  ]
+}
+```
+- 특징:
+  - 검색 빈도(search_count)와 최신성(last_appeared) 기준 정렬
+  - Redis 캐싱으로 빠른 응답 (< 50ms)
+  - prefix 매칭 방식
+
+### SK2. /api/keywords/popular/
+- 인기 검색어 조회
+- 요청 방식: GET
+- 요청 파라미터:
+  - limit: 반환할 결과 수 (선택, 기본값: 100, 최대: 100)
+- 응답 형식: JSON
+```json
+{
+  "keywords": [
+    {
+      "keyword": "갤럭시 S25",
+      "search_count": 5234
+    },
+    {
+      "keyword": "김연아",
+      "search_count": 4821
+    }
+  ]
+}
+```
+- 특징:
+  - 검색 횟수 기준 내림차순 정렬
+  - Top 100 캐싱 (30분 TTL)
+
+### 참고사항
+- SimpleKeyword는 중복 없는 고유 키워드만 저장
+- /api/keyword/history/ 호출 시 자동으로 search_count 증가
+- keyword_resolver.py가 1시간마다 새 키워드 자동 추가

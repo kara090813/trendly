@@ -38,7 +38,20 @@ class ApiService {
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => Keyword.fromJson(json)).toList();
+        
+        // null 값들을 안전하게 처리
+        return data.map((json) {
+          final Map<String, dynamic> safeJson = Map<String, dynamic>.from(json);
+          
+          // null 값들을 기본값으로 처리
+          safeJson['type2'] = safeJson['type2'] ?? '';
+          safeJson['type3'] = safeJson['type3'] ?? '';
+          safeJson['category'] = safeJson['category'] ?? '기타';
+          safeJson['type1'] = safeJson['type1'] ?? [];
+          safeJson['references'] = safeJson['references'] ?? {};
+          
+          return Keyword.fromJson(safeJson);
+        }).toList();
       } else {
         throw Exception('Failed to load current keywords: ${response.statusCode}');
       }
@@ -61,7 +74,16 @@ class ApiService {
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = json.decode(decodedBody);
-        return Keyword.fromJson(data);
+        
+        // null 값들을 안전하게 처리
+        final Map<String, dynamic> safeData = Map<String, dynamic>.from(data);
+        safeData['type2'] = safeData['type2'] ?? '';
+        safeData['type3'] = safeData['type3'] ?? '';
+        safeData['category'] = safeData['category'] ?? '기타';
+        safeData['type1'] = safeData['type1'] ?? [];
+        safeData['references'] = safeData['references'] ?? {};
+        
+        return Keyword.fromJson(safeData);
       } else {
         throw Exception('Failed to load keyword: ${response.statusCode}');
       }
@@ -115,7 +137,20 @@ class ApiService {
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => Keyword.fromJson(json)).toList();
+        
+        // null 값들을 안전하게 처리
+        return data.map((json) {
+          final Map<String, dynamic> safeJson = Map<String, dynamic>.from(json);
+          
+          // null 값들을 기본값으로 처리
+          safeJson['type2'] = safeJson['type2'] ?? '';
+          safeJson['type3'] = safeJson['type3'] ?? '';
+          safeJson['category'] = safeJson['category'] ?? '기타';
+          safeJson['type1'] = safeJson['type1'] ?? [];
+          safeJson['references'] = safeJson['references'] ?? {};
+          
+          return Keyword.fromJson(safeJson);
+        }).toList();
       } else if (response.statusCode == 404) {
         throw Exception('해당 키워드의 히스토리가 존재하지 않습니다.');
       } else {
@@ -602,6 +637,89 @@ class ApiService {
     } catch (e) {
       print('관심 키워드 가져오기 오류: $e');
       return [];
+    }
+  }
+
+  /// 키워드 자동완성
+  /// GET /api/keywords/autocomplete/
+  Future<List<Map<String, dynamic>>> getKeywordAutocomplete(String query, {int limit = 10}) async {
+    print('🔍 [AUTO] Starting autocomplete search for: "$query"');
+    
+    final Map<String, String> queryParams = {
+      'q': query,
+      'limit': limit.toString(),
+    };
+    
+    final String url = Uri.parse('$_baseUrl/keywords/autocomplete/')
+        .replace(queryParameters: queryParams)
+        .toString();
+    
+    print('🔍 [AUTO] Request URL: $url');
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      print('🔍 [AUTO] Response status: ${response.statusCode}');
+      print('🔍 [AUTO] Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        final List<dynamic> suggestions = data['suggestions'] ?? [];
+        
+        print('🔍 [AUTO] Parsed suggestions count: ${suggestions.length}');
+        
+        final results = suggestions.map((item) => {
+          'keyword': (item['keyword'] ?? '').toString(),
+          'search_count': (item['search_count'] ?? 0) as int,
+        }).toList();
+        
+        print('🔍 [AUTO] Final results: $results');
+        return results;
+      } else {
+        print('❌ [AUTO] API Error - Status: ${response.statusCode}, Body: ${response.body}');
+        throw Exception('Failed to get autocomplete: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ [AUTO] Network error: $e');
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// 인기 검색어 조회
+  /// GET /api/keywords/popular/
+  Future<List<Map<String, dynamic>>> getPopularKeywords({int limit = 100}) async {
+    final Map<String, String> queryParams = {
+      'limit': limit.toString(),
+    };
+    
+    final String url = Uri.parse('$_baseUrl/keywords/popular/')
+        .replace(queryParameters: queryParams)
+        .toString();
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        final List<dynamic> keywords = data['keywords'] ?? [];
+        
+        return keywords.map((item) => {
+          'keyword': (item['keyword'] ?? '').toString(),
+          'search_count': (item['search_count'] ?? 0) as int,
+        }).toList();
+      } else {
+        throw Exception('Failed to get popular keywords: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 

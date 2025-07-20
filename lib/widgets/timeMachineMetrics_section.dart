@@ -53,7 +53,6 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
   @override
   Widget build(BuildContext context) {
     final bool isDark = AppTheme.isDark(context);
-    print(widget.summaryData);
     final top3Data = widget.summaryData['top3_keywords'] as List<dynamic>? ?? [];
     
     final List<Map<String, dynamic>> keywords = [];
