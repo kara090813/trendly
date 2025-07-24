@@ -114,10 +114,39 @@ class ApiService {
   }
 
   /// 임의의 키워드 히스토리 가져오기
-  /// GET /random_keyword_history/
-  Future<Map<String, dynamic>> getRandomKeywordHistory() async {
-    final String url = '$_baseUrl';
-    return Future.value({});
+  /// GET /keyword/random/1/
+  Future<List<Keyword>> getRandomKeywordHistory() async {
+    final String url = '$_baseUrl/keyword/random/1/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        
+        // null 값들을 안전하게 처리
+        return data.map((json) {
+          final Map<String, dynamic> safeJson = Map<String, dynamic>.from(json);
+          
+          // null 값들을 기본값으로 처리
+          safeJson['type2'] = safeJson['type2'] ?? '';
+          safeJson['type3'] = safeJson['type3'] ?? '';
+          safeJson['category'] = safeJson['category'] ?? '기타';
+          safeJson['type1'] = safeJson['type1'] ?? [];
+          safeJson['references'] = safeJson['references'] ?? {};
+          
+          return Keyword.fromJson(safeJson);
+        }).toList();
+      } else {
+        throw Exception('Failed to load random keywords: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
   }
 
   /// 특정 키워드의 히스토리 가져오기
@@ -717,6 +746,36 @@ class ApiService {
         }).toList();
       } else {
         throw Exception('Failed to get popular keywords: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// 랜덤 키워드 조회
+  /// GET /api/keywords/random/
+  Future<Map<String, dynamic>> getRandomKeyword() async {
+    final String url = '$_baseUrl/keywords/random/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        
+        // 응답 데이터 검증 및 기본값 설정
+        return {
+          'keyword': data['keyword']?.toString() ?? '',
+          'search_count': (data['search_count'] as num?)?.toInt() ?? 0,
+          'last_searched': data['last_searched'],
+          'last_appeared': data['last_appeared']?.toString() ?? '',
+        };
+      } else {
+        throw Exception('Failed to load random keyword: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network error: $e');
