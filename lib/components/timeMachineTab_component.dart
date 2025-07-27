@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../widgets/_widgets.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../funcs/category_colors.dart';
 import 'package:intl/intl.dart';
 
 class TimeMachineTabComponent extends StatefulWidget {
@@ -26,16 +27,8 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
   final ApiService _apiService = ApiService();
   final Set<String> _unavailableDates = {};
 
-  final Map<String, Color> categoryColors = {
-    '정치': Color(0xFF4A90E2),
-    '사회': Color(0xFF27AE60),
-    '연예': Color(0xFFE74C3C),
-    '스포츠': Color(0xFFF39C12),
-    'IT': Color(0xFF9B59B6),
-    '경제': Color(0xFF1ABC9C),
-    '국제': Color(0xFF34495E),
-    '문화': Color(0xFFE67E22),
-  };
+  // Use centralized category colors for consistency
+  final Map<String, Color> categoryColors = CategoryColors.allCategoryColors;
 
   @override
   void initState() {

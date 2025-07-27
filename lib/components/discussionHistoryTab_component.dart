@@ -1,13 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'dart:ui';
+import 'dart:async';
+import 'dart:math' as math;
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../services/api_cache_service.dart';
+import '../widgets/discussion_filter_widget.dart';
+import '../models/filter_state_model.dart';
+import '../funcs/category_colors.dart';
 
-class DiscussionHistoryTabComponent extends StatefulWidget {
+class DiscussionHistoryTabComponent extends StatefulWidget{
   const DiscussionHistoryTabComponent({super.key});
 
   @override
@@ -20,32 +27,37 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
   List<DiscussionRoom> _allHistoryRooms = [];
   List<DiscussionRoom> _filteredRooms = [];
   bool _isLoading = true;
-  bool _isLoadingMore = false;
+  // Removed _isLoadingMore as we use pagination
   String? _error;
   late AnimationController _floatingController;
   
-  // 검색 및 필터링 상태
-  String _searchQuery = '';
-  String _selectedCategory = '전체';
-  String _selectedPeriod = '전체';
-  String _sortOption = 'newest'; // newest, oldest, popular, active
+  // Enhanced state management
+  final ApiCacheService _cacheService = ApiCacheService();
+  HistoryFilterState _filterState = HistoryFilterState();
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
+  
+  // Pagination state
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  final int _itemsPerPage = 20; // Match LiveTab pattern
+  bool _hasMoreData = true;
+  int _totalPages = 1;
+  int _totalItems = 0;
+  
+  // Advanced filtering - removed, now using simple filter only
   List<String> _categories = ['전체'];
   Map<String, int> _categoryCounts = {};
   
-  // 페이징
-  int _currentPage = 1;
-  final int _pageSize = 50; // 대량 데이터를 위해 증가
-  bool _hasMoreData = true;
-  final ScrollController _scrollController = ScrollController();
+  // Performance tracking
+  DateTime? _lastQueryTime;
+  int _totalQueries = 0;
   
+  // Removed timeline grouping for flat list display
   
-  // 고급 필터
-  DateTime? _startDate;
-  DateTime? _endDate;
-  bool _showAdvancedFilters = false;
-  RangeValues _commentRange = RangeValues(0, 1000);
-  RangeValues _participantRange = RangeValues(0, 500);
+  // Focus management for accessibility
+  late FocusNode _paginationFocusNode;
+  final TextEditingController _jumpPageController = TextEditingController();
 
   @override
   void initState() {
@@ -54,8 +66,10 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
       vsync: this,
       duration: Duration(seconds: 3),
     )..repeat(reverse: true);
+    
+    _paginationFocusNode = FocusNode();
+    
     _loadHistoryData();
-    _scrollController.addListener(_onScroll);
     
     _searchController.addListener(() {
       _debounceSearch();
@@ -67,24 +81,128 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     _floatingController.dispose();
     _scrollController.dispose();
     _searchController.dispose();
+    _paginationFocusNode.dispose();
+    _jumpPageController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
+  
+  String _generateCacheKey() {
+    return _filterState.generateCacheKey();
+  }
+  
+  void _processSearchResult(Map<String, dynamic> result, {bool fromCache = false}) {
+    final rooms = (result['data'] as List<dynamic>)
+        .map((json) => DiscussionRoom.fromJson(json))
+        .toList();
+    
+    final pagination = result['pagination'] ?? {};
+    final totalItems = pagination['total_items'] ?? 0;
+    final totalPages = pagination['total_pages'] ?? 1;
+    
+    setState(() {
+      _allHistoryRooms = rooms;
+      _filteredRooms = List.from(rooms);
+      _totalItems = totalItems;
+      _totalPages = totalPages;
+      _hasMoreData = _currentPage < _totalPages;
+    });
+    
+    // No need to group rooms anymore
+    
+    // Cache hit logged internally
+  }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMoreData) {
-        _loadMoreData();
-      }
+  // Navigation methods for pagination
+  Future<void> _goToPage(int page) async {
+    if (page < 1 || page > _totalPages || page == _currentPage) return;
+    
+    setState(() {
+      _currentPage = page;
+      _isLoading = true;
+    });
+    
+    await _loadHistoryWithFilters();
+    
+    // Scroll to top for better UX
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
   }
-
-  // 검색 디바운싱
-  void _debounceSearch() {
-    setState(() {
-      _searchQuery = _searchController.text.toLowerCase();
-    });
-    _applyFilters();
+  
+  Future<void> _goToNextPage() async {
+    if (_hasMoreData) {
+      await _goToPage(_currentPage + 1);
+    }
   }
+  
+  Future<void> _goToPreviousPage() async {
+    if (_currentPage > 1) {
+      await _goToPage(_currentPage - 1);
+    }
+  }
+  
+  Future<void> _goToFirstPage() async {
+    await _goToPage(1);
+  }
+  
+  Future<void> _goToLastPage() async {
+    await _goToPage(_totalPages);
+  }
+  
+  void _handleJumpToPage(String input) {
+    final page = int.tryParse(input.trim());
+    if (page != null && page >= 1 && page <= _totalPages) {
+      _goToPage(page);
+    } else {
+      // Show error message for invalid page
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('올바른 페이지 번호를 입력하세요 (1-$_totalPages)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    _jumpPageController.clear();
+  }
+
+  // Enhanced search with debouncing and caching
+  void _debounceSearch() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        final query = _searchController.text.trim();
+        if (query != _filterState.searchQuery) {
+          setState(() {
+            _filterState = _filterState.copyWith(searchQuery: query);
+          });
+          _performSearch();
+        }
+      }
+    });
+  }
+
+  Future<void> _performSearch() async {
+    _totalQueries++;
+    _lastQueryTime = DateTime.now();
+    
+    // Check cache first
+    final cacheKey = _generateCacheKey();
+    final cachedResult = await _cacheService.getHistoryData(cacheKey);
+    
+    if (cachedResult != null) {
+      _processSearchResult(cachedResult, fromCache: true);
+      return;
+    }
+    
+    // Perform API search
+    await _loadHistoryWithFilters();
+  }
+
 
   Future<void> _loadHistoryData() async {
     setState(() {
@@ -94,13 +212,16 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
       _hasMoreData = true;
       _allHistoryRooms = [];
       _filteredRooms = [];
+      _totalItems = 0;
+      _totalPages = 1;
     });
 
     try {
-      // 병렬로 데이터 로드
-      final results = await Future.wait([
+      // Parallel loading with enhanced error handling
+      await Future.wait([
         _loadCategories(),
-        _loadHistoryRooms(),
+        _loadHistoryWithFilters(),
+        _preloadAggregations(),
       ]);
 
       if (mounted) {
@@ -118,249 +239,190 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     }
   }
 
-  Future<void> _loadCategories() async {
+
+  Future<void> _preloadAggregations() async {
     try {
-      // Mock 카테고리 데이터 (실제로는 API 호출)
-      final categories = ['정치', '경제', '사회', '문화', '스포츠', '국제', '과학', '기타'];
-      final counts = {
-        '전체': 2847,
-        '정치': 456,
-        '경제': 378,
-        '사회': 623,
-        '문화': 234,
-        '스포츠': 189,
-        '국제': 345,
-        '과학': 167,
-        '기타': 455,
-      };
-      
-      setState(() {
-        _categories = ['전체', ...categories];
-        _categoryCounts = counts;
-      });
+      // Preload commonly accessed aggregations
+      await _cacheService.preloadStatistics();
     } catch (e) {
-      print('카테고리 로드 실패: $e');
+      // Aggregation preload failed silently
     }
   }
 
-
-  Future<void> _loadHistoryRooms() async {
+  Future<void> _loadHistoryWithFilters() async {
     try {
-      // Mock 데이터 생성 (실제로는 API 호출)
-      final List<DiscussionRoom> mockRooms = [];
-      final keywords = [
-        '대통령 탄핵', '비트코인 급락', '아이돌 논란', '월드컵 경기', '인공지능 발전',
-        '부동산 정책', '코로나 백신', '기후변화', '우크라이나 전쟁', '메타버스',
-        '주 52시간', '최저임금', '4차 산업혁명', '전기차 시대', '우주 개발',
-        '넷플릭스 오징어게임', 'K-POP 월드투어', '배달음식 규제', '카카오톡 장애',
-        '삼성 반도체', 'LG 배터리', '현대차 수소차', '네이버 웹툰', '쿠팡 물류',
-      ];
+      final historyData = await _apiService.getHistoryWithAdvancedFilters(
+        filters: _filterState.toApiFilters(),
+        cursor: null, // Use null cursor for page-based
+        limit: _itemsPerPage,
+      );
       
-      final categories = ['정치', '경제', '사회', '문화', '스포츠', '국제', '과학'];
+      final rooms = (historyData['data'] as List<dynamic>)
+          .map((json) => DiscussionRoom.fromJson(json))
+          .toList();
       
-      for (int i = 0; i < 100; i++) { // 처음에 100개 로드
-        final createdAt = DateTime.now().subtract(Duration(days: i + 1));
-        final closedAt = createdAt.add(Duration(hours: 12 + (i % 20)));
-        
-        mockRooms.add(DiscussionRoom(
-          id: 3000 + i,
-          keyword: keywords[i % keywords.length] + (i > 24 ? ' ${i ~/ 25 + 1}' : ''),
-          keyword_id_list: [100 + i],
-          is_closed: true,
-          created_at: createdAt,
-          updated_at: closedAt,
-          closed_at: closedAt,
-          comment_count: 15 + (i % 200),
-          comment_summary: '활발한 토론이 진행되었습니다. 다양한 의견이 교환되었고...',
-          positive_count: 20 + (i % 50),
-          neutral_count: 15 + (i % 30),
-          negative_count: 10 + (i % 25),
-          sentiment_snapshot: [],
-          category: categories[i % categories.length],
-        ));
-      }
+      final pagination = historyData['pagination'] ?? {};
+      final totalItems = pagination['total_items'] ?? 0;
+      final totalPages = pagination['total_pages'] ?? 1;
+      
+      // Cache the result
+      final cacheKey = _generateCacheKey();
+      await _cacheService.cacheHistoryData(cacheKey, historyData);
       
       setState(() {
-        _allHistoryRooms = mockRooms;
-        _filteredRooms = List.from(mockRooms);
-        _hasMoreData = mockRooms.length >= _pageSize;
+        _allHistoryRooms = rooms;
+        _filteredRooms = List.from(rooms);
+        _totalItems = totalItems;
+        _totalPages = totalPages;
+        _hasMoreData = _currentPage < _totalPages;
+        _isLoading = false;
       });
+      
+      // No need to group rooms anymore
+    } catch (e) {
+      // Fallback to existing API
+      await _loadHistoryRoomsFallback();
+    }
+  }
+
+  Future<void> _loadHistoryRoomsFallback() async {
+    try {
+      final closedRooms = await _apiService.getClosedDiscussionRooms(
+        sort: _filterState.sortOption,
+        page: _currentPage,
+        category: _filterState.selectedCategory == '전체' ? 'all' : _filterState.selectedCategory,
+      );
+      
+      // Estimate total pages from returned data
+      final estimatedTotal = closedRooms.length < _itemsPerPage 
+          ? (_currentPage - 1) * _itemsPerPage + closedRooms.length
+          : _currentPage * _itemsPerPage;
+      final estimatedPages = (estimatedTotal / _itemsPerPage).ceil();
+      
+      setState(() {
+        _allHistoryRooms = closedRooms;
+        _filteredRooms = List.from(closedRooms);
+        _totalItems = estimatedTotal;
+        _totalPages = estimatedPages;
+        _hasMoreData = closedRooms.length == _itemsPerPage;
+        _isLoading = false;
+      });
+      
+      // No need to group rooms anymore
     } catch (e) {
       throw Exception('히스토리 룸 로드 실패: $e');
     }
   }
 
-  Future<void> _loadMoreData() async {
-    if (!_hasMoreData || _isLoadingMore) return;
-    
-    setState(() {
-      _isLoadingMore = true;
-    });
-    
+  Future<void> _loadCategories() async {
     try {
-      await Future.delayed(Duration(milliseconds: 500)); // 로딩 시뮬레이션
+      // API에서 카테고리 목록 가져오기
+      final categories = await _apiService.getDiscussionCategories();
+      // 카테고리 목록 설정 - 정의된 순서대로 정렬
+      final orderedCategories = CategoryColors.primaryCategories
+          .where((category) => categories.contains(category))
+          .toList();
+      final finalCategories = ['전체', ...orderedCategories];
       
-      // Mock 추가 데이터
-      final List<DiscussionRoom> newRooms = [];
-      final baseIndex = _allHistoryRooms.length;
-      
-      for (int i = 0; i < 50; i++) {
-        final idx = baseIndex + i;
-        final createdAt = DateTime.now().subtract(Duration(days: idx + 1));
-        final closedAt = createdAt.add(Duration(hours: 12 + (idx % 20)));
-        
-        newRooms.add(DiscussionRoom(
-          id: 3000 + idx,
-          keyword: '과거 토론 ${idx + 1}',
-          keyword_id_list: [100 + idx],
-          is_closed: true,
-          created_at: createdAt,
-          updated_at: closedAt,
-          closed_at: closedAt,
-          comment_count: 5 + (idx % 100),
-          comment_summary: '과거에 진행된 토론입니다.',
-          positive_count: 10 + (idx % 30),
-          neutral_count: 8 + (idx % 20),
-          negative_count: 5 + (idx % 15),
-          sentiment_snapshot: [],
-          category: ['정치', '경제', '사회'][idx % 3],
-        ));
-      }
+      // 카테고리별 카운트 로드 (병렬 처리)
+      await _loadCategoryCounts(finalCategories);
       
       if (mounted) {
         setState(() {
-          _allHistoryRooms.addAll(newRooms);
-          _currentPage++;
-          _hasMoreData = _allHistoryRooms.length < 1000; // 최대 1000개
-          _isLoadingMore = false;
+          _categories = finalCategories;
         });
-        _applyFilters();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingMore = false;
-        });
-      }
+      // 카테고리 로드 실패 시 기본값 사용
     }
   }
 
-  void _applyFilters() {
-    List<DiscussionRoom> filtered = List.from(_allHistoryRooms);
+  Future<void> _loadCategoryCounts(List<String> categories) async {
+    final Map<String, int> counts = {};
     
-    // 검색어 필터
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((room) =>
-        room.keyword.toLowerCase().contains(_searchQuery) ||
-        (room.comment_summary ?? '').toLowerCase().contains(_searchQuery)
-      ).toList();
+    // 전체 카운트
+    try {
+      final totalCount = await _apiService.getDiscussionCount(isActive: false, category: 'all');
+      counts['전체'] = totalCount;
+    } catch (e) {
+      counts['전체'] = 0;
     }
     
-    // 카테고리 필터
-    if (_selectedCategory != '전체') {
-      filtered = filtered.where((room) => room.category == _selectedCategory).toList();
-    }
+    // 병렬로 모든 카테고리의 카운트 로드
+    final futures = <Future<void>>[];
     
-    // 기간 필터
-    if (_selectedPeriod != '전체') {
-      final now = DateTime.now();
-      DateTime filterDate;
-      
-      switch (_selectedPeriod) {
-        case '1주일':
-          filterDate = now.subtract(Duration(days: 7));
-          break;
-        case '1개월':
-          filterDate = now.subtract(Duration(days: 30));
-          break;
-        case '3개월':
-          filterDate = now.subtract(Duration(days: 90));
-          break;
-        case '6개월':
-          filterDate = now.subtract(Duration(days: 180));
-          break;
-        case '1년':
-          filterDate = now.subtract(Duration(days: 365));
-          break;
-        default:
-          filterDate = DateTime(2020);
+    for (var category in categories) {
+      if (category != '전체') {
+        futures.add(
+          _apiService.getDiscussionCount(isActive: false, category: category).then((count) {
+            counts[category] = count;
+          }).catchError((e) {
+            counts[category] = 0;
+          }),
+        );
       }
-      
-      filtered = filtered.where((room) =>
-        room.created_at.isAfter(filterDate)
-      ).toList();
     }
     
-    // 날짜 범위 필터
-    if (_startDate != null) {
-      filtered = filtered.where((room) => room.created_at.isAfter(_startDate!)).toList();
-    }
-    if (_endDate != null) {
-      filtered = filtered.where((room) => room.created_at.isBefore(_endDate!)).toList();
-    }
+    await Future.wait(futures);
     
-    // 댓글 수 필터
-    filtered = filtered.where((room) {
-      final count = room.comment_count ?? 0;
-      return count >= _commentRange.start && count <= _commentRange.end;
-    }).toList();
-    
-    // 정렬
-    switch (_sortOption) {
-      case 'newest':
-        filtered.sort((a, b) {
-          final aDate = a.closed_at ?? a.updated_at ?? DateTime.now();
-          final bDate = b.closed_at ?? b.updated_at ?? DateTime.now();
-          return bDate.compareTo(aDate);
-        });
-        break;
-      case 'oldest':
-        filtered.sort((a, b) {
-          final aDate = a.closed_at ?? a.updated_at ?? DateTime.now();
-          final bDate = b.closed_at ?? b.updated_at ?? DateTime.now();
-          return aDate.compareTo(bDate);
-        });
-        break;
-      case 'popular':
-        filtered.sort((a, b) {
-          final aTotal = (a.positive_count ?? 0) + (a.neutral_count ?? 0) + (a.negative_count ?? 0);
-          final bTotal = (b.positive_count ?? 0) + (b.neutral_count ?? 0) + (b.negative_count ?? 0);
-          return bTotal.compareTo(aTotal);
-        });
-        break;
-      case 'active':
-        filtered.sort((a, b) => (b.comment_count ?? 0).compareTo(a.comment_count ?? 0));
-        break;
+    if (mounted) {
+      setState(() {
+        _categoryCounts = counts;
+      });
     }
-    
-    setState(() {
-      _filteredRooms = filtered;
-    });
   }
+
+
+  // Removed _loadMoreData as we're using pagination instead of infinite scroll
+
+  // Removed timeline grouping function
+
+  void _applyAdvancedFilters() {
+    // Reset to first page when applying new filters
+    setState(() {
+      _currentPage = 1;
+    });
+    
+    // Server-side filtering for all datasets
+    _loadHistoryWithFilters();
+  }
+
+  void _showSimpleFilter() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => DiscussionFilterComponent(
+          initialFilter: _filterState,
+          onFilterChanged: (newFilter) {
+            setState(() {
+              _filterState = newFilter;
+            });
+            _applyAdvancedFilters();
+          },
+          onReset: () {
+            setState(() {
+              _filterState = const HistoryFilterState();
+            });
+            _applyAdvancedFilters();
+          },
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFB74D)),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              '히스토리 데이터를 불러오는 중...',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppTheme.getTextColor(context),
-              ),
-            ),
-          ],
-        ),
-      );
+      return Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -372,14 +434,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
             SizedBox(height: 16.h),
             Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red)),
             SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: _loadHistoryData,
-              child: Text('다시 시도'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFFB74D),
-                foregroundColor: Colors.white,
-              ),
-            ),
+            ElevatedButton(onPressed: _loadHistoryData, child: Text('다시 시도')),
           ],
         ),
       );
@@ -433,9 +488,9 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          (index == 0 ? Color(0xFFFFB74D) : Color(0xFF9C27B0))
+                          (index == 0 ? Color(0xFF6366F1) : Color(0xFF8B5CF6))
                               .withOpacity(0.2),
-                          (index == 0 ? Color(0xFFFFB74D) : Color(0xFF9C27B0))
+                          (index == 0 ? Color(0xFF6366F1) : Color(0xFF8B5CF6))
                               .withOpacity(0.0),
                         ],
                       ),
@@ -452,21 +507,37 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           child: CustomScrollView(
             physics: BouncingScrollPhysics(),
             controller: _scrollController,
+            cacheExtent: 1000.0, // Increased cache for better performance
             slivers: [
               // 히어로 섹션
               SliverToBoxAdapter(
                 child: _buildHistoryHeader(),
               ),
               
-              // 검색 및 필터 섹션
+              // 타임라인 필터 섹션
               SliverToBoxAdapter(
-                child: _buildSearchAndFilterSection(),
+                child: _buildTimelineFilterSection(),
               ),
               
-              // 토론방 리스트 섹션
+              // 검색바
               SliverToBoxAdapter(
-                child: _buildHistoryList(),
+                child: _buildSearchBar(),
               ),
+              
+              
+              // 토론방 리스트 - Natural SliverList implementation
+              _buildNaturalHistoryList(),
+              
+              // Pagination navigation
+              SliverToBoxAdapter(
+                child: _buildPaginationNavigation(),
+              ),
+              
+              // Performance monitor (only in debug mode)
+              if (kDebugMode)
+                SliverToBoxAdapter(
+                  child: _buildPerformanceMonitor(),
+                ),
               
               // 하단 여백
               SliverToBoxAdapter(
@@ -493,19 +564,19 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFFFB74D), Color(0xFFFF9800)],
+                    colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
                   ),
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFFFB74D).withOpacity(0.3),
+                      color: Color(0xFF6366F1).withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
-                  Icons.history_rounded,
+                  Icons.archive_rounded,
                   color: Colors.white,
                   size: 28.sp,
                 ),
@@ -516,7 +587,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "토론 히스토리",
+                      "HISTORY",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -526,7 +597,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "과거 토론 ${_filteredRooms.length}개를 탐색하세요",
+                      "종료된 토론 아카이브",
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -536,28 +607,38 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   ],
                 ),
               ),
-              // 고급 필터 토글
+              // 통계 정보
               Container(
-                padding: EdgeInsets.all(8.w),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: _showAdvancedFilters ? Color(0xFFFFB74D) : (isDark ? Color(0xFF1E293B) : Colors.white),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(
-                    color: Color(0xFFFFB74D).withOpacity(0.3),
-                    width: 1,
-                  ),
+                  color: Color(0xFF6366F1),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF6366F1).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _showAdvancedFilters = !_showAdvancedFilters;
-                    });
-                  },
-                  child: Icon(
-                    Icons.tune,
-                    color: _showAdvancedFilters ? Colors.white : Color(0xFFFFB74D),
-                    size: 20.sp,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.insights,
+                      color: Colors.white,
+                      size: 16.sp,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      '총 ${_categoryCounts['전체'] ?? 0}건',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -569,15 +650,15 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     );
   }
 
-
-  Widget _buildSearchAndFilterSection() {
+  Widget _buildTimelineFilterSection() {
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.fromLTRB(0, 0, 0, 24.h),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 16.h),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 섹션 헤더 (Live 탭 스타일)
+          // 섹션 헤더
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
@@ -589,14 +670,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Color(0xFFFFB74D), Color(0xFFFF9800)],
+                      colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
                     ),
                     borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
                 SizedBox(width: 12.w),
                 Text(
-                  "토론 검색",
+                  "게시글 목록",
                   style: TextStyle(
                     fontSize: 28.sp,
                     fontWeight: FontWeight.w800,
@@ -605,21 +686,39 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   ),
                 ),
                 Spacer(),
-                // 필터 버튼
-                InkWell(
-                  onTap: _showFilterModal,
-                  borderRadius: BorderRadius.circular(16.r),
+                // 정렬 옵션
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    setState(() {
+                      _filterState = _filterState.copyWith(sortOption: value);
+                    });
+                    _applyAdvancedFilters();
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'newest',
+                      child: Text('최신순'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'oldest',
+                      child: Text('오래된순'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'popular',
+                      child: Text('인기순'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'active',
+                      child: Text('활발한순'),
+                    ),
+                  ],
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                     decoration: BoxDecoration(
-                      color: _hasActiveFilters() 
-                          ? Color(0xFFFFB74D).withOpacity(0.1)
-                          : (isDark ? Color(0xFF1E293B) : Colors.white),
+                      color: isDark ? Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: _hasActiveFilters()
-                            ? Color(0xFFFFB74D).withOpacity(0.3)
-                            : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
                         width: 1,
                       ),
                     ),
@@ -627,41 +726,25 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.filter_list,
+                          Icons.sort,
                           size: 14.sp,
-                          color: _hasActiveFilters()
-                              ? Color(0xFFFFB74D)
-                              : (isDark ? Colors.white : Colors.black),
+                          color: isDark ? Colors.white : Colors.black,
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          '필터',
+                          _getSortDisplayName(_filterState.sortOption),
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
-                            color: _hasActiveFilters()
-                                ? Color(0xFFFFB74D)
-                                : (isDark ? Colors.white : Colors.black),
+                            color: isDark ? Colors.white : Colors.black,
                           ),
                         ),
-                        if (_hasActiveFilters()) ...[
-                          SizedBox(width: 4.w),
-                          Container(
-                            padding: EdgeInsets.all(4.w),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFFB74D),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              _getActiveFilterCount().toString(),
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                        SizedBox(width: 4.w),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 16.sp,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
                       ],
                     ),
                   ),
@@ -673,11 +756,9 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           SizedBox(height: 8.h),
           
           Padding(
-            padding: EdgeInsets.only(left: 40.w, right: 24.w),
+            padding: EdgeInsets.only(left: 40.w),
             child: Text(
-              _hasActiveFilters() 
-                  ? '${_getActiveFilterCount()}개의 필터가 적용되었습니다'
-                  : '토론 제목으로 검색하고, 필터 버튼을 눌러 상세 조건을 설정하세요',
+              "종료된 토론방을 한눈에 탐색하세요",
               style: TextStyle(
                 fontSize: 15.sp,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -688,635 +769,106 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           
           SizedBox(height: 20.h),
           
-          // 검색바 (심플하게)
+          // 카테고리 필터 (가로 스크롤)
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 24.w),
-            decoration: BoxDecoration(
-              color: isDark ? Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDark ? Colors.black : Colors.grey).withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: '토론 제목 검색...',
-                prefixIcon: Icon(Icons.search, color: Color(0xFFFFB74D), size: 20.sp),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey, size: 18.sp),
-                        onPressed: () {
-                          _searchController.clear();
-                          _searchQuery = '';
-                          _applyFilters();
-                        },
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  fontSize: 14.sp,
-                ),
-              ),
-              style: TextStyle(
-                color: AppTheme.getTextColor(context),
-                fontSize: 14.sp,
-              ),
+            height: 40.h,
+            margin: EdgeInsets.only(left: 24.w),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = category == _filterState.selectedCategory;
+                
+                return Container(
+                  margin: EdgeInsets.only(right: 8.w),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _filterState = _filterState.copyWith(selectedCategory: category);
+                        });
+                        _applyAdvancedFilters();
+                      },
+                      borderRadius: BorderRadius.circular(20.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          gradient: isSelected ? LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                          ) : null,
+                          color: isSelected ? null : (isDark ? Color(0xFF1E293B) : Colors.white),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: isSelected 
+                              ? Colors.transparent
+                              : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                            width: 1,
+                          ),
+                          boxShadow: isSelected ? [
+                            BoxShadow(
+                              color: Color(0xFF6366F1).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ] : [],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (category != '전체')
+                              Container(
+                                width: 6.w,
+                                height: 6.w,
+                                margin: EdgeInsets.only(right: 6.w),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.white : CategoryColors.getCategoryColor(category),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            Text(
+                              category,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                color: isSelected 
+                                  ? Colors.white
+                                  : AppTheme.getTextColor(context),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${_categoryCounts[category] ?? 0}',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected 
+                                  ? Colors.white.withOpacity(0.8)
+                                  : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          
-          // 활성 필터 표시
-          if (_hasActiveFilters()) ...[
-            SizedBox(height: 12.h),
-            Container(
-              height: 32.h,
-              margin: EdgeInsets.only(left: 24.w),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  if (_selectedCategory != '전체')
-                    _buildActiveFilterChip(
-                      Icons.category_outlined,
-                      _selectedCategory,
-                      () {
-                        setState(() {
-                          _selectedCategory = '전체';
-                        });
-                        _applyFilters();
-                      },
-                    ),
-                  if (_selectedPeriod != '전체')
-                    Padding(
-                      padding: EdgeInsets.only(left: 8.w),
-                      child: _buildActiveFilterChip(
-                        Icons.calendar_today_outlined,
-                        _selectedPeriod,
-                        () {
-                          setState(() {
-                            _selectedPeriod = '전체';
-                          });
-                          _applyFilters();
-                        },
-                      ),
-                    ),
-                  if (_sortOption != 'newest')
-                    Padding(
-                      padding: EdgeInsets.only(left: 8.w),
-                      child: _buildActiveFilterChip(
-                        Icons.sort_outlined,
-                        _getSortDisplayName(_sortOption),
-                        () {
-                          setState(() {
-                            _sortOption = 'newest';
-                          });
-                          _applyFilters();
-                        },
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     ).animate()
         .fadeIn(duration: 600.ms, delay: 200.ms)
-        .slideY(begin: 0.03, end: 0, duration: 600.ms);
+        .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildFilterDropdown(String title, String value, List<String> items, 
-      Function(String) onChanged, {IconData? icon}) {
+  Widget _buildSearchBar() {
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-          width: 1,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(
-            Icons.expand_more,
-            size: 18.sp,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-          ),
-          style: TextStyle(
-            color: AppTheme.getTextColor(context),
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w500,
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Row(
-                children: [
-                  if (icon != null) ...[
-                    Icon(
-                      icon,
-                      size: 16.sp,
-                      color: Color(0xFFFFB74D).withOpacity(0.8),
-                    ),
-                    SizedBox(width: 6.w),
-                  ],
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.getTextColor(context),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              onChanged(newValue);
-            }
-          },
-          dropdownColor: isDark ? Color(0xFF1E293B) : Colors.white,
-        ),
-      ),
-    );
-  }
-
-  bool _hasActiveFilters() {
-    return _selectedCategory != '전체' || 
-           _selectedPeriod != '전체' || 
-           _sortOption != 'newest';
-  }
-
-  int _getActiveFilterCount() {
-    int count = 0;
-    if (_selectedCategory != '전체') count++;
-    if (_selectedPeriod != '전체') count++;
-    if (_sortOption != 'newest') count++;
-    return count;
-  }
-
-  Widget _buildActiveFilterChip(IconData icon, String value, VoidCallback onRemove) {
-    final bool isDark = AppTheme.isDark(context);
-    
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: Color(0xFFFFB74D).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: Color(0xFFFFB74D).withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14.sp, color: Color(0xFFFFB74D)),
-          SizedBox(width: 6.w),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFFFB74D),
-            ),
-          ),
-          SizedBox(width: 6.w),
-          GestureDetector(
-            onTap: onRemove,
-            child: Icon(
-              Icons.close_rounded,
-              size: 14.sp,
-              color: Color(0xFFFFB74D),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showFilterModal() {
-    final bool isDark = AppTheme.isDark(context);
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: 0.7.sh,
-        decoration: BoxDecoration(
-          color: isDark ? Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        child: Column(
-          children: [
-            // 핸들바
-            Container(
-              margin: EdgeInsets.only(top: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            
-            // 헤더
-            Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Row(
-                children: [
-                  Text(
-                    '필터 설정',
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.getTextColor(context),
-                    ),
-                  ),
-                  Spacer(),
-                  if (_hasActiveFilters())
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedCategory = '전체';
-                          _selectedPeriod = '전체';
-                          _sortOption = 'newest';
-                        });
-                        _applyFilters();
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        '초기화',
-                        style: TextStyle(
-                          color: Color(0xFFFFB74D),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Icon(Icons.close, size: 16.sp, color: Colors.grey),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
-            
-            // 필터 옵션들
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.all(20.w),
-                children: [
-                  _buildFilterSection(
-                    '카테고리',
-                    Icons.category_outlined,
-                    _selectedCategory,
-                    _categories,
-                    (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-                  ),
-                  
-                  SizedBox(height: 24.h),
-                  
-                  _buildFilterSection(
-                    '기간',
-                    Icons.calendar_today_outlined,
-                    _selectedPeriod,
-                    ['전체', '1주일', '1개월', '3개월', '6개월', '1년'],
-                    (value) {
-                      setState(() {
-                        _selectedPeriod = value;
-                      });
-                    },
-                  ),
-                  
-                  SizedBox(height: 24.h),
-                  
-                  _buildFilterSection(
-                    '정렬',
-                    Icons.sort_outlined,
-                    _getSortDisplayName(_sortOption),
-                    ['최신순', '오래된순', '인기순', '활발한순'],
-                    (value) {
-                      setState(() {
-                        _sortOption = _getSortOptionFromDisplay(value);
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            
-            // 적용 버튼
-            Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                color: isDark ? Color(0xFF1E293B) : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48.h,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _applyFilters();
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFFB74D),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      '필터 적용',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterSection(String title, IconData icon, String selectedValue, 
-      List<String> options, Function(String) onChanged) {
-    final bool isDark = AppTheme.isDark(context);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20.sp, color: Color(0xFFFFB74D)),
-            SizedBox(width: 8.w),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.getTextColor(context),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 12.h),
-        Wrap(
-          spacing: 8.w,
-          runSpacing: 8.h,
-          children: options.map((option) {
-            final isSelected = option == selectedValue;
-            return GestureDetector(
-              onTap: () => onChanged(option),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Color(0xFFFFB74D)
-                      : (isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC)),
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(
-                    color: isSelected
-                        ? Color(0xFFFFB74D)
-                        : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected
-                        ? Colors.white
-                        : AppTheme.getTextColor(context),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdvancedFilters() {
-    final bool isDark = AppTheme.isDark(context);
-    
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '고급 필터',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.getTextColor(context),
-            ),
-          ),
-          
-          SizedBox(height: 16.h),
-          
-          // 날짜 범위 선택
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _selectDate(true),
-                  child: Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.calendar_today, size: 16.sp, color: Color(0xFFFFB74D)),
-                        SizedBox(width: 8.w),
-                        Text(
-                          _startDate != null 
-                              ? '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')}'
-                              : '시작일',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppTheme.getTextColor(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Text('~', style: TextStyle(color: Colors.grey)),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => _selectDate(false),
-                  child: Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.calendar_today, size: 16.sp, color: Color(0xFFFFB74D)),
-                        SizedBox(width: 8.w),
-                        Text(
-                          _endDate != null 
-                              ? '${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}'
-                              : '종료일',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppTheme.getTextColor(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          SizedBox(height: 16.h),
-          
-          // 댓글 수 범위
-          Text(
-            '댓글 수: ${_commentRange.start.round()} - ${_commentRange.end.round()}',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppTheme.getTextColor(context),
-            ),
-          ),
-          RangeSlider(
-            values: _commentRange,
-            min: 0,
-            max: 1000,
-            divisions: 50,
-            activeColor: Color(0xFFFFB74D),
-            onChanged: (RangeValues values) {
-              setState(() {
-                _commentRange = values;
-              });
-            },
-            onChangeEnd: (RangeValues values) {
-              _applyFilters();
-            },
-          ),
-          
-          SizedBox(height: 16.h),
-          
-          // 필터 초기화 버튼
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _resetFilters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? Color(0xFF374151) : Colors.grey[200],
-                    foregroundColor: isDark ? Colors.white : Colors.black,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                  ),
-                  child: Text('필터 초기화', style: TextStyle(fontSize: 12.sp)),
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _applyFilters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFFB74D),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                  ),
-                  child: Text('적용', style: TextStyle(fontSize: 12.sp)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate()
-        .fadeIn(duration: 400.ms)
-        .slideY(begin: -0.03, end: 0, duration: 400.ms);
-  }
-
-  Widget _buildHistoryList() {
-    final bool isDark = AppTheme.isDark(context);
-    
-    if (_filteredRooms.isEmpty) {
-      return _buildEmptyState();
-    }
-    
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w),
+      margin: EdgeInsets.fromLTRB(24.w, 0, 24.w, 24.h),
       decoration: BoxDecoration(
         color: isDark ? Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
@@ -1327,327 +879,260 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         boxShadow: [
           BoxShadow(
             color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-            blurRadius: 20,
-            offset: Offset(0, 8),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // 리스트 아이템들 (헤더 제거)
-          ...List.generate(_filteredRooms.length, (index) {
-            final room = _filteredRooms[index];
-            final isLast = index == _filteredRooms.length - 1 && !_isLoadingMore;
-            return _buildSimpleHistoryItem(room, isLast, index);
-          }),
-          
-          // 로딩 더보기
-          if (_isLoadingMore)
-            Container(
-              padding: EdgeInsets.all(16.w),
-              child: SizedBox(
-                width: 20.w,
-                height: 20.w,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.0,
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFB74D)),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: '토론 제목으로 검색...',
+          hintStyle: TextStyle(
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 14.sp,
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: Color(0xFF6366F1),
+            size: 20.sp,
+          ),
+          suffixIcon: _filterState.searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, size: 18.sp),
+                  color: Colors.grey,
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _filterState = _filterState.copyWith(searchQuery: '');
+                    });
+                    _applyAdvancedFilters();
+                  },
+                )
+              : IconButton(
+                  icon: Icon(
+                    Icons.tune,
+                    size: 18.sp,
+                    color: Color(0xFF10B981),
+                  ),
+                  tooltip: '토론방 필터',
+                  onPressed: _showSimpleFilter,
                 ),
-              ),
-            ),
-        ],
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        ),
+        style: TextStyle(
+          color: AppTheme.getTextColor(context),
+          fontSize: 14.sp,
+        ),
       ),
     ).animate()
         .fadeIn(duration: 600.ms, delay: 400.ms)
         .slideY(begin: 0.03, end: 0, duration: 600.ms);
   }
 
-  Widget _buildHistoryItem(DiscussionRoom room, bool isLast, int index) {
+  // Build flat history list like posts
+  Widget _buildNaturalHistoryList() {
+    if (_filteredRooms.isEmpty) {
+      return SliverToBoxAdapter(
+        child: _buildEmptyState(),
+      );
+    }
+    
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          if (index >= _filteredRooms.length) return null;
+          
+          final room = _filteredRooms[index];
+          return _buildFlatHistoryItem(room, index);
+        },
+        childCount: _filteredRooms.length,
+      ),
+    );
+  }
+
+  // Create flat history item like a post
+  Widget _buildFlatHistoryItem(DiscussionRoom room, int index) {
     final bool isDark = AppTheme.isDark(context);
     final String category = room.category ?? '기타';
-    final Color categoryColor = _getCategoryColor(category);
+    final Color categoryColor = CategoryColors.getCategoryColor(category);
     final int totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
     final String timeAgo = _getTimeAgo(room.closed_at ?? room.updated_at ?? DateTime.now());
-    final String duration = _getDuration(room.created_at, room.closed_at ?? room.updated_at ?? DateTime.now());
     
-    return Container(
-      decoration: BoxDecoration(
-        border: isLast ? null : Border(
-          bottom: BorderSide(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+    // Build semantic label for accessibility
+    final semanticLabel = '토론방: ${room.keyword}, '
+        '카테고리: $category, '
+        '댓글 수: ${room.comment_count ?? 0}개, '
+        '반응 수: $totalReactions개, '
+        '종료 시점: $timeAgo';
+    
+    return RepaintBoundary(
+      key: ValueKey('flat_history_item_${room.id}'),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: isDark ? Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : Colors.grey).withOpacity(0.08),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.push('/discussion/${room.id}'),
-          child: Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 첫 번째 줄: 카테고리 + 제목
-                Row(
+        child: Semantics(
+          button: true,
+          enabled: true,
+          label: semanticLabel,
+          hint: '토론방으로 이동하려면 두 번 탭하세요',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/discussion/${room.id}'),
+              borderRadius: BorderRadius.circular(12.r),
+              child: Container(
+                constraints: BoxConstraints(minHeight: 44.h),
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(
-                          color: categoryColor.withOpacity(0.3),
-                          width: 1,
+                    // Header row with category and time
+                    Row(
+                      children: [
+                        // Category tag
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: categoryColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6.r),
+                            border: Border.all(
+                              color: categoryColor.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            category,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: categoryColor,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color: categoryColor,
+                        
+                        Spacer(),
+                        
+                        // Time ago
+                        Text(
+                          timeAgo,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: (isDark ? Colors.grey[400] : Colors.grey[600]),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    SizedBox(width: 12.w),
-                    Expanded(
+                    
+                    SizedBox(height: 12.h),
+                    
+                    // Title
+                    Semantics(
+                      header: true,
                       child: Text(
                         room.keyword,
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.getTextColor(context),
+                          height: 1.3,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    // 종료 상태 표시
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Text(
-                        '종료',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
+                    
+                    SizedBox(height: 12.h),
+                    
+                    // Stats row
+                    Row(
+                      children: [
+                        // Comments
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 16.sp,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '댓글 ${room.comment_count ?? 0}',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                        
+                        SizedBox(width: 16.w),
+                        
+                        // Reactions
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 16.sp,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '반응 $totalReactions',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        Spacer(),
+                        
+                        // Arrow indicator
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14.sp,
+                          color: isDark ? Colors.grey[500] : Colors.grey[400],
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                
-                SizedBox(height: 8.h),
-                
-                // 두 번째 줄: 요약 (있는 경우)
-                if (room.comment_summary != null && room.comment_summary!.isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 8.h),
-                    child: Text(
-                      room.comment_summary!,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                
-                // 세 번째 줄: 통계 정보
-                Row(
-                  children: [
-                    _buildStatChip(
-                      Icons.chat_bubble_outline,
-                      '${room.comment_count ?? 0}',
-                      isDark ? Colors.grey[400]! : Colors.grey[600]!,
-                    ),
-                    SizedBox(width: 12.w),
-                    _buildStatChip(
-                      Icons.people_outline,
-                      '$totalReactions',
-                      isDark ? Colors.grey[400]! : Colors.grey[600]!,
-                    ),
-                    SizedBox(width: 12.w),
-                    _buildStatChip(
-                      Icons.schedule_outlined,
-                      duration,
-                      isDark ? Colors.grey[400]! : Colors.grey[600]!,
-                    ),
-                    Spacer(),
-                    Text(
-                      timeAgo,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: isDark ? Colors.grey[500] : Colors.grey[500],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     ).animate(delay: Duration(milliseconds: index * 50))
         .fadeIn(duration: 600.ms)
-        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+        .slideY(begin: 0.02, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildSimpleHistoryItem(DiscussionRoom room, bool isLast, int index) {
-    final bool isDark = AppTheme.isDark(context);
-    final String category = room.category ?? '기타';
-    final Color categoryColor = _getCategoryColor(category);
-    final int totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
-    final String timeAgo = _getTimeAgo(room.closed_at ?? room.updated_at ?? DateTime.now());
-    
-    return Container(
-      decoration: BoxDecoration(
-        border: isLast ? null : Border(
-          bottom: BorderSide(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.push('/discussion/${room.id}'),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            child: Row(
-              children: [
-                // 카테고리 컬러 인디케이터
-                Container(
-                  width: 3.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    color: categoryColor,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-                
-                SizedBox(width: 12.w),
-                
-                // 카테고리 태그
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(
-                      color: categoryColor.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    category,
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w700,
-                      color: categoryColor,
-                    ),
-                  ),
-                ),
-                
-                SizedBox(width: 12.w),
-                
-                // 토론방 제목
-                Expanded(
-                  child: Text(
-                    room.keyword,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.getTextColor(context),
-                      height: 1.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                
-                SizedBox(width: 12.w),
-                
-                // 통계 정보 (댓글 수)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_outline,
-                      size: 12.sp,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                    SizedBox(width: 3.w),
-                    Text(
-                      '${room.comment_count ?? 0}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                SizedBox(width: 12.w),
-                
-                // 시간
-                Text(
-                  timeAgo,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: isDark ? Colors.grey[500] : Colors.grey[500],
-                  ),
-                ),
-                
-                SizedBox(width: 8.w),
-                
-                // 화살표 아이콘
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 12.sp,
-                  color: isDark ? Colors.grey[500] : Colors.grey[400],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).animate(delay: Duration(milliseconds: index * 50))
-        .fadeIn(duration: 600.ms)
-        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
-  }
-
-  Widget _buildStatChip(IconData icon, String text, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12.sp, color: color),
-        SizedBox(width: 4.w),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: color,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
+  // Removed old timeline-based history item
 
   Widget _buildEmptyState() {
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20.w),
+      margin: EdgeInsets.symmetric(horizontal: 24.w),
       padding: EdgeInsets.all(40.w),
       decoration: BoxDecoration(
         color: isDark ? Color(0xFF1E293B) : Colors.white,
@@ -1663,14 +1148,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFFFB74D).withOpacity(0.1), Color(0xFFFF9800).withOpacity(0.05)],
+                colors: [Color(0xFF6366F1).withOpacity(0.1), Color(0xFF4F46E5).withOpacity(0.05)],
               ),
               borderRadius: BorderRadius.circular(20.r),
             ),
             child: Icon(
               Icons.search_off_outlined,
               size: 48.sp,
-              color: Color(0xFFFFB74D),
+              color: Color(0xFF6366F1),
             ),
           ),
           SizedBox(height: 16.h),
@@ -1684,7 +1169,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           ),
           SizedBox(height: 8.h),
           Text(
-            '다른 키워드나 필터 조건으로 검색해보세요',
+            '다른 키워드나 카테고리로 검색해보세요',
             style: TextStyle(
               fontSize: 14.sp,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -1692,37 +1177,12 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 20.h),
-          ElevatedButton(
-            onPressed: _resetFilters,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFFB74D),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-            ),
-            child: Text('필터 초기화'),
-          ),
         ],
       ),
     );
   }
 
   // 헬퍼 메서드들
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case '정치': return Color(0xFF2196F3);
-      case '경제': return Color(0xFF4CAF50);
-      case '사회': return Color(0xFFFF9800);
-      case '문화': return Color(0xFF9C27B0);
-      case '스포츠': return Color(0xFFF44336);
-      case '국제': return Color(0xFF607D8B);
-      case '과학': return Color(0xFF00BCD4);
-      default: return Color(0xFF795548);
-    }
-  }
-
   String _getTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
@@ -1744,16 +1204,70 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     }
   }
 
-  String _getDuration(DateTime start, DateTime end) {
-    final duration = end.difference(start);
+  // Removed virtual scroll implementation in favor of natural pagination
+  
+  Widget _buildPerformanceMonitor() {
+    if (!kDebugMode) return const SizedBox.shrink();
     
-    if (duration.inDays > 0) {
-      return '${duration.inDays}일';
-    } else if (duration.inHours > 0) {
-      return '${duration.inHours}시간';
-    } else {
-      return '${duration.inMinutes}분';
-    }
+    final metrics = _cacheService.getMetrics();
+    
+    return Container(
+      margin: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: Colors.grey, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Performance Monitor',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14.sp,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          _buildMetricRow('Total Items', _allHistoryRooms.length.toString()),
+          _buildMetricRow('Filtered Items', _filteredRooms.length.toString()),
+          _buildMetricRow('Pagination Mode', 'ENABLED'),
+          _buildMetricRow('Cache Hits', metrics['cache_hits'].toString()),
+          _buildMetricRow('Cache Hit Ratio', '${(metrics['hit_ratio'] * 100).toStringAsFixed(1)}%'),
+          _buildMetricRow('Total Queries', _totalQueries.toString()),
+          if (_lastQueryTime != null)
+            _buildMetricRow('Last Query', '${DateTime.now().difference(_lastQueryTime!).inMilliseconds}ms ago'),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildMetricRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 10.sp,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _getSortDisplayName(String sortOption) {
@@ -1766,48 +1280,428 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
     }
   }
 
-  String _getSortOptionFromDisplay(String displayName) {
-    switch (displayName) {
-      case '최신순': return 'newest';
-      case '오래된순': return 'oldest';
-      case '인기순': return 'popular';
-      case '활발한순': return 'active';
-      default: return 'newest';
-    }
-  }
-
-  Future<void> _selectDate(bool isStartDate) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isStartDate ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now()),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
+  // Accessible pagination navigation component
+  Widget _buildPaginationNavigation() {
+    if (_totalPages <= 1) return SizedBox.shrink();
     
-    if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          _startDate = picked;
-        } else {
-          _endDate = picked;
-        }
-      });
-      _applyFilters();
-    }
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isDark ? Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Focus(
+        focusNode: _paginationFocusNode,
+        onKeyEvent: _handlePaginationKeyEvent,
+        child: Column(
+          children: [
+            // Page information with live region for screen readers
+            Semantics(
+              liveRegion: true,
+              label: '현재 $_currentPage페이지, 총 $_totalPages페이지 중 $_totalItems건',
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                child: Text(
+                  '$_currentPage / $_totalPages 페이지 (총 $_totalItems건)',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            
+            SizedBox(height: 16.h),
+            
+            // Navigation buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // First page button
+                _buildPaginationButton(
+                  onPressed: _currentPage > 1 ? _goToFirstPage : null,
+                  icon: Icons.first_page,
+                  label: '첫 페이지',
+                ),
+                
+                SizedBox(width: 8.w),
+                
+                // Previous page button
+                _buildPaginationButton(
+                  onPressed: _currentPage > 1 ? _goToPreviousPage : null,
+                  icon: Icons.chevron_left,
+                  label: '이전 페이지',
+                ),
+                
+                SizedBox(width: 16.w),
+                
+                // Page numbers
+                ..._buildPageNumbers(),
+                
+                SizedBox(width: 16.w),
+                
+                // Next page button
+                _buildPaginationButton(
+                  onPressed: _hasMoreData ? _goToNextPage : null,
+                  icon: Icons.chevron_right,
+                  label: '다음 페이지',
+                ),
+                
+                SizedBox(width: 8.w),
+                
+                // Last page button
+                _buildPaginationButton(
+                  onPressed: _hasMoreData ? _goToLastPage : null,
+                  icon: Icons.last_page,
+                  label: '마지막 페이지',
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 16.h),
+            
+            // Jump to page functionality
+            _buildJumpToPage(),
+            
+            SizedBox(height: 8.h),
+            
+            // Accessibility guide
+            _buildAccessibilityGuide(),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _resetFilters() {
-    setState(() {
-      _searchController.clear();
-      _searchQuery = '';
-      _selectedCategory = '전체';
-      _selectedPeriod = '전체';
-      _sortOption = 'newest';
-      _startDate = null;
-      _endDate = null;
-      _commentRange = RangeValues(0, 1000);
-      _participantRange = RangeValues(0, 500);
-    });
-    _applyFilters();
+  Widget _buildPaginationButton({
+    required VoidCallback? onPressed,
+    required IconData icon,
+    required String label,
+  }) {
+    final bool isDark = AppTheme.isDark(context);
+    final bool isEnabled = onPressed != null;
+    
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      label: label,
+      child: Container(
+        width: 44.w,
+        height: 44.w,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(8.r),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isEnabled 
+                    ? (isDark ? Color(0xFF334155) : Color(0xFFF1F5F9))
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(
+                    isEnabled ? 0.2 : 0.1
+                  ),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                size: 20.sp,
+                color: isEnabled
+                    ? AppTheme.getTextColor(context)
+                    : (isDark ? Colors.grey[600] : Colors.grey[400]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildPageNumbers() {
+    final visiblePages = _calculateVisiblePages();
+    final widgets = <Widget>[];
+    
+    for (int i = 0; i < visiblePages.length; i++) {
+      final page = visiblePages[i];
+      final isCurrentPage = page == _currentPage;
+      
+      widgets.add(
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 2.w),
+          child: _buildPageNumberButton(page, isCurrentPage),
+        ),
+      );
+      
+      // Add ellipsis if there's a gap
+      if (i < visiblePages.length - 1 && visiblePages[i + 1] - page > 1) {
+        widgets.add(
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 4.w),
+            child: Text(
+              '...',
+              style: TextStyle(
+                color: AppTheme.getTextColor(context).withOpacity(0.5),
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    
+    return widgets;
+  }
+
+  Widget _buildPageNumberButton(int page, bool isCurrentPage) {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Semantics(
+      button: true,
+      selected: isCurrentPage,
+      label: isCurrentPage ? '현재 페이지 $page' : '$page페이지로 이동',
+      child: Container(
+        width: 44.w,
+        height: 44.w,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isCurrentPage ? null : () => _goToPage(page),
+            borderRadius: BorderRadius.circular(8.r),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isCurrentPage 
+                    ? Color(0xFF6366F1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(
+                  color: isCurrentPage 
+                      ? Color(0xFF6366F1)
+                      : (isDark ? Colors.white : Colors.black).withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  '$page',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: isCurrentPage 
+                        ? FontWeight.w700 
+                        : FontWeight.w500,
+                    color: isCurrentPage 
+                        ? Colors.white
+                        : AppTheme.getTextColor(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<int> _calculateVisiblePages() {
+    const maxVisible = 5;
+    final start = math.max(1, _currentPage - 2);
+    final end = math.min(_totalPages, start + maxVisible - 1);
+    
+    return List.generate(end - start + 1, (i) => start + i);
+  }
+
+  Widget _buildJumpToPage() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '페이지로 이동:',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppTheme.getTextColor(context),
+            ),
+          ),
+          
+          SizedBox(width: 12.w),
+          
+          Container(
+            width: 80.w,
+            child: Semantics(
+              textField: true,
+              label: '이동할 페이지 번호 입력',
+              hint: '1부터 $_totalPages까지 입력 가능',
+              child: TextField(
+                controller: _jumpPageController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14.sp),
+                decoration: InputDecoration(
+                  hintText: '페이지',
+                  hintStyle: TextStyle(fontSize: 12.sp),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(
+                      color: (isDark ? Colors.white : Colors.black).withOpacity(0.2),
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 8.w, 
+                    vertical: 8.h,
+                  ),
+                ),
+                onSubmitted: _handleJumpToPage,
+              ),
+            ),
+          ),
+          
+          SizedBox(width: 8.w),
+          
+          Semantics(
+            button: true,
+            label: '입력한 페이지로 이동',
+            child: ElevatedButton(
+              onPressed: () => _handleJumpToPage(_jumpPageController.text),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                minimumSize: Size(44.w, 44.h), // Minimum touch target
+              ),
+              child: Text(
+                '이동',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccessibilityGuide() {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Semantics(
+      label: '페이지 네비게이션 키보드 단축키 안내',
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '키보드 단축키:',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.getTextColor(context),
+              ),
+            ),
+            SizedBox(height: 4.h),
+            _buildShortcutItem('←/→', '이전/다음 페이지'),
+            _buildShortcutItem('Home/End', '첫/마지막 페이지'),
+            _buildShortcutItem('Tab', '다음 요소로 이동'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShortcutItem(String keys, String description) {
+    final bool isDark = AppTheme.isDark(context);
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2.h),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+            decoration: BoxDecoration(
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+            child: Text(
+              keys,
+              style: TextStyle(
+                fontSize: 10.sp,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w600,
+                color: AppTheme.getTextColor(context),
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: AppTheme.getTextColor(context).withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Handle keyboard events for pagination navigation
+  KeyEventResult _handlePaginationKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      switch (event.logicalKey) {
+        case LogicalKeyboardKey.arrowLeft:
+          if (_currentPage > 1) {
+            _goToPreviousPage();
+          }
+          return KeyEventResult.handled;
+          
+        case LogicalKeyboardKey.arrowRight:
+          if (_hasMoreData) {
+            _goToNextPage();
+          }
+          return KeyEventResult.handled;
+          
+        case LogicalKeyboardKey.home:
+          _goToFirstPage();
+          return KeyEventResult.handled;
+          
+        case LogicalKeyboardKey.end:
+          _goToLastPage();
+          return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
   }
 }

@@ -373,6 +373,83 @@ class ApiService {
     return Future.value([]);
   }
 
+  /// 종료된 토론방 목록 가져오기
+  /// GET /discussion/closed?sort=[newest|oldest|popular|active]&page=N&category=all
+  Future<List<DiscussionRoom>> getClosedDiscussionRooms({
+    String sort = 'newest',
+    int page = 1,
+    String category = 'all',
+  }) async {
+    final Map<String, String> queryParams = {
+      'sort': sort,
+      'page': page.toString(),
+      'category': category,
+    };
+    
+    final String url = Uri.parse('$_baseUrl/discussion/closed')
+        .replace(queryParameters: queryParams)
+        .toString();
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        return data.map((json) => DiscussionRoom.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        // 임시 데이터 반환
+        return _generateMockClosedRooms(page, category);
+      } else {
+        throw Exception('Failed to load closed discussion rooms: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 네트워크 오류 시 임시 데이터 반환
+      return _generateMockClosedRooms(page, category);
+    }
+  }
+
+  List<DiscussionRoom> _generateMockClosedRooms(int page, String category) {
+    final List<DiscussionRoom> mockRooms = [];
+    final keywords = [
+      '대통령 탄핵', '비트코인 급락', '아이돌 논란', '월드컵 경기', '인공지능 발전',
+      '부동산 정책', '코로나 백신', '기후변화', '우크라이나 전쟁', '메타버스',
+      '주 52시간', '최저임금', '4차 산업혁명', '전기차 시대', '우주 개발',
+      '넷플릭스 오징어게임', 'K-POP 월드투어', '배달음식 규제', '카카오톡 장애',
+      '삼성 반도체', 'LG 배터리', '현대차 수소차', '네이버 웹툰', '쿠팡 물류',
+    ];
+    
+    final categories = ['정치', '경제', '사회', '문화', '스포츠', '국제', '과학'];
+    
+    for (int i = 0; i < 20; i++) {
+      final idx = (page - 1) * 20 + i;
+      final createdAt = DateTime.now().subtract(Duration(days: idx + 1));
+      final closedAt = createdAt.add(Duration(hours: 12 + (idx % 20)));
+      
+      mockRooms.add(DiscussionRoom(
+        id: 3000 + idx,
+        keyword: keywords[idx % keywords.length] + (idx > 24 ? ' ${idx ~/ 25 + 1}' : ''),
+        keyword_id_list: [100 + idx],
+        is_closed: true,
+        created_at: createdAt,
+        updated_at: closedAt,
+        closed_at: closedAt,
+        comment_count: 15 + (idx % 200),
+        comment_summary: '활발한 토론이 진행되었습니다. 다양한 의견이 교환되었고...',
+        positive_count: 20 + (idx % 50),
+        neutral_count: 15 + (idx % 30),
+        negative_count: 10 + (idx % 25),
+        sentiment_snapshot: [],
+        category: category == 'all' ? categories[idx % categories.length] : category,
+      ));
+    }
+    
+    return mockRooms;
+  }
+
   /// 특정 토론방 정보 가져오기
   /// GET /discussion/get/<int:discussion_room_id>/
   Future<DiscussionRoom> getDiscussionRoomById(int roomId) async {
@@ -1081,6 +1158,222 @@ class ApiService {
     };
     
     return CapsuleModel.fromJson(testData);
+  }
+
+  /// Enhanced History API with advanced filtering and cursor-based pagination
+  /// GET /api/discussion/history
+  Future<Map<String, dynamic>> getHistoryWithAdvancedFilters({
+    required Map<String, dynamic> filters,
+    String? cursor,
+    int limit = 50,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+      };
+      
+      // Add cursor if provided
+      if (cursor != null && cursor.isNotEmpty) {
+        queryParams['cursor'] = cursor;
+      }
+      
+      // Add filters
+      filters.forEach((key, value) {
+        if (value != null) {
+          if (value is List) {
+            queryParams[key] = value.join(',');
+          } else {
+            queryParams[key] = value.toString();
+          }
+        }
+      });
+      
+      final uri = Uri.parse('$_baseUrl/discussion/history').replace(
+        queryParameters: queryParams,
+      );
+      
+      final response = await _client.get(uri, headers: _headers);
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        
+        return {
+          'data': data['data'] ?? [],
+          'pagination': data['pagination'] ?? {
+            'next_cursor': null,
+            'has_next_page': false,
+            'total_count': 0,
+          },
+          'aggregations': data['aggregations'] ?? {
+            'categories': <String, int>{},
+            'date_distribution': <String, int>{},
+            'sentiment_summary': {
+              'positive': 0,
+              'neutral': 0,
+              'negative': 0,
+            },
+          },
+        };
+      } else {
+        throw Exception('Advanced history API failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Fallback to existing API with limitations
+      print('Advanced API failed, falling back to legacy: $e');
+      throw Exception('Advanced filtering not available: $e');
+    }
+  }
+  
+  /// Get filter suggestions for autocomplete
+  /// GET /api/discussion/history/suggest
+  Future<List<Map<String, dynamic>>> getFilterSuggestions({
+    required String type,
+    String? context,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'type': type,
+      };
+      
+      if (context != null && context.isNotEmpty) {
+        queryParams['context'] = context;
+      }
+      
+      final uri = Uri.parse('$_baseUrl/discussion/history/suggest').replace(
+        queryParameters: queryParams,
+      );
+      
+      final response = await _client.get(uri, headers: _headers);
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      } else {
+        throw Exception('Filter suggestions failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Return empty suggestions on error
+      return [];
+    }
+  }
+  
+  /// Export history data in various formats
+  /// POST /api/discussion/history/export
+  Future<bool> exportHistoryData({
+    required Map<String, dynamic> filters,
+    required String format,
+    required String email,
+  }) async {
+    try {
+      final body = {
+        'filters': filters,
+        'format': format,
+        'email': email,
+      };
+      
+      final response = await _client.post(
+        Uri.parse('$_baseUrl/discussion/history/export'),
+        headers: _headers,
+        body: json.encode(body),
+      );
+      
+      return response.statusCode == 202; // Accepted for async processing
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  /// Get performance metrics and cache statistics
+  /// GET /api/discussion/history/metrics
+  Future<Map<String, dynamic>> getHistoryMetrics() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$_baseUrl/discussion/history/metrics'),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else {
+        return {
+          'query_performance': <String, dynamic>{},
+          'cache_metrics': <String, dynamic>{},
+          'search_patterns': <String, dynamic>{},
+        };
+      }
+    } catch (e) {
+      return {
+        'query_performance': <String, dynamic>{},
+        'cache_metrics': <String, dynamic>{},
+        'search_patterns': <String, dynamic>{},
+        'error': e.toString(),
+      };
+    }
+  }
+  
+  /// Get aggregated statistics for dashboard
+  /// GET /api/discussion/history/stats
+  Future<Map<String, dynamic>> getHistoryStatistics({
+    String period = 'month',
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/discussion/history/stats').replace(
+        queryParameters: {'period': period},
+      );
+      
+      final response = await _client.get(uri, headers: _headers);
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else {
+        return _getMockStatistics();
+      }
+    } catch (e) {
+      return _getMockStatistics();
+    }
+  }
+  
+  /// Mock statistics for development
+  Map<String, dynamic> _getMockStatistics() {
+    return {
+      'total_discussions': 2847,
+      'categories': {
+        '정치': 523,
+        'IT': 412,
+        '연예/문화': 389,
+        '스포츠': 298,
+        '경제': 245,
+        '사회': 231,
+        '기타': 749,
+      },
+      'monthly_trends': {
+        '2024-01': 145,
+        '2024-02': 189,
+        '2024-03': 234,
+        '2024-04': 298,
+        '2024-05': 356,
+        '2024-06': 412,
+        '2024-07': 467,
+      },
+      'top_keywords': [
+        {'keyword': '포켓몬 우유', 'discussions': 23},
+        {'keyword': '갤럭시 S25', 'discussions': 19},
+        {'keyword': '천국보다 아름다운', 'discussions': 17},
+        {'keyword': '이재명', 'discussions': 15},
+        {'keyword': '김준호 김지민', 'discussions': 12},
+      ],
+      'engagement_metrics': {
+        'avg_comments_per_discussion': 14.7,
+        'avg_reactions_per_discussion': 8.3,
+        'peak_hours': ['20:00', '21:00', '22:00'],
+        'most_active_day': 'Sunday',
+      },
+    };
   }
 
   /// API 요청 취소 및 자원 해제

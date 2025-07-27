@@ -6,6 +6,7 @@ import 'dart:ui';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../funcs/category_colors.dart';
 
 class DiscussionLiveTabComponent extends StatefulWidget {
   const DiscussionLiveTabComponent({super.key});
@@ -104,9 +105,11 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       // API가 20개를 반환하므로, 반환된 개수가 20개 미만이면 더 이상 데이터가 없음
       _hasMoreData = activeRooms.length == _pageSize;
       
-      // 카테고리 목록 설정
-      final sortedCategories = categories..sort();
-      final finalCategories = ['전체', ...sortedCategories];
+      // 카테고리 목록 설정 - 정의된 순서대로 정렬
+      final orderedCategories = CategoryColors.primaryCategories
+          .where((category) => categories.contains(category))
+          .toList();
+      final finalCategories = ['전체', ...orderedCategories];
       
       // 전체 카운트를 먼저 저장
       _categoryCounts['전체'] = totalCount;
@@ -246,29 +249,6 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   }
 
 
-  // 카테고리 색상 팔레트
-  final List<Color> _categoryColors = [
-    Color(0xFF3B82F6), // 파랑
-    Color(0xFF10B981), // 초록
-    Color(0xFFF59E0B), // 주황
-    Color(0xFF8B5CF6), // 보라
-    Color(0xFFEF4444), // 빨강
-    Color(0xFF6366F1), // 인디고
-    Color(0xFF14B8A6), // 청록
-    Color(0xFF0EA5E9), // 하늘
-    Color(0xFFEC4899), // 분홍
-    Color(0xFFF97316), // 주황2
-    Color(0xFF84CC16), // 라임
-    Color(0xFF06B6D4), // 시안
-  ];
-
-  Color _getCategoryColor(String category) {
-    if (category == '전체') return Color(0xFF6B7280);
-    
-    // 카테고리명의 해시코드를 사용하여 색상 지정
-    final colorIndex = category.hashCode.abs() % _categoryColors.length;
-    return _categoryColors[colorIndex];
-  }
 
   int _getCategoryCount(String category) {
     // API로부터 받은 카운트 사용, 없으면 0 반환
@@ -673,7 +653,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                                 height: 6.w,
                                 margin: EdgeInsets.only(right: 6.w),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? Colors.white : _getCategoryColor(category),
+                                  color: isSelected ? Colors.white : CategoryColors.getCategoryColor(category),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -767,7 +747,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
   Widget _buildCompactPostItem(DiscussionRoom room, int delay, bool isLast) {
     final bool isDark = AppTheme.isDark(context);
     final String category = room.category ?? '기타';
-    final Color categoryColor = _getCategoryColor(category);
+    final Color categoryColor = CategoryColors.getCategoryColor(category);
     final int totalReactions = (room.positive_count ?? 0) + (room.neutral_count ?? 0) + (room.negative_count ?? 0);
     
     return Container(

@@ -6,6 +6,7 @@ import 'dart:ui';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../funcs/category_colors.dart';
 import '../widgets/discussionReaction_widget.dart';
 
 class DiscussionHotTabComponent extends StatefulWidget {
@@ -143,18 +144,6 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     return estimatedParticipants > 0 ? estimatedParticipants : 0;
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case '정치': return Color(0xFF2196F3);
-      case '경제': return Color(0xFF4CAF50);
-      case '사회': return Color(0xFFFF9800);
-      case '문화': return Color(0xFF9C27B0);
-      case '스포츠': return Color(0xFFF44336);
-      case '국제': return Color(0xFF607D8B);
-      case '과학': return Color(0xFF00BCD4);
-      default: return Color(0xFF795548);
-    }
-  }
 
   int _getTotalReactions(DiscussionRoom room) {
     final positive = room.positive_count ?? 0;
@@ -848,7 +837,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     final darkerCardColor = isDark ? Color(0xFF232B38) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
     final category = room.category;
-    final categoryColor = _getCategoryColor(category);
+    final categoryColor = CategoryColors.getCategoryColor(category);
     
     return Container(
       decoration: BoxDecoration(
