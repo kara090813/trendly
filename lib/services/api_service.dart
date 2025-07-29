@@ -92,26 +92,8 @@ class ApiService {
     }
   }
 
-  /// 키워드 검색 - 키워드 이름과 시간 범위로 키워드 ID 목록 가져오기
-  /// POST /keyword/search/
-  Future<List<int>> searchKeywordIds(String keyword, DateTime startTime, DateTime endTime) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
-  /// 여러 키워드 ID로 키워드 정보 가져오기
-  /// POST /keyword/get_keyword_many/
-  Future<List<Keyword>> getKeywordsByIds(List<int> idList) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
-  /// 특정 시점의 1~10 키워드 가져오기 (타임머신 기능)
-  /// GET /keyword/time_machine/<str:time>/
-  Future<List<Keyword>> getKeywordsByTime(DateTime date) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
   /// 임의의 키워드 히스토리 가져오기
   /// GET /keyword/random/1/
@@ -190,58 +172,12 @@ class ApiService {
     }
   }
 
-  /// 임의의 키워드 n개 가져오기
-  /// GET /keyword/random/<int:count>/
-  Future<List<Keyword>> getRandomKeywords(int count) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
-  /// 키워드 간략 히스토리 가져오기
-  /// POST /keyword/history_simple/
-  Future<Map<String, dynamic>> getKeywordHistorySimple(String keyword, String period) async {
-    final String url = '$_baseUrl';
-    return Future.value({});
-  }
 
-  /// 토론방 수량 조회
-  /// GET /discussion/count/<str:option>
-  Future<int> getDiscussionCountByOption(String option) async {
-    final String url = '$_baseUrl';
-    return Future.value(0);
-  }
 
-  /// 토론방 페이징 조회
-  /// GET /discussion/paging?option=N&sort=(new|pop)&page=N
-  Future<List<DiscussionRoom>> getDiscussionRoomsPaging({
-    required int option, // 0=all, 1=open, 2=closed
-    required String sort, // new=갱신시각순, pop=(댓글+긍정)순
-    required int page,
-  }) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
-  /// 특정 날짜의 키워드 그룹 가져오기
-  /// GET /keyword/date_groups/<str:datestr>/
-  Future<Map<String, dynamic>> getKeywordDateGroups(String dateStr) async {
-    final String url = '$_baseUrl';
-    return Future.value({});
-  }
 
-  /// 특정 날짜의 일일 요약 가져오기
-  /// GET /keyword/daily_summary/<str:datestr>/
-  Future<Map<String, dynamic>> getKeywordDailySummary(String dateStr) async {
-    final String url = '$_baseUrl';
-    return Future.value({});
-  }
 
-  /// 현재 인기 키워드와 관련된 토론방 목록 가져오기
-  /// GET /discussion/now/
-  Future<List<DiscussionRoom>> getCurrentDiscussionRooms() async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
   /// 활성화된 토론방 목록 가져오기 (is_closed가 False인 토론방)
   /// GET /discussion/active?sort=[new|pop]&page=N&category=all
@@ -359,23 +295,11 @@ class ApiService {
     }
   }
 
-  /// 전체 토론방 목록 가져오기
-  /// GET /discussion/all?page=N
-  Future<List<DiscussionRoom>> getAllDiscussionRooms({int page = 0}) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
-  /// 랜덤 토론방 가져오기
-  /// GET /discussion/get_random/<int:count>/<int:option>/
-  Future<List<DiscussionRoom>> getRandomDiscussionRooms(int count, {int option = 1}) async {
-    final String url = '$_baseUrl';
-    return Future.value([]);
-  }
 
-  /// 종료된 토론방 목록 가져오기
-  /// GET /discussion/closed?sort=[newest|oldest|popular|active]&page=N&category=all
-  Future<List<DiscussionRoom>> getClosedDiscussionRooms({
+  /// 종료된 토론방 목록 가져오기 (기본 GET 방식)
+  /// GET /discussion/closed?sort=[newest|oldest|popular]&page=N&category=all
+  Future<Map<String, dynamic>> getClosedDiscussionRooms({
     String sort = 'newest',
     int page = 1,
     String category = 'all',
@@ -398,17 +322,148 @@ class ApiService {
       
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
-        final List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => DiscussionRoom.fromJson(json)).toList();
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        
+        return {
+          'results': (data['results'] as List<dynamic>)
+              .map((json) => DiscussionRoom.fromJson(json))
+              .toList(),
+          'page': data['page'] ?? page,
+          'total_pages': data['total_pages'] ?? 1,
+          'total_count': data['total_count'] ?? 0,
+          'has_next': data['has_next'] ?? false,
+          'has_previous': data['has_previous'] ?? false,
+        };
       } else if (response.statusCode == 404) {
         // 임시 데이터 반환
-        return _generateMockClosedRooms(page, category);
+        return _generateMockClosedRoomsResponse(page, category);
       } else {
         throw Exception('Failed to load closed discussion rooms: ${response.statusCode}');
       }
     } catch (e) {
       // 네트워크 오류 시 임시 데이터 반환
-      return _generateMockClosedRooms(page, category);
+      return _generateMockClosedRoomsResponse(page, category);
+    }
+  }
+
+  /// 종료된 토론방 목록 가져오기 (고급 필터링 POST 방식)
+  /// POST /discussion/closed?sort=[newest|oldest|popular]&page=N&category=all
+  /// 전체 종료된 토론방 개수 조회
+  /// GET /api/discussion/closed/total-count/
+  Future<int> getClosedDiscussionTotalCount() async {
+    final String url = '$_baseUrl/discussion/closed/total-count/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return data['total_count'] ?? 0;
+      } else {
+        throw Exception('Failed to load total count: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 네트워크 오류 시 기본값 반환
+      return 1000; // Mock 데이터
+    }
+  }
+
+  /// 필터링된 카테고리별 종료된 토론방 개수 조회
+  /// POST /api/discussion/closed/category-counts/
+  Future<Map<String, int>> getClosedDiscussionCategoryCounts({
+    Map<String, dynamic>? filters,
+  }) async {
+    final String url = '$_baseUrl/discussion/closed/category-counts/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(filters ?? {}),
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        final Map<String, dynamic> counts = data['counts'] ?? {};
+        
+        // int 타입으로 변환
+        return counts.map((key, value) => MapEntry(key, (value as num).toInt()));
+      } else {
+        throw Exception('Failed to load category counts: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 네트워크 오류 시 Mock 데이터 반환
+      return _generateMockCategoryCounts();
+    }
+  }
+
+  /// Mock 카테고리 카운트 데이터 생성
+  Map<String, int> _generateMockCategoryCounts() {
+    return {
+      '전체': 1000,
+      '정치/사회': 250,
+      '경제/기술': 200,
+      '연예/문화': 180,
+      '생활/정보': 150,
+      '사건/사고': 120,
+      '커뮤/이슈': 80,
+      '스포츠': 20,
+      '국제': 0,
+      '기타': 0,
+    };
+  }
+
+  Future<Map<String, dynamic>> getClosedDiscussionRoomsWithFilters({
+    String sort = 'newest',
+    int page = 1,
+    String category = 'all',
+    Map<String, dynamic>? filters,
+  }) async {
+    final Map<String, String> queryParams = {
+      'sort': sort,
+      'page': page.toString(),
+      'category': category,
+    };
+    
+    final String url = Uri.parse('$_baseUrl/discussion/closed')
+        .replace(queryParameters: queryParams)
+        .toString();
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(filters ?? {}),
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        
+        return {
+          'results': (data['results'] as List<dynamic>)
+              .map((json) => DiscussionRoom.fromJson(json))
+              .toList(),
+          'page': data['page'] ?? page,
+          'total_pages': data['total_pages'] ?? 1,
+          'total_count': data['total_count'] ?? 0,
+          'has_next': data['has_next'] ?? false,
+          'has_previous': data['has_previous'] ?? false,
+        };
+      } else if (response.statusCode == 404) {
+        // 임시 데이터 반환
+        return _generateMockClosedRoomsResponse(page, category);
+      } else {
+        throw Exception('Failed to load closed discussion rooms with filters: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 네트워크 오류 시 임시 데이터 반환
+      return _generateMockClosedRoomsResponse(page, category);
     }
   }
 
@@ -450,6 +505,22 @@ class ApiService {
     return mockRooms;
   }
 
+  /// Mock 데이터를 새로운 응답 형식으로 반환
+  Map<String, dynamic> _generateMockClosedRoomsResponse(int page, String category) {
+    final mockRooms = _generateMockClosedRooms(page, category);
+    final totalCount = 1000; // 가상의 전체 개수
+    final totalPages = (totalCount / 20).ceil();
+    
+    return {
+      'results': mockRooms,
+      'page': page,
+      'total_pages': totalPages,
+      'total_count': totalCount,
+      'has_next': page < totalPages,
+      'has_previous': page > 1,
+    };
+  }
+
   /// 특정 토론방 정보 가져오기
   /// GET /discussion/get/<int:discussion_room_id>/
   Future<DiscussionRoom> getDiscussionRoomById(int roomId) async {
@@ -473,19 +544,7 @@ class ApiService {
     }
   }
 
-  /// 토론방 ID로 최신 키워드 가져오기
-  /// GET /discussion/get-latest-keyword-by-room-id/<int:discussion_room_id>/
-  Future<Keyword> getLatestKeywordByDiscussionRoomId(int roomId) async {
-    final String url = '$_baseUrl';
-    return Future.error('Not implemented');
-  }
 
-  /// 특정 키워드 토론방 가져오기
-  /// POST /discussion/
-  Future<DiscussionRoom> getDiscussionRoomByKeyword(String keywordName) async {
-    final String url = '$_baseUrl';
-    return Future.error('Not implemented');
-  }
 
   /// 해당 토론방 댓글 가져오기 (최신순 또는 인기순)
   /// GET /discussion/<room_id>/get_comment/[new/pop]
@@ -863,6 +922,7 @@ class ApiService {
   /// GET /api/capsule/<str:date_str>/
   Future<CapsuleModel> getCapsule(String dateStr) async {
     final String url = '$_baseUrl/capsule/$dateStr/';
+    print(url);
     
     try {
       final response = await _client.get(

@@ -134,17 +134,6 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
       DiscussionRoom? discussionRoom;
       Keyword? keyword;
 
-      try {
-        discussionRoom = await _apiService.getDiscussionRoomById(comment.discussion_room);
-
-        // 토론방 정보를 성공적으로 가져온 경우, 해당 토론방의 최신 키워드 정보 가져오기
-        if (discussionRoom != null) {
-          keyword = await _apiService.getLatestKeywordByDiscussionRoomId(comment.discussion_room);
-        }
-      } catch (e) {
-        print('토론방 또는 키워드 정보 로드 오류: $e');
-        // 오류가 발생해도 UI는 계속 진행
-      }
 
       if (_isRefreshing) {
         await Future.delayed(Duration(milliseconds: 600));

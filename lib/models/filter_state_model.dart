@@ -62,6 +62,106 @@ class HistoryFilterState with _$HistoryFilterState {
 }
 
 extension HistoryFilterStateExtension on HistoryFilterState {
+  /// POST 요청 body용 필터 데이터 생성 (API 명세서 기준)
+  Map<String, dynamic> toPostFilters() {
+    final filters = <String, dynamic>{};
+    
+    // 검색 필터
+    if (searchQuery.isNotEmpty) {
+      filters['search'] = searchQuery;
+    }
+    
+    // 날짜 필터 - API 명세서에 맞게 수정
+    switch (dateFilterType) {
+      case 'created_at':
+        if (dateFromCreated != null) {
+          filters['created_from'] = dateFromCreated!.toIso8601String();
+        }
+        if (dateToCreated != null) {
+          filters['created_to'] = dateToCreated!.toIso8601String();
+        }
+        break;
+      case 'updated_at':
+        if (dateFromUpdated != null) {
+          filters['updated_from'] = dateFromUpdated!.toIso8601String();
+        }
+        if (dateToUpdated != null) {
+          filters['updated_to'] = dateToUpdated!.toIso8601String();
+        }
+        break;
+      case 'closed_at':
+        if (dateFromClosed != null) {
+          filters['closed_from'] = dateFromClosed!.toIso8601String();
+        }
+        if (dateToClosed != null) {
+          filters['closed_to'] = dateToClosed!.toIso8601String();
+        }
+        break;
+    }
+    
+    // 댓글 수 필터
+    if (minComments != null) {
+      filters['min_comments'] = minComments;
+    }
+    if (maxComments != null) {
+      filters['max_comments'] = maxComments;
+    }
+    
+    // 감정 반응 필터
+    if (minPositiveReactions != null) {
+      filters['min_positive'] = minPositiveReactions;
+    }
+    if (maxPositiveReactions != null) {
+      filters['max_positive'] = maxPositiveReactions;
+    }
+    if (minNeutralReactions != null) {
+      filters['min_neutral'] = minNeutralReactions;
+    }
+    if (maxNeutralReactions != null) {
+      filters['max_neutral'] = maxNeutralReactions;
+    }
+    if (minNegativeReactions != null) {
+      filters['min_negative'] = minNegativeReactions;
+    }
+    if (maxNegativeReactions != null) {
+      filters['max_negative'] = maxNegativeReactions;
+    }
+    if (minTotalReactions != null) {
+      filters['min_total_reactions'] = minTotalReactions;
+    }
+    if (maxTotalReactions != null) {
+      filters['max_total_reactions'] = maxTotalReactions;
+    }
+    
+    // 지배적 감정 필터
+    if (dominantSentiment != 'all') {
+      filters['dominant_sentiment'] = dominantSentiment;
+    }
+    
+    // 활동 수준 필터
+    if (activityLevel != 'all') {
+      filters['activity_level'] = activityLevel;
+    }
+    
+    // 요약 존재 여부
+    if (hasSummary) {
+      filters['has_summary'] = true;
+    }
+    
+    // 시간대 필터
+    if (timeOfDay != 'all') {
+      filters['time_of_day'] = timeOfDay;
+    }
+    
+    // 요일 필터
+    if (dayOfWeek != 'all') {
+      filters['day_of_week'] = dayOfWeek;
+    }
+    
+    return filters;
+  }
+
+  /// 레거시 호환성을 위한 API 필터 (기존 코드용)
   Map<String, dynamic> toApiFilters() {
     final filters = <String, dynamic>{};
     

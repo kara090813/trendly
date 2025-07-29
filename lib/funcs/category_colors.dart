@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Centralized category color utility for consistent category color mapping
 /// across all discussion components.
 /// 
-/// Categories: 정치/사회, 경제/기술, 연예/문화, 생활/정보, 사건/사고, 커뮤/이슈, 스포츠, 국제, 기타
+/// Categories: 정치/사회, 경제/기술, 연예/문화, 생활/정보, 사건/사고, 커뮤/이슈, 스포츠, 게임/e스포츠, 국제, 기타
 class CategoryColors {
   // Private constructor to prevent instantiation
   CategoryColors._();
@@ -50,6 +50,13 @@ class CategoryColors {
     '운동': Color(0xFF0D9488),
     '축구': Color(0xFF14B8A6),
     '야구': Color(0xFF0D9488),
+    
+    // 게임/e스포츠 - 자주색 계열
+    '게임': Color(0xFF9333EA),
+    'e스포츠': Color(0xFF7C3AED),
+    '게임/e스포츠': Color(0xFF9333EA),
+    'e-스포츠': Color(0xFF7C3AED),
+    '이스포츠': Color(0xFF7C3AED),
     
     // 국제 - 남색 계열
     '국제': Color(0xFF0EA5E9),
@@ -106,6 +113,7 @@ class CategoryColors {
         '사건/사고',
         '커뮤/이슈',
         '스포츠',
+        '게임/e스포츠',
         '국제',
         '기타',
       ];

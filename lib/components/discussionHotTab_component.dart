@@ -50,9 +50,6 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     try {
       // 인기 토론방 10개 가져오기
       final hotRooms = await _apiService.getHotDiscussionRooms();
-      
-      // 카테고리 정보 로드
-      await _loadCategoriesForRooms(hotRooms);
 
       if (mounted) {
         setState(() {
@@ -67,43 +64,6 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           _isLoading = false;
         });
       }
-    }
-  }
-
-  Future<void> _loadCategoriesForRooms(List<DiscussionRoom> rooms) async {
-    final Map<int, int> roomToKeywordMap = {};
-    final List<int> keywordIds = [];
-
-    for (var room in rooms) {
-      if (room.keyword_id_list.isNotEmpty) {
-        final lastKeywordId = room.keyword_id_list.last;
-        roomToKeywordMap[room.id] = lastKeywordId;
-        keywordIds.add(lastKeywordId);
-      }
-    }
-
-    if (keywordIds.isEmpty) return;
-
-    try {
-      final keywords = await _apiService.getKeywordsByIds(keywordIds);
-
-      final Map<int, String> keywordCategories = {};
-      for (var keyword in keywords) {
-        keywordCategories[keyword.id] = keyword.category;
-      }
-
-      final Map<int, String> tempCategories = {};
-      roomToKeywordMap.forEach((roomId, keywordId) {
-        tempCategories[roomId] = keywordCategories[keywordId] ?? '기타';
-      });
-
-      if (mounted) {
-        setState(() {
-          _roomCategories = tempCategories;
-        });
-      }
-    } catch (e) {
-      print('카테고리 정보 일괄 로드 실패: $e');
     }
   }
 

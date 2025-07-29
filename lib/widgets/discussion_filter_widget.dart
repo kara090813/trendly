@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../app_theme.dart';
 import '../models/filter_state_model.dart';
 
@@ -27,6 +29,7 @@ class DiscussionFilterComponent extends StatefulWidget {
 
 class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
   late HistoryFilterState _currentFilter;
+  Timer? _debounceTimer;
   
   // 텍스트 컨트롤러들
   final TextEditingController _minCommentsController = TextEditingController();
@@ -49,6 +52,7 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _disposeControllers();
     super.dispose();
   }
@@ -83,13 +87,26 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     setState(() {
       _currentFilter = newFilter;
     });
-    widget.onFilterChanged(newFilter);
+    
+    // Debounce parent callback to reduce cascade rebuilds
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      widget.onFilterChanged(newFilter);
+    });
   }
+
 
   void _resetFilters() {
     final resetFilter = const HistoryFilterState();
-    _updateFilter(resetFilter);
+    setState(() {
+      _currentFilter = resetFilter;
+    });
     _initializeControllers();
+    
+    // Cancel any pending debounced updates and notify immediately
+    _debounceTimer?.cancel();
+    widget.onFilterChanged(resetFilter);
+    
     if (widget.onReset != null) {
       widget.onReset!();
     }
@@ -165,21 +182,37 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
 
   @override
   Widget build(BuildContext context) {
+    // Cache theme values to eliminate repeated calculations
     final bool isDark = AppTheme.isDark(context);
+    final Color textColor = AppTheme.getTextColor(context);
+    final Color backgroundColor = isDark 
+        ? const Color(0xFF21202C)
+        : Colors.white;
+    final Color shadowColor = isDark 
+        ? Colors.black
+        : const Color(0xFF6366F1);
     
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: backgroundColor.withOpacity(isDark ? 0.95 : 0.98),
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.r),
-          topRight: Radius.circular(20.r),
+          topLeft: Radius.circular(28.r),
+          topRight: Radius.circular(28.r),
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+            color: shadowColor.withOpacity(isDark ? 0.4 : 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
+            spreadRadius: 0,
           ),
+          if (!isDark)
+            BoxShadow(
+              color: shadowColor.withOpacity(0.04),
+              blurRadius: 48,
+              offset: const Offset(0, -16),
+              spreadRadius: 0,
+            ),
         ],
       ),
       child: Column(
@@ -187,10 +220,10 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // 드래그 핸들
-          _buildDragHandle(),
+          _buildDragHandle(textColor: textColor),
           
           // 헤더
-          _buildHeader(),
+          _buildHeader(textColor: textColor),
           
           // 메인 필터 섹션들 (스크롤 가능)
           Expanded(
@@ -199,22 +232,22 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
               child: Column(
                 children: [
                   // 1. 날짜 섹션
-                  _buildDateSection(),
+                  _buildDateSection(isDark: isDark, textColor: textColor, shadowColor: shadowColor),
                   
                   SizedBox(height: 32.h),
                   
                   // 2. 감정 섹션
-                  _buildEmotionSection(),
+                  _buildEmotionSection(isDark: isDark, textColor: textColor, shadowColor: shadowColor),
                   
                   SizedBox(height: 32.h),
                   
                   // 3. 댓글/공감 섹션
-                  _buildEngagementSection(),
+                  _buildEngagementSection(isDark: isDark, textColor: textColor, shadowColor: shadowColor),
                   
                   SizedBox(height: 32.h),
                   
                   // 액션 버튼들
-                  _buildActionButtons(),
+                  _buildActionButtons(isDark: isDark, textColor: textColor),
                   
                   // 하단 안전 여백
                   SizedBox(height: 20.h),
@@ -227,104 +260,153 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     );
   }
 
-  Widget _buildDragHandle() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12.h),
-      child: Center(
-        child: Container(
-          width: 40.w,
-          height: 4.h,
-          decoration: BoxDecoration(
-            color: const Color(0xFF6366F1).withOpacity(0.3),
-            borderRadius: BorderRadius.circular(2.r),
-          ),
-        ),
-      ),
+  Widget _buildDragHandle({required Color textColor}) {
+    return RepaintBoundary(
+      child: _FilterDragHandle(textColor: textColor),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-        ),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16.r),
-          topRight: Radius.circular(16.r),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.filter_list,
-            color: Colors.white,
-            size: 24.sp,
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '토론방 필터',
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '원하는 조건으로 토론방을 찾아보세요',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 활성 필터 개수 표시
-          if (_currentFilter.hasActiveFilters)
+  Widget _buildHeader({required Color textColor}) {
+    return Semantics(
+      header: true,
+      label: '토론방 필터 헤더',
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        child: Row(
+          children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              width: 40.w,
+              height: 40.h,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Text(
-                '${_currentFilter.filterComplexity}개 적용됨',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF6366F1),
+                    Color(0xFF818CF8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF6366F1).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.filter_list_rounded,
+                color: Colors.white,
+                size: 22.sp,
+              ),
+            ).animate()
+                .scale(duration: 400.ms, curve: Curves.elasticOut)
+                .shimmer(duration: 1200.ms, delay: 400.ms),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '토론방 필터',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                      letterSpacing: -0.5,
+                    ),
+                  ).animate()
+                      .fadeIn(duration: 300.ms)
+                      .slideX(begin: -0.1, end: 0),
+                  SizedBox(height: 2.h),
+                  Text(
+                    '원하는 조건으로 토론방을 찾아보세요',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: textColor.withOpacity(0.6),
+                      letterSpacing: -0.2,
+                    ),
+                  ).animate()
+                      .fadeIn(duration: 300.ms, delay: 100.ms)
+                      .slideX(begin: -0.1, end: 0),
+                ],
               ),
             ),
-        ],
+            // 활성 필터 개수 표시
+            if (_currentFilter.hasActiveFilters)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Color(0xFF6366F1).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: Color(0xFF6366F1).withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6.w,
+                      height: 6.h,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF6366F1),
+                        shape: BoxShape.circle,
+                      ),
+                    ).animate(autoPlay: true, onPlay: (controller) => controller.repeat())
+                        .scale(
+                          begin: Offset(1, 1),
+                          end: Offset(1.3, 1.3),
+                          duration: 1000.ms,
+                        )
+                        .then()
+                        .scale(
+                          begin: Offset(1.3, 1.3),
+                          end: Offset(1, 1),
+                          duration: 1000.ms,
+                        ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      '${_currentFilter.filterComplexity}개 적용',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF6366F1),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate()
+                  .fadeIn(duration: 300.ms)
+                  .scale(begin: Offset(0.8, 0.8), end: Offset(1, 1)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDateSection() {
+  Widget _buildDateSection({required bool isDark, required Color textColor, required Color shadowColor}) {
     return _buildSection(
       title: '📅 날짜 필터',
       description: '토론방 생성, 업데이트, 또는 종료 날짜를 기준으로 필터링',
+      isDark: isDark,
+      textColor: textColor,
+      shadowColor: shadowColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 날짜 타입 선택
-          _buildSectionLabel('날짜 기준 선택'),
+          _buildSectionLabel('날짜 기준 선택', textColor: textColor),
           SizedBox(height: 8.h),
           _buildDateTypeSelector(),
           
           SizedBox(height: 16.h),
           
           // 날짜 범위 선택
-          _buildSectionLabel('날짜 범위'),
+          _buildSectionLabel('날짜 범위', textColor: textColor),
           SizedBox(height: 8.h),
           _buildDateRangeSelector(),
         ],
@@ -332,29 +414,32 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     );
   }
 
-  Widget _buildEmotionSection() {
+  Widget _buildEmotionSection({required bool isDark, required Color textColor, required Color shadowColor}) {
     return _buildSection(
       title: '😊 감정 필터',
       description: '토론방의 감정 분위기와 반응 수를 기준으로 필터링',
+      isDark: isDark,
+      textColor: textColor,
+      shadowColor: shadowColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 지배적 감정 선택
-          _buildSectionLabel('지배적 감정'),
+          _buildSectionLabel('지배적 감정', textColor: textColor),
           SizedBox(height: 8.h),
           _buildDominantSentimentSelector(),
           
           SizedBox(height: 16.h),
           
           // 감정별 반응 수 범위
-          _buildSectionLabel('감정별 반응 수 범위'),
+          _buildSectionLabel('감정별 반응 수 범위', textColor: textColor),
           SizedBox(height: 8.h),
           _buildEmotionRanges(),
           
           SizedBox(height: 16.h),
           
           // 전체 반응 수 범위
-          _buildSectionLabel('전체 반응 수'),
+          _buildSectionLabel('전체 반응 수', textColor: textColor),
           SizedBox(height: 8.h),
           _buildTotalReactionRange(),
         ],
@@ -362,24 +447,20 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     );
   }
 
-  Widget _buildEngagementSection() {
+  Widget _buildEngagementSection({required bool isDark, required Color textColor, required Color shadowColor}) {
     return _buildSection(
-      title: '💬 댓글/공감 필터',
-      description: '토론방의 활동 수준을 댓글 수와 반응 수로 측정',
+      title: '💬 댓글 필터',
+      description: '토론방의 댓글 수를 기준으로 필터링',
+      isDark: isDark,
+      textColor: textColor,
+      shadowColor: shadowColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 댓글 수 범위
-          _buildSectionLabel('댓글 수 범위'),
+          _buildSectionLabel('댓글 수 범위', textColor: textColor),
           SizedBox(height: 8.h),
           _buildCommentRange(),
-          
-          SizedBox(height: 16.h),
-          
-          // 활동 수준 선택
-          _buildSectionLabel('활동 수준'),
-          SizedBox(height: 8.h),
-          _buildActivityLevelSelector(),
         ],
       ),
     );
@@ -389,51 +470,100 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     required String title,
     required String description,
     required Widget child,
+    required bool isDark,
+    required Color textColor,
+    required Color shadowColor,
   }) {
-    final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1B3A) : const Color(0xFFF5F3FF),
-        borderRadius: BorderRadius.circular(12.r),
+        color: isDark 
+          ? Color(0xFF2D2C3D).withOpacity(0.5)
+          : Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+          color: isDark
+            ? Colors.white.withOpacity(0.06)
+            : shadowColor.withOpacity(0.08),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+              ? Colors.black.withOpacity(0.2)
+              : shadowColor.withOpacity(0.06),
+            blurRadius: 20,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.getTextColor(context),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                  ? [
+                      Color(0xFF6366F1).withOpacity(0.15),
+                      Color(0xFF6366F1).withOpacity(0.05),
+                    ]
+                  : [
+                      Color(0xFF6366F1).withOpacity(0.08),
+                      Color(0xFF6366F1).withOpacity(0.03),
+                    ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20.r),
+                topRight: Radius.circular(20.r),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: textColor.withOpacity(0.6),
+                    letterSpacing: -0.2,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 4.h),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: (AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]),
-            ),
+          Padding(
+            padding: EdgeInsets.all(20.w),
+            child: child,
           ),
-          SizedBox(height: 16.h),
-          child,
         ],
       ),
-    );
+    ).animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.02, end: 0);
   }
 
-  Widget _buildSectionLabel(String label) {
+  Widget _buildSectionLabel(String label, {required Color textColor}) {
     return Text(
       label,
       style: TextStyle(
         fontSize: 14.sp,
         fontWeight: FontWeight.w600,
-        color: AppTheme.getTextColor(context),
+        color: textColor,
       ),
     );
   }
@@ -517,48 +647,109 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     required VoidCallback onTap,
   }) {
     final bool isDark = AppTheme.isDark(context);
+    final bool hasDate = date != null;
     
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+    return Semantics(
+      button: true,
+      label: '$label ${hasDate ? "${date.year}년 ${date.month}월 ${date.day}일" : "선택 안됨"}',
+      hint: '탭하여 날짜를 선택하세요',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              color: isDark
+                ? Color(0xFF2D2C3D).withOpacity(0.6)
+                : Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: hasDate
+                  ? Color(0xFF6366F1).withOpacity(0.3)
+                  : (isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.08)),
+                width: hasDate ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: hasDate
+                    ? Color(0xFF6366F1).withOpacity(0.1)
+                    : (isDark
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.05)),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: (isDark ? Colors.grey[400] : Colors.grey[600]),
+            child: Row(
+              children: [
+                Container(
+                  width: 36.w,
+                  height: 36.h,
+                  decoration: BoxDecoration(
+                    color: hasDate
+                      ? Color(0xFF6366F1).withOpacity(0.1)
+                      : (isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.grey.withOpacity(0.1)),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    Icons.calendar_today_rounded,
+                    color: hasDate
+                      ? Color(0xFF6366F1)
+                      : AppTheme.getTextColor(context).withOpacity(0.4),
+                    size: 18.sp,
+                  ),
                 ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                date != null 
-                  ? '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}'
-                  : '선택해주세요',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: date != null ? AppTheme.getTextColor(context) : (isDark ? Colors.grey[500] : Colors.grey[400]),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.getTextColor(context).withOpacity(0.6),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        hasDate
+                          ? '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}'
+                          : '선택해주세요',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: hasDate ? FontWeight.w700 : FontWeight.w500,
+                          color: hasDate
+                            ? AppTheme.getTextColor(context)
+                            : AppTheme.getTextColor(context).withOpacity(0.4),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.getTextColor(context).withOpacity(0.3),
+                  size: 20.sp,
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
+    ).animate()
+        .fadeIn(duration: 300.ms)
+        .slideX(begin: 0.02, end: 0);
   }
 
   Widget _buildDominantSentimentSelector() {
@@ -662,30 +853,6 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     );
   }
 
-  Widget _buildActivityLevelSelector() {
-    final options = [
-      {'value': 'all', 'label': '전체'},
-      {'value': 'high', 'label': '높음'},
-      {'value': 'medium', 'label': '보통'},
-      {'value': 'low', 'label': '낮음'},
-    ];
-    
-    return Wrap(
-      spacing: 8.w,
-      children: options.map((option) {
-        final bool isSelected = _currentFilter.activityLevel == option['value'];
-        return _buildChoiceChip(
-          label: option['label'] as String,
-          isSelected: isSelected,
-          onSelected: (selected) {
-            if (selected) {
-              _updateFilter(_currentFilter.copyWith(activityLevel: option['value'] as String));
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
 
   Widget _buildRangeInput({
     required String label,
@@ -770,46 +937,76 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
   }) {
     final bool isDark = AppTheme.isDark(context);
     
-    return SizedBox(
-      height: 40.h,
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.getTextColor(context),
+    return Semantics(
+      textField: true,
+      label: hint,
+      child: Container(
+        height: 42.h,
+        decoration: BoxDecoration(
+          color: isDark
+            ? Color(0xFF2D2C3D).withOpacity(0.6)
+            : Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Color(0xFF6366F1).withOpacity(0.1),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
+        child: TextField(
+          controller: controller,
+          onChanged: onChanged,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: TextStyle(
             fontSize: 14.sp,
-            color: (isDark ? Colors.grey[500] : Colors.grey[400]),
+            fontWeight: FontWeight.w600,
+            color: AppTheme.getTextColor(context),
+            letterSpacing: -0.2,
           ),
-          filled: true,
-          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.r),
-            borderSide: BorderSide(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontSize: 13.sp,
+              color: AppTheme.getTextColor(context).withOpacity(0.4),
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
             ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.r),
-            borderSide: BorderSide(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+            filled: false,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide.none,
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.r),
-            borderSide: const BorderSide(
-              color: Color(0xFF6366F1),
-              width: 2,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide.none,
             ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide(
+                color: Color(0xFF6366F1),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide(
+                color: Colors.red.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         ),
       ),
     );
@@ -824,99 +1021,249 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
     final bool isDark = AppTheme.isDark(context);
     final effectiveColor = color ?? const Color(0xFF6366F1);
     
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w600,
-          color: isSelected 
-            ? Colors.white 
-            : AppTheme.getTextColor(context),
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: '$label ${isSelected ? "선택됨" : "선택 안됨"}',
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onSelected(!isSelected),
+            borderRadius: BorderRadius.circular(24.r),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: isSelected
+                  ? effectiveColor
+                  : (isDark 
+                      ? Color(0xFF2D2C3D).withOpacity(0.6)
+                      : Colors.white.withOpacity(0.9)),
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: isSelected
+                    ? effectiveColor
+                    : (isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Color(0xFF6366F1).withOpacity(0.2)),
+                  width: isSelected ? 2 : 1,
+                ),
+                boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: effectiveColor.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: isDark
+                          ? Colors.black.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isSelected)
+                    Padding(
+                      padding: EdgeInsets.only(right: 6.w),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 16.sp,
+                      ),
+                    ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: isSelected
+                        ? Colors.white
+                        : AppTheme.getTextColor(context),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-      selected: isSelected,
-      onSelected: onSelected,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-      selectedColor: effectiveColor,
-      checkmarkColor: Colors.white,
-      side: BorderSide(
-        color: isSelected 
-          ? effectiveColor 
-          : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-    );
+    ).animate()
+        .scale(
+          begin: Offset(0.95, 0.95),
+          end: Offset(1, 1),
+          duration: 200.ms,
+          curve: Curves.easeOut,
+        );
   }
 
-  Widget _buildActionButtons() {
-    final bool isDark = AppTheme.isDark(context);
+  Widget _buildActionButtons({required bool isDark, required Color textColor}) {
     
     return Row(
       children: [
         // 초기화 버튼
         Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _resetFilters,
-            icon: Icon(
-              Icons.refresh,
-              size: 18.sp,
-              color: (isDark ? Colors.grey[400] : Colors.grey[600]),
-            ),
-            label: Text(
-              '초기화',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: (isDark ? Colors.grey[400] : Colors.grey[600]),
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              side: BorderSide(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.2),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+          child: Semantics(
+            button: true,
+            label: '필터 초기화',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _resetFilters,
+                borderRadius: BorderRadius.circular(16.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  decoration: BoxDecoration(
+                    color: isDark
+                      ? Color(0xFF2D2C3D).withOpacity(0.6)
+                      : Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.08),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                          ? Colors.black.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.05),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.refresh_rounded,
+                        size: 20.sp,
+                        color: AppTheme.getTextColor(context).withOpacity(0.7),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        '초기화',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.getTextColor(context).withOpacity(0.7),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ).animate()
+            .fadeIn(duration: 400.ms, delay: 100.ms)
+            .slideY(begin: 0.1, end: 0),
         SizedBox(width: 12.w),
         // 적용 버튼
         Expanded(
           flex: 2,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // 필터 적용은 실시간으로 이미 적용되고 있음
-              Navigator.of(context).pop();
-            },
-            icon: Icon(
-              Icons.check,
-              size: 18.sp,
-              color: Colors.white,
-            ),
-            label: Text(
-              '필터 적용',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+          child: Semantics(
+            button: true,
+            label: '필터 적용하고 닫기',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  // 필터 적용은 실시간으로 이미 적용되고 있음
+                  Navigator.of(context).pop();
+                },
+                borderRadius: BorderRadius.circular(16.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF6366F1),
+                        Color(0xFF818CF8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFF6366F1).withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_rounded,
+                        size: 20.sp,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        '필터 적용',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ).animate()
+            .fadeIn(duration: 400.ms, delay: 200.ms)
+            .slideY(begin: 0.1, end: 0)
+            .shimmer(duration: 1500.ms, delay: 800.ms, color: Colors.white.withOpacity(0.3)),
       ],
     );
+  }
+}
+
+/// Optimized drag handle widget with RepaintBoundary
+class _FilterDragHandle extends StatelessWidget {
+  const _FilterDragHandle({required this.textColor});
+  
+  final Color textColor;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '필터 창 드래그 핸들',
+      hint: '위아래로 드래그하여 크기를 조절할 수 있습니다',
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Center(
+          child: Container(
+            width: 48.w,
+            height: 5.h,
+            decoration: BoxDecoration(
+              color: textColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(2.5.r),
+            ),
+          ),
+        ),
+      ),
+    ).animate()
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: -0.2, end: 0);
   }
 }
