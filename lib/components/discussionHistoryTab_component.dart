@@ -718,7 +718,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "HISTORY",
+                      "토론방 히스토리",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -789,149 +789,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 섹션 헤더
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Row(
-              children: [
-                Container(
-                  width: 4.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-                    ),
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Text(
-                  "게시글 목록",
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.getTextColor(context),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Spacer(),
-                // 정렬 옵션
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (_filterState.sortOption == value) return; // 같은 정렬이면 무시
-                    
-                    _filterState = _filterState.copyWith(sortOption: value);
-                    _currentPage = 1;
-                    _hasMoreData = true;
-                    _isLoadingMore = false;
-                    
-                    // 정렬 상태만 즉시 업데이트하고 데이터는 별도로 로드
-                    setState(() {});
-                    _loadFilteredHistoryRooms();
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'newest',
-                      child: Row(
-                        children: [
-                          Icon(Icons.schedule, size: 18.sp),
-                          SizedBox(width: 12.w),
-                          Text('최신순'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'oldest',
-                      child: Row(
-                        children: [
-                          Icon(Icons.history, size: 18.sp),
-                          SizedBox(width: 12.w),
-                          Text('오래된순'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'popular',
-                      child: Row(
-                        children: [
-                          Icon(Icons.trending_up, size: 18.sp),
-                          SizedBox(width: 12.w),
-                          Text('인기순'),
-                        ],
-                      ),
-                    ),
-                  ],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  elevation: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: isDark 
-                        ? Color(0xFF2A2A36).withOpacity(0.6)
-                        : Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark 
-                            ? Colors.black.withOpacity(0.2)
-                            : Color(0xFF6366F1).withOpacity(0.06),
-                          blurRadius: 10,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.sort_rounded,
-                          size: 16.sp,
-                          color: Color(0xFF6366F1),
-                        ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          _getSortDisplayName(_filterState.sortOption),
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.getTextColor(context),
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 18.sp,
-                          color: AppTheme.getTextColor(context).withOpacity(0.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          SizedBox(height: 8.h),
-          
-          Padding(
-            padding: EdgeInsets.only(left: 40.w),
-            child: Text(
-              "종료된 토론방을 한눈에 탐색하세요",
-              style: TextStyle(
-                fontSize: 15.sp,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          
-          SizedBox(height: 20.h),
-          
-          // 카테고리 필터 (가로 스크롤) - LiveTab 스타일
+          // 카테고리 필터 (전체 너비 사용)
           Container(
             height: 40.h,
             margin: EdgeInsets.only(left: 24.w),
@@ -1274,6 +1132,120 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
             ? _buildEmptyState()
             : Column(
                 children: [
+                  // 리스트 헤더 (정렬 옵션 포함)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    decoration: BoxDecoration(
+                      color: isDark 
+                        ? Color(0xFF334155).withOpacity(0.3)
+                        : Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16.r),
+                        topRight: Radius.circular(16.r),
+                      ),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '히스토리 목록',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.grey[300] : Colors.grey[700],
+                          ),
+                        ),
+                        Spacer(),
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (_filterState.sortOption == value) return; // 같은 정렬이면 무시
+                            
+                            _filterState = _filterState.copyWith(sortOption: value);
+                            _currentPage = 1;
+                            _hasMoreData = true;
+                            _isLoadingMore = false;
+                            
+                            // 정렬 상태만 즉시 업데이트하고 데이터는 별도로 로드
+                            setState(() {});
+                            _loadFilteredHistoryRooms();
+                          },
+                          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                            PopupMenuItem<String>(
+                              value: 'newest',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.schedule, size: 16.sp, color: Color(0xFF6366F1)),
+                                  SizedBox(width: 8.w),
+                                  Text('최신순'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'oldest',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.history, size: 16.sp, color: Color(0xFF6366F1)),
+                                  SizedBox(width: 8.w),
+                                  Text('오래된순'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'popular',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.trending_up, size: 16.sp, color: Color(0xFF6366F1)),
+                                  SizedBox(width: 8.w),
+                                  Text('인기순'),
+                                ],
+                              ),
+                            ),
+                          ],
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.sort,
+                                  size: 14.sp,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  _getSortDisplayName(_filterState.sortOption),
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                  ),
+                                ),
+                                SizedBox(width: 2.w),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 14.sp,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate(delay: Duration(milliseconds: 500))
+                      .fadeIn(duration: 600.ms)
+                      .slideY(begin: -0.02, end: 0, duration: 600.ms),
+                  
+                  // 토론방 아이템들
                   ..._filteredRooms.asMap().entries.map((entry) {
                     final int index = entry.key;
                     final DiscussionRoom room = entry.value;

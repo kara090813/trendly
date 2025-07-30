@@ -506,105 +506,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 섹션 헤더
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Row(
-              children: [
-                Container(
-                  width: 4.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFF10B981), Color(0xFF059669)],
-                    ),
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Text(
-                  "실시간 토론방",
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.getTextColor(context),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Spacer(),
-                // 정렬 옵션
-                PopupMenuButton<String>(
-                  onSelected: _onSortChanged,
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'new',
-                      child: Text('최신순'),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'pop',
-                      child: Text('인기순'),
-                    ),
-                  ],
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: isDark ? Color(0xFF1E293B) : Colors.white,
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.sort,
-                          size: 14.sp,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          _sortOption == 'new' ? '최신순' : '인기순',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 16.sp,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          SizedBox(height: 8.h),
-          
-          Padding(
-            padding: EdgeInsets.only(left: 40.w),
-            child: Text(
-              "현재 진행 중인 토론에 참여하세요",
-              style: TextStyle(
-                fontSize: 15.sp,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          
-          SizedBox(height: 20.h),
-          
-          // 카테고리 필터 (가로 스크롤)
+          // 카테고리 필터 (전체 너비 사용)
           Container(
             height: 40.h,
             margin: EdgeInsets.only(left: 24.w),
@@ -717,6 +619,99 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
           ? _buildEmptyState()
           : Column(
               children: [
+                // 리스트 헤더 (정렬 옵션 포함)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: isDark 
+                      ? Color(0xFF334155).withOpacity(0.3)
+                      : Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.r),
+                      topRight: Radius.circular(16.r),
+                    ),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        '토론방 목록',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.grey[300] : Colors.grey[700],
+                        ),
+                      ),
+                      Spacer(),
+                      PopupMenuButton<String>(
+                        onSelected: _onSortChanged,
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'new',
+                            child: Row(
+                              children: [
+                                Icon(Icons.schedule, size: 16.sp, color: Color(0xFF10B981)),
+                                SizedBox(width: 8.w),
+                                Text('최신순'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'pop',
+                            child: Row(
+                              children: [
+                                Icon(Icons.trending_up, size: 16.sp, color: Color(0xFF10B981)),
+                                SizedBox(width: 8.w),
+                                Text('인기순'),
+                              ],
+                            ),
+                          ),
+                        ],
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.sort,
+                                size: 14.sp,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                _sortOption == 'new' ? '최신순' : '인기순',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                ),
+                              ),
+                              SizedBox(width: 2.w),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 14.sp,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate(delay: Duration(milliseconds: 500))
+                    .fadeIn(duration: 600.ms)
+                    .slideY(begin: -0.02, end: 0, duration: 600.ms),
+                
+                // 토론방 아이템들
                 ..._filteredRooms.asMap().entries.map((entry) {
                   final int index = entry.key;
                   final DiscussionRoom room = entry.value;
