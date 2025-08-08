@@ -1436,6 +1436,77 @@ class ApiService {
     };
   }
 
+  /// FCM 토큰 등록/업데이트
+  /// POST /push/register/
+  Future<Map<String, dynamic>> registerPushToken({
+    required String token,
+    required bool isPushAllowed,
+  }) async {
+    print(token);
+    final String url = '$_baseUrl/push/register/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'token': token,
+          'is_push_allowed': isPushAllowed,
+        }),
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else {
+        throw Exception('Failed to register push token: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// 키워드 조회 로그 기록
+  /// POST /log/keyword-view/
+  Future<Map<String, dynamic>> logKeywordView({
+    required String token,
+    required String category,
+    String? keyword,
+  }) async {
+    final String url = '$_baseUrl/log/keyword-view/';
+    
+    try {
+      final Map<String, dynamic> requestBody = {
+        'token': token,
+        'category': category,
+      };
+      
+      // keyword는 선택적 파라미터
+      if (keyword != null && keyword.isNotEmpty) {
+        requestBody['keyword'] = keyword;
+      }
+      
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestBody),
+      );
+      
+      if (response.statusCode == 201) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        return json.decode(decodedBody);
+      } else if (response.statusCode == 404) {
+        throw Exception('Device token not found');
+      } else if (response.statusCode == 400) {
+        throw Exception('Token and category are required');
+      } else {
+        throw Exception('Failed to log keyword view: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
   /// API 요청 취소 및 자원 해제
   void dispose() {
     _client.close();

@@ -9,6 +9,7 @@ import 'dart:math'; // 랜덤 함수 사용을 위해 추가
 import '../app_theme.dart';
 import '../providers/_providers.dart';
 import '../services/api_service.dart';
+import '../services/firebase_messaging_service.dart';
 import '../models/_models.dart';
 import '../widgets/_widgets.dart';
 
@@ -22,6 +23,7 @@ class KeywordHomeComponent extends StatefulWidget {
 class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
+  final FirebaseMessagingService _fcmService = FirebaseMessagingService();
   List<Keyword> _keywords = [];
   List<Keyword> _previousKeywords = []; // 이전 키워드 목록 저장용
 
@@ -160,7 +162,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     }
   }
 
-  void _selectKeyword(Keyword keyword) {
+  void _selectKeyword(Keyword keyword, {bool isManualClick = false}) async {
     final index = _keywords.indexWhere((k) => k.id == keyword.id);
     if (index != -1) {
       setState(() {
@@ -170,6 +172,23 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
 
       // 요약 영역으로 자동 스크롤
       _scrollToSummary();
+      
+      // 사용자가 직접 클릭한 경우에만 로그 기록
+      if (isManualClick) {
+        try {
+          final token = await _fcmService.getCurrentToken();
+          if (token != null) {
+            await _apiService.logKeywordView(
+              token: token,
+              category: keyword.category ?? '기타',
+              keyword: keyword.keyword,
+            );
+            print('📊 [LOG] Keyword view logged: ${keyword.keyword}');
+          }
+        } catch (e) {
+          print('❌ [LOG] Failed to log keyword view: $e');
+        }
+      }
     }
   }
 
@@ -633,7 +652,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                 keyword: keywords[index],
                 rank: index + 1,
                 isSelected: _selectedKeyword?.id == keywords[index].id,
-                onTap: () => _selectKeyword(keywords[index]),
+                onTap: () => _selectKeyword(keywords[index], isManualClick: true),
               ),
             ),
           );
@@ -660,7 +679,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                 keyword: keywords[index],
                 rank: index + 1,
                 isSelected: _selectedKeyword?.id == keywords[index].id,
-                onTap: () => _selectKeyword(keywords[index]),
+                onTap: () => _selectKeyword(keywords[index], isManualClick: true),
               ),
             );
 

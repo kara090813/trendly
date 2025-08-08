@@ -1,4 +1,4 @@
-package com.example.trendly
+package net.lamoss.trendly
 
 import io.flutter.embedding.android.FlutterActivity
 

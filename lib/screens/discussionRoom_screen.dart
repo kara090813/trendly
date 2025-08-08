@@ -9,6 +9,7 @@ import 'dart:async';
 
 import '../models/_models.dart';
 import '../services/api_service.dart';
+import '../services/firebase_messaging_service.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/_widgets.dart';
 import '../app_theme.dart';
@@ -28,6 +29,7 @@ class DiscussionRoomScreen extends StatefulWidget {
 class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
     with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
+  final FirebaseMessagingService _fcmService = FirebaseMessagingService();
 
   // 상태 변수들
   bool _isRealTimeSummaryEnabled = true;
@@ -156,6 +158,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       if (discussionRoom.keyword_id_list.isNotEmpty) {
         final lastKeywordId = discussionRoom.keyword_id_list.last;
         keyword = await _apiService.getKeywordById(lastKeywordId);
+        
+        // 토론방 접속 시 키워드 조회 로그 기록
+        _logKeywordView(keyword);
       } else {
         throw Exception('No keyword found for this discussion room');
       }
@@ -251,6 +256,23 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           dislikeCount: comment.dislike_count ?? 0,
         );
       }
+    }
+  }
+  
+  // 키워드 조회 로그 기록 메서드
+  Future<void> _logKeywordView(Keyword keyword) async {
+    try {
+      final token = await _fcmService.getCurrentToken();
+      if (token != null) {
+        await _apiService.logKeywordView(
+          token: token,
+          category: keyword.category ?? '기타',
+          keyword: keyword.keyword,
+        );
+        print('📊 [LOG] Discussion room keyword view logged: ${keyword.keyword}');
+      }
+    } catch (e) {
+      print('❌ [LOG] Failed to log discussion room keyword view: $e');
     }
   }
 

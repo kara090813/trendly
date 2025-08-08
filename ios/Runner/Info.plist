@@ -50,5 +50,37 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	
+	<!-- Push Notification Settings -->
+	<key>NSUserNotificationAlertStyle</key>
+	<string>alert</string>
+	
+	<!-- Privacy - Notification Usage Description -->
+	<key>NSUserNotificationUsageDescription</key>
+	<string>실시간 검색어 알림을 받기 위해 알림 권한이 필요합니다.</string>
+	
+	<!-- Enable Push Notifications -->
+	<key>aps-environment</key>
+	<string>development</string>
+	
+	<!-- URL Schemes for Deep Linking -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.trendly.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>trendly</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

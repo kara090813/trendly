@@ -411,7 +411,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "LIVE 토론방",
+                      "실시간 토론방",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,

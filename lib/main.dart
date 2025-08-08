@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'app_theme.dart';
 import 'router.dart';
 import 'providers/_providers.dart';
 import 'package:flutter/services.dart';
 import 'services/user_preference_service.dart';
+import 'services/firebase_messaging_service.dart';
 import 'dart:ui' as ui;
 
-void main() {
+// Background message handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  print('Handling a background message: ${message.messageId}');
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // FCM Background 메시지 핸들러 설정
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // FCM 서비스 초기화 (앱 시작과 함께 바로 실행)
+  try {
+    print('🔥 [MAIN] Starting FCM initialization...');
+    await FirebaseMessagingService().initializeFirebaseMessaging();
+  } catch (e) {
+    print('❌ [MAIN] Failed to initialize FCM: $e');
+  }
 
   // MobileAds 초기화를 try-catch로 감싸기
   // try {
@@ -37,9 +65,15 @@ class Trendly extends StatelessWidget {
           ],
           child: Builder(
             builder: (BuildContext context) {
-              Future.microtask(() =>
-                  Provider.of<UserPreferenceProvider>(context, listen: false)
-                      .loadBasicInfo());
+              Future.microtask(() async {
+                // 사용자 기본 정보 로드
+                await Provider.of<UserPreferenceProvider>(context, listen: false)
+                    .loadBasicInfo();
+                
+                // 약간의 지연 후 보류된 FCM 네비게이션 처리 (컨텍스트 완전 초기화 대기)
+                await Future.delayed(Duration(milliseconds: 1000));
+                await FirebaseMessagingService().handlePendingNavigation();
+              });
 
               final router = Provider.of<AppRouter>(context, listen: false).router;
 

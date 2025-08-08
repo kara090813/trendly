@@ -359,14 +359,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           
           SizedBox(height: 24.h),
           
-          Container(
-            height: 280.h,
+          SizedBox(
+            height: 220.h, // 약간 여유를 둔 최대 높이
             child: PageView.builder(
               controller: PageController(viewportFraction: 0.85),
               itemCount: topThree.length,
               itemBuilder: (context, index) {
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
                   child: _buildTopCard(topThree[index], index),
                 );
               },
@@ -382,168 +382,350 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
   Widget _buildTopCard(DiscussionRoom room, int index) {
     final isDark = AppTheme.isDark(context);
     final rankColors = [
-      Color(0xFFFFB300), // 1등 - 골드 (더 진한 노란색)
-      Color(0xFFE0E0E0), // 2등 - 실버  
-      Color(0xFFD4824B), // 3등 - 브론즈
+      Color(0xFFFFD700), // 1등 - 골드
+      Color(0xFFC0C0C0), // 2등 - 실버  
+      Color(0xFFCD7F32), // 3등 - 브론즈
+    ];
+    
+    final rankIcons = [
+      Icons.emoji_events, // 1등 - 트로피
+      Icons.military_tech, // 2등 - 메달
+      Icons.workspace_premium, // 3등 - 프리미엄
     ];
     
     final rankColor = rankColors[index];
-    final cardColor = isDark ? Color(0xFF232B38) : Colors.white;
-    final darkerCardColor = isDark ? Color(0xFF232B38) : Colors.white;
+    final rankIcon = rankIcons[index];
+    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
+    final category = room.category ?? '기타';
+    final categoryColor = CategoryColors.getCategoryColor(category);
     
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: isDark ? rankColor.withOpacity(0.4) : rankColor.withOpacity(0.3),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: Offset(0, 0),
+            color: rankColor.withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: Offset(0, 8),
+          ),
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.5) : Colors.grey.withOpacity(0.1),
+            blurRadius: 15,
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.r),
-            gradient: isDark ? LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [darkerCardColor, cardColor],
-            ) : null,
-            color: isDark ? null : Colors.white,
-            border: Border.all(
-              color: rankColor.withOpacity(0.5),
-              width: 1.w,
-            ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24.r),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark ? [
+              cardColor,
+              cardColor.withOpacity(0.9),
+            ] : [
+              Colors.white,
+              Colors.grey.shade50,
+            ],
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => context.push('/discussion/${room.id}'),
-              borderRadius: BorderRadius.circular(20.r),
-              child: Padding(
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 32.w,
-                          height: 32.w,
-                          decoration: BoxDecoration(
-                            gradient: RadialGradient(
-                              center: Alignment(-0.3, -0.3),
-                              colors: [
-                                rankColor.withOpacity(0.9),
-                                rankColor,
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: rankColor.withOpacity(0.4),
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
+          border: Border.all(
+            color: rankColor.withOpacity(0.4),
+            width: 2.w,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => context.push('/discussion/${room.id}'),
+            borderRadius: BorderRadius.circular(24.r),
+            child: Padding(
+              padding: EdgeInsets.all(14.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 헤더: 순위 + 제목
+                  Row(
+                    children: [
+                      Container(
+                        width: 40.w,
+                        height: 40.w,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              rankColor,
+                              rankColor.withOpacity(0.8),
                             ],
                           ),
-                          child: Center(
-                            child: Text(
-                              '${index + 1}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          borderRadius: BorderRadius.circular(20.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: rankColor.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
                             ),
-                          ),
+                          ],
                         ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            room.keyword,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-                    // 인용문 스타일 댓글
-                    Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        color: isDark 
-                          ? Colors.black.withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: isDark 
-                            ? Colors.grey.withOpacity(0.3)
-                            : Colors.grey.withOpacity(0.2),
-                          width: 1,
+                        child: Icon(
+                          rankIcon,
+                          color: Colors.white,
+                          size: 20.sp,
                         ),
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.format_quote,
-                            color: textColor.withOpacity(0.6),
-                            size: 16.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Text(
-                              room.comment_summary != null && room.comment_summary!.isNotEmpty 
-                                ? room.comment_summary!
-                                : '아직 토론이 활발하지 않아요. 첫 번째 의견을 남겨보세요!',
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              room.keyword,
                               style: TextStyle(
-                                color: textColor.withOpacity(0.8),
-                                fontSize: 12.sp,
-                                height: 1.3,
+                                color: textColor,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 4.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: categoryColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: categoryColor.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                category,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: categoryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 16.h),
-                    // 반응 프로그레스바
-                    _buildReactionProgressBar(room),
-                    SizedBox(height: 12.h),
-                    // 통계 정보
-                    Row(
-                      children: [
-                        Icon(Icons.comment, size: 14.sp, color: textColor.withOpacity(0.6)),
-                        SizedBox(width: 4.w),
-                        Text('${room.comment_count ?? 0}', 
-                          style: TextStyle(fontSize: 12.sp, color: textColor.withOpacity(0.6))),
-                        SizedBox(width: 16.w),
-                        Icon(Icons.group, size: 14.sp, color: textColor.withOpacity(0.6)),
-                        SizedBox(width: 4.w),
-                        Text('${_getUniqueParticipants(room)}', 
-                          style: TextStyle(fontSize: 12.sp, color: textColor.withOpacity(0.6))),
-                        Spacer(),
-                        Text(_getRelativeTime(room.updated_at ?? room.created_at), 
-                          style: TextStyle(fontSize: 12.sp, color: textColor.withOpacity(0.6))),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 14.h),
+                  
+                  // 감정 반응 프로그레스바 (간단 버전)
+                  _buildSimpleReactionBar(room),
+                  
+                  SizedBox(height: 12.h),
+                  
+                  // 베스트 댓글 인용
+                  _buildBestCommentQuote(room, rankColor, textColor),
+                  
+                  SizedBox(height: 12.h),
+                  
+                  // 하단 간단 통계
+                  Row(
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 12.sp, color: textColor.withOpacity(0.5)),
+                      SizedBox(width: 4.w),
+                      Text('${room.comment_count ?? 0}', style: TextStyle(
+                        fontSize: 11.sp, fontWeight: FontWeight.w500, color: textColor.withOpacity(0.6)
+                      )),
+                      SizedBox(width: 12.w),
+                      Icon(Icons.people_outline, size: 12.sp, color: textColor.withOpacity(0.5)),
+                      SizedBox(width: 4.w),
+                      Text('${_getTotalReactions(room)}', style: TextStyle(
+                        fontSize: 11.sp, fontWeight: FontWeight.w500, color: textColor.withOpacity(0.6)
+                      )),
+                      Spacer(),
+                      Text(
+                        _getRelativeTime(room.updated_at ?? room.created_at),
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: textColor.withOpacity(0.4),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+  
+
+  Widget _buildBestCommentQuote(DiscussionRoom room, Color rankColor, Color textColor) {
+    // 실제로는 API에서 베스트 댓글을 가져와야 하지만, 임시로 더미 데이터 사용
+    final bestComments = [
+      '정말 흥미로운 주제네요. 다양한 관점에서 생각해볼 필요가 있을 것 같습니다.',
+      '이 문제에 대해서는 신중한 접근이 필요하다고 생각해요.',
+      '좋은 토론이 되고 있네요. 더 많은 의견을 듣고 싶습니다.',
+      '데이터를 바탕으로 한 분석이 필요할 것 같아요.',
+      '실제 경험을 바탕으로 말씀드리면...',
+    ];
+    
+    final randomComment = bestComments[room.id % bestComments.length];
+    final isDark = AppTheme.isDark(context);
+    
+    return Flexible(
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(10.w),
+        decoration: BoxDecoration(
+          color: isDark 
+            ? rankColor.withOpacity(0.1)
+            : rankColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: rankColor.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.format_quote,
+                  color: rankColor,
+                  size: 12.sp,
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  '베스트 댓글',
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w700,
+                    color: rankColor,
+                  ),
+                ),
+                Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: rankColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.thumb_up,
+                        size: 7.sp,
+                        color: rankColor,
+                      ),
+                      SizedBox(width: 2.w),
+                      Text(
+                        '${(room.comment_count ?? 0) > 0 ? ((room.comment_count! * 0.3).round() + 5) : 12}',
+                        style: TextStyle(
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.w600,
+                          color: rankColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              '"$randomComment"',
+              style: TextStyle(
+                color: textColor.withOpacity(0.8),
+                fontSize: 11.sp,
+                height: 1.3,
+                fontWeight: FontWeight.w500,
+                fontStyle: FontStyle.italic,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleReactionBar(DiscussionRoom room) {
+    final isDark = AppTheme.isDark(context);
+    final textColor = isDark ? Colors.white : Colors.black;
+    
+    final positive = room.positive_count ?? 0;
+    final neutral = room.neutral_count ?? 0;
+    final negative = room.negative_count ?? 0;
+    final total = positive + neutral + negative;
+    
+    if (total == 0) {
+      return Container(
+        height: 6.h,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[700] : Colors.grey[300],
+          borderRadius: BorderRadius.circular(3.r),
+        ),
+      );
+    }
+    
+    final positiveColor = isDark ? Color(0xFF389E0D) : Color(0xFF52C41A);
+    final neutralColor = isDark ? Color(0xFF8C8C8C) : Color(0xFFA6A6A6);
+    final negativeColor = isDark ? Color(0xFFFF4D4F) : Color(0xFFFF7875);
+    
+    return Container(
+      height: 6.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(3.r),
+        color: isDark ? Colors.grey[700] : Colors.grey[300],
+      ),
+      child: Row(
+        children: [
+          if (positive > 0)
+            Expanded(
+              flex: positive,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: positiveColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(3.r),
+                    bottomLeft: Radius.circular(3.r),
+                    topRight: neutral == 0 && negative == 0 ? Radius.circular(3.r) : Radius.zero,
+                    bottomRight: neutral == 0 && negative == 0 ? Radius.circular(3.r) : Radius.zero,
+                  ),
+                ),
+              ),
+            ),
+          if (neutral > 0)
+            Expanded(
+              flex: neutral,
+              child: Container(color: neutralColor),
+            ),
+          if (negative > 0)
+            Expanded(
+              flex: negative,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: negativeColor,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(3.r),
+                    bottomRight: Radius.circular(3.r),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -814,25 +996,13 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           onTap: () => context.push('/discussion/${room.id}'),
           borderRadius: BorderRadius.circular(12.r),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1번줄: 키워드명 ----- 랭크원
+                // 1번줄: 랭크  카테고리
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        room.keyword,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
                     Container(
                       width: 28.w,
                       height: 28.w,
@@ -860,12 +1030,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                         ),
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 8.h),
-                // 카테고리 태그
-                Row(
-                  children: [
+                    Spacer(),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
@@ -887,11 +1052,24 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     ),
                   ],
                 ),
-                SizedBox(height: 8.h),
-                // 2번줄: 프로그레스바
+                SizedBox(height: 12.h),
+                // 2번줄: 키워드명
+                Text(
+                  room.keyword,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 10.h),
+                // 3번줄: 프로그레스바
                 _buildCompactReactionBar(room),
                 SizedBox(height: 12.h),
-                // 3번줄: 댓글 공감 ---- N분전
+                // 4번줄: 댓글 공감 ---- N분전
                 Row(
                   children: [
                     Row(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:html_unescape/html_unescape.dart';
 import '../models/_models.dart';
 import '../services/api_service.dart';
+import '../services/firebase_messaging_service.dart';
 import '../widgets/_widgets.dart';
 import '../app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -26,6 +27,7 @@ class KeywordDetailScreen extends StatefulWidget {
 
 class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   final ApiService _apiService = ApiService();
+  final FirebaseMessagingService _fcmService = FirebaseMessagingService();
   Keyword? _keyword;
   DiscussionRoom? _discussionRoom;
   List<Comment>? _comments;
@@ -49,6 +51,9 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
       // 키워드 ID로 상세 정보 로드
       final keyword = await _apiService.getKeywordById(widget.keywordId);
+      
+      // 키워드 조회 로그 기록
+      _logKeywordView(keyword);
 
       // 현재 활성화된 토론방 정보 로드
       DiscussionRoom? discussionRoom;
@@ -86,6 +91,23 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+  
+  // 키워드 조회 로그 기록 메서드
+  Future<void> _logKeywordView(Keyword keyword) async {
+    try {
+      final token = await _fcmService.getCurrentToken();
+      if (token != null) {
+        await _apiService.logKeywordView(
+          token: token,
+          category: keyword.category ?? '기타',
+          keyword: keyword.keyword,
+        );
+        print('📊 [LOG] Keyword detail view logged: ${keyword.keyword}');
+      }
+    } catch (e) {
+      print('❌ [LOG] Failed to log keyword detail view: $e');
     }
   }
 

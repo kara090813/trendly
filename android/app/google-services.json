@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "268111542837",
+    "project_id": "trendly-c0cf5",
+    "storage_bucket": "trendly-c0cf5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:268111542837:android:2a23aca01a5a1aa89fcf7c",
+        "android_client_info": {
+          "package_name": "net.lamoss.trendly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAc0IycHm7kaKoW67rUVLENNJllN1z5Wzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
