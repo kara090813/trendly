@@ -112,6 +112,21 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     return positive + neutral + negative;
   }
 
+  String _getCompactTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inMinutes < 1) {
+      return '방금';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}분';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}시간';
+    } else {
+      return '${difference.inDays}일';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -228,7 +243,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     );
   }
 
-  // HOT 토론방 히어로 섹션 - TimeMachine 스타일
+  // HOT 토론방 히어로 섹션 - 통일된 스타일
   Widget _buildHotDiscussionHeader() {
     final bool isDark = AppTheme.isDark(context);
     
@@ -267,7 +282,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "HOT 토론방",
+                      "인기 토론방",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -277,11 +292,50 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "실시간 인기 토론을 확인하세요",
+                      "가장 핫한 토론에 참여하세요",
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // HOT 인디케이터
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFFF6B35).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6.w,
+                      height: 6.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'HOT 10',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -303,66 +357,77 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
+      margin: EdgeInsets.fromLTRB(0, 0, 0, 32.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 모던 섹션 헤더
+          // TOP 3 섹션 타이틀
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 4.w,
-                      height: 24.h,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
-                        ),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
+                Container(
+                  width: 4.w,
+                  height: 24.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFFF6B35), Color(0xFFFF8E53)],
                     ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      "TOP 3 토론방",
-                      style: TextStyle(
-                        fontSize: 28.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.getTextColor(context),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
                 ),
-                SizedBox(height: 8.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 16.w),
-                  child: Text(
-                    "실시간 최고 인기 토론",
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
+                SizedBox(width: 12.w),
+                Text(
+                  "TOP 3",
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.getTextColor(context),
+                  ),
+                ),
+                Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.swipe,
+                        size: 14.sp,
+                        color: isDark ? Colors.grey[500] : Colors.grey[600],
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "스와이프",
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: isDark ? Colors.grey[500] : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ).animate()
-                .fadeIn(duration: 600.ms, delay: 200.ms)
-                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
-          ),
+            ),
+          ).animate()
+              .fadeIn(duration: 600.ms, delay: 200.ms)
+              .slideX(begin: -0.05, end: 0, duration: 600.ms),
           
-          SizedBox(height: 24.h),
+          SizedBox(height: 20.h),
           
           SizedBox(
-            height: 220.h, // 약간 여유를 둔 최대 높이
+            height: 180.h, // 높이 조정
             child: PageView.builder(
-              controller: PageController(viewportFraction: 0.85),
+              controller: PageController(viewportFraction: 0.9),
               itemCount: topThree.length,
               itemBuilder: (context, index) {
                 return Container(
@@ -372,8 +437,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
               },
             ),
           ).animate()
-              .fadeIn(duration: 600.ms, delay: 400.ms)
-              .slideY(begin: 0.03, end: 0, duration: 600.ms),
+              .fadeIn(duration: 600.ms, delay: 400.ms),
         ],
       ),
     );
@@ -382,288 +446,223 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
   Widget _buildTopCard(DiscussionRoom room, int index) {
     final isDark = AppTheme.isDark(context);
     final rankColors = [
-      Color(0xFFFFD700), // 1등 - 골드
-      Color(0xFFC0C0C0), // 2등 - 실버  
-      Color(0xFFCD7F32), // 3등 - 브론즈
+      [Color(0xFFFFD700), Color(0xFFFFA500)], // 골드 그라디언트
+      [Color(0xFFC0C0C0), Color(0xFF9E9E9E)], // 실버 그라디언트
+      [Color(0xFFCD7F32), Color(0xFF8B4513)], // 브론즈 그라디언트
     ];
     
-    final rankIcons = [
-      Icons.emoji_events, // 1등 - 트로피
-      Icons.military_tech, // 2등 - 메달
-      Icons.workspace_premium, // 3등 - 프리미엄
-    ];
-    
-    final rankColor = rankColors[index];
-    final rankIcon = rankIcons[index];
-    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black;
+    final rankGradient = rankColors[index];
+    final textColor = isDark ? Colors.white : Colors.black87;
     final category = room.category ?? '기타';
     final categoryColor = CategoryColors.getCategoryColor(category);
     
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(20.r),
+        color: isDark ? Color(0xFF1E293B) : Colors.white,
+        border: Border.all(
+          color: rankGradient[0].withOpacity(0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: rankColor.withOpacity(0.3),
+            color: rankGradient[0].withOpacity(0.2),
             blurRadius: 20,
-            spreadRadius: 2,
             offset: Offset(0, 8),
           ),
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.5) : Colors.grey.withOpacity(0.1),
+            color: isDark 
+              ? Colors.black.withOpacity(0.3)
+              : Colors.black.withOpacity(0.05),
             blurRadius: 15,
             offset: Offset(0, 4),
           ),
         ],
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.r),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark ? [
-              cardColor,
-              cardColor.withOpacity(0.9),
-            ] : [
-              Colors.white,
-              Colors.grey.shade50,
-            ],
-          ),
-          border: Border.all(
-            color: rankColor.withOpacity(0.4),
-            width: 2.w,
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => context.push('/discussion/${room.id}'),
-            borderRadius: BorderRadius.circular(24.r),
-            child: Padding(
-              padding: EdgeInsets.all(14.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 헤더: 순위 + 제목
-                  Row(
-                    children: [
-                      Container(
-                        width: 40.w,
-                        height: 40.w,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              rankColor,
-                              rankColor.withOpacity(0.8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/discussion/${room.id}'),
+          borderRadius: BorderRadius.circular(20.r),
+          child: Column(
+            children: [
+              // 상단 영역: 순위 배지 + 키워드
+              Container(
+                padding: EdgeInsets.all(14.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      rankGradient[0].withOpacity(0.1),
+                      rankGradient[0].withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20.r),
+                    topRight: Radius.circular(20.r),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // 순위 배지
+                    Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: rankGradient,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: rankGradient[0].withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    // 키워드 + 카테고리
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            room.keyword,
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                                decoration: BoxDecoration(
+                                  color: categoryColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                                child: Text(
+                                  category,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: categoryColor,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Icon(
+                                Icons.local_fire_department,
+                                size: 12.sp,
+                                color: Colors.orange,
+                              ),
+                              SizedBox(width: 2.w),
+                              Text(
+                                'HOT',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.orange,
+                                ),
+                              ),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(20.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: rankColor.withOpacity(0.4),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          rankIcon,
-                          color: Colors.white,
-                          size: 20.sp,
-                        ),
+                        ],
                       ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              room.keyword,
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w800,
-                                height: 1.2,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 4.h),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                              decoration: BoxDecoration(
-                                color: categoryColor.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: categoryColor.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                category,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: categoryColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  SizedBox(height: 14.h),
-                  
-                  // 감정 반응 프로그레스바 (간단 버전)
-                  _buildSimpleReactionBar(room),
-                  
-                  SizedBox(height: 12.h),
-                  
-                  // 베스트 댓글 인용
-                  _buildBestCommentQuote(room, rankColor, textColor),
-                  
-                  SizedBox(height: 12.h),
-                  
-                  // 하단 간단 통계
-                  Row(
+                    ),
+                  ],
+                ),
+              ),
+              
+              // 하단 영역: 감정 반응 + 통계
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(14.w),
+                  child: Column(
                     children: [
-                      Icon(Icons.chat_bubble_outline, size: 12.sp, color: textColor.withOpacity(0.5)),
-                      SizedBox(width: 4.w),
-                      Text('${room.comment_count ?? 0}', style: TextStyle(
-                        fontSize: 11.sp, fontWeight: FontWeight.w500, color: textColor.withOpacity(0.6)
-                      )),
-                      SizedBox(width: 12.w),
-                      Icon(Icons.people_outline, size: 12.sp, color: textColor.withOpacity(0.5)),
-                      SizedBox(width: 4.w),
-                      Text('${_getTotalReactions(room)}', style: TextStyle(
-                        fontSize: 11.sp, fontWeight: FontWeight.w500, color: textColor.withOpacity(0.6)
-                      )),
+                      // 감정 반응 심플 버전
+                      _buildCompactSentimentBar(room),
+                      
                       Spacer(),
-                      Text(
-                        _getRelativeTime(room.updated_at ?? room.created_at),
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: textColor.withOpacity(0.4),
-                          fontWeight: FontWeight.w500,
-                        ),
+                      
+                      // 통계 정보
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildMiniStat(
+                            icon: Icons.chat_bubble_outline,
+                            value: '${room.comment_count ?? 0}',
+                            color: textColor.withOpacity(0.6),
+                          ),
+                          _buildMiniStat(
+                            icon: Icons.people_outline,
+                            value: '${_getTotalReactions(room)}',
+                            color: textColor.withOpacity(0.6),
+                          ),
+                          _buildMiniStat(
+                            icon: Icons.access_time,
+                            value: _getCompactTime(room.updated_at ?? room.created_at),
+                            color: textColor.withOpacity(0.6),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
-  
 
-  Widget _buildBestCommentQuote(DiscussionRoom room, Color rankColor, Color textColor) {
-    // 실제로는 API에서 베스트 댓글을 가져와야 하지만, 임시로 더미 데이터 사용
-    final bestComments = [
-      '정말 흥미로운 주제네요. 다양한 관점에서 생각해볼 필요가 있을 것 같습니다.',
-      '이 문제에 대해서는 신중한 접근이 필요하다고 생각해요.',
-      '좋은 토론이 되고 있네요. 더 많은 의견을 듣고 싶습니다.',
-      '데이터를 바탕으로 한 분석이 필요할 것 같아요.',
-      '실제 경험을 바탕으로 말씀드리면...',
-    ];
-    
-    final randomComment = bestComments[room.id % bestComments.length];
-    final isDark = AppTheme.isDark(context);
-    
-    return Flexible(
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(10.w),
-        decoration: BoxDecoration(
-          color: isDark 
-            ? rankColor.withOpacity(0.1)
-            : rankColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: rankColor.withOpacity(0.2),
-            width: 1,
+  Widget _buildMiniStat({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14.sp,
+          color: color,
+        ),
+        SizedBox(width: 4.w),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: color,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.format_quote,
-                  color: rankColor,
-                  size: 12.sp,
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '베스트 댓글',
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w700,
-                    color: rankColor,
-                  ),
-                ),
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: rankColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.thumb_up,
-                        size: 7.sp,
-                        color: rankColor,
-                      ),
-                      SizedBox(width: 2.w),
-                      Text(
-                        '${(room.comment_count ?? 0) > 0 ? ((room.comment_count! * 0.3).round() + 5) : 12}',
-                        style: TextStyle(
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.w600,
-                          color: rankColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 6.h),
-            Text(
-              '"$randomComment"',
-              style: TextStyle(
-                color: textColor.withOpacity(0.8),
-                fontSize: 11.sp,
-                height: 1.3,
-                fontWeight: FontWeight.w500,
-                fontStyle: FontStyle.italic,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
-  Widget _buildSimpleReactionBar(DiscussionRoom room) {
+  Widget _buildCompactSentimentBar(DiscussionRoom room) {
     final isDark = AppTheme.isDark(context);
-    final textColor = isDark ? Colors.white : Colors.black;
     
     final positive = room.positive_count ?? 0;
     final neutral = room.neutral_count ?? 0;
@@ -672,161 +671,38 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     
     if (total == 0) {
       return Container(
-        height: 6.h,
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[700] : Colors.grey[300],
-          borderRadius: BorderRadius.circular(3.r),
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        child: Text(
+          '아직 참여자가 없습니다',
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: isDark ? Colors.grey[500] : Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
         ),
       );
     }
     
-    final positiveColor = isDark ? Color(0xFF389E0D) : Color(0xFF52C41A);
-    final neutralColor = isDark ? Color(0xFF8C8C8C) : Color(0xFFA6A6A6);
-    final negativeColor = isDark ? Color(0xFFFF4D4F) : Color(0xFFFF7875);
-    
-    return Container(
-      height: 6.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3.r),
-        color: isDark ? Colors.grey[700] : Colors.grey[300],
-      ),
-      child: Row(
-        children: [
-          if (positive > 0)
-            Expanded(
-              flex: positive,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: positiveColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(3.r),
-                    bottomLeft: Radius.circular(3.r),
-                    topRight: neutral == 0 && negative == 0 ? Radius.circular(3.r) : Radius.zero,
-                    bottomRight: neutral == 0 && negative == 0 ? Radius.circular(3.r) : Radius.zero,
-                  ),
-                ),
-              ),
-            ),
-          if (neutral > 0)
-            Expanded(
-              flex: neutral,
-              child: Container(color: neutralColor),
-            ),
-          if (negative > 0)
-            Expanded(
-              flex: negative,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: negativeColor,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(3.r),
-                    bottomRight: Radius.circular(3.r),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReactionProgressBar(DiscussionRoom room) {
-    final isDark = AppTheme.isDark(context);
-    final textColor = isDark ? Colors.white : Colors.black;
-    
-    final positive = room.positive_count ?? 0;
-    final neutral = room.neutral_count ?? 0;
-    final negative = room.negative_count ?? 0;
-    final total = positive + neutral + negative;
-    
-    if (total == 0) {
-      return Column(
-        children: [
-          Text(
-            '아직 참여자가 없어요',
-            style: TextStyle(
-              color: textColor.withOpacity(0.5),
-              fontSize: 11.sp,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Container(
-            height: 8.h,
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[800] : Colors.grey[300],
-              borderRadius: BorderRadius.circular(4.r),
-            ),
-          ),
-        ],
-      );
-    }
-    
-    final positivePercent = ((positive / total) * 100).round();
-    final neutralPercent = ((neutral / total) * 100).round();
-    final negativePercent = ((negative / total) * 100).round();
-    
-    // 자연스러운 색상
-    final positiveColor = isDark ? Color(0xFF389E0D) : Color(0xFF52C41A);
-    final neutralColor = isDark ? Color(0xFF8C8C8C) : Color(0xFFA6A6A6);
-    final negativeColor = isDark ? Color(0xFFFF4D4F) : Color(0xFFFF7875);
+    final positivePercent = (positive / total * 100).round();
+    final neutralPercent = (neutral / total * 100).round();
+    final negativePercent = (negative / total * 100).round();
     
     return Column(
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Container(
-              width: 6.w,
-              height: 6.w,
-              decoration: BoxDecoration(
-                color: positiveColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text('긍정 $positivePercent%', style: TextStyle(
-              color: textColor.withOpacity(0.8), 
-              fontSize: 11.sp, 
-              fontWeight: FontWeight.w500
-            )),
-            SizedBox(width: 12.w),
-            Container(
-              width: 6.w,
-              height: 6.w,
-              decoration: BoxDecoration(
-                color: neutralColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text('중립 $neutralPercent%', style: TextStyle(
-              color: textColor.withOpacity(0.8), 
-              fontSize: 11.sp, 
-              fontWeight: FontWeight.w500
-            )),
-            SizedBox(width: 12.w),
-            Container(
-              width: 6.w,
-              height: 6.w,
-              decoration: BoxDecoration(
-                color: negativeColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text('부정 $negativePercent%', style: TextStyle(
-              color: textColor.withOpacity(0.8), 
-              fontSize: 11.sp, 
-              fontWeight: FontWeight.w500
-            )),
+            _buildSentimentChip('😊', positivePercent, Colors.green),
+            _buildSentimentChip('😐', neutralPercent, Colors.grey),
+            _buildSentimentChip('😔', negativePercent, Colors.red),
           ],
         ),
         SizedBox(height: 8.h),
         Container(
-          height: 8.h,
+          height: 4.h,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4.r),
-            color: isDark ? Colors.grey[800] : Colors.grey[200],
+            borderRadius: BorderRadius.circular(2.r),
+            color: isDark ? Colors.grey[800] : Colors.grey[300],
           ),
           child: Row(
             children: [
@@ -835,12 +711,12 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   flex: positive,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: positiveColor,
+                      color: Colors.green,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(4.r),
-                        bottomLeft: Radius.circular(4.r),
-                        topRight: neutral == 0 && negative == 0 ? Radius.circular(4.r) : Radius.zero,
-                        bottomRight: neutral == 0 && negative == 0 ? Radius.circular(4.r) : Radius.zero,
+                        topLeft: Radius.circular(2.r),
+                        bottomLeft: Radius.circular(2.r),
+                        topRight: neutral == 0 && negative == 0 ? Radius.circular(2.r) : Radius.zero,
+                        bottomRight: neutral == 0 && negative == 0 ? Radius.circular(2.r) : Radius.zero,
                       ),
                     ),
                   ),
@@ -848,24 +724,42 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
               if (neutral > 0)
                 Expanded(
                   flex: neutral,
-                  child: Container(
-                    color: neutralColor,
-                  ),
+                  child: Container(color: Colors.grey),
                 ),
               if (negative > 0)
                 Expanded(
                   flex: negative,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: negativeColor,
+                      color: Colors.red,
                       borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(4.r),
-                        bottomRight: Radius.circular(4.r),
+                        topRight: Radius.circular(2.r),
+                        bottomRight: Radius.circular(2.r),
                       ),
                     ),
                   ),
                 ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSentimentChip(String emoji, int percent, Color color) {
+    return Column(
+      children: [
+        Text(
+          emoji,
+          style: TextStyle(fontSize: 16.sp),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          '$percent%',
+          style: TextStyle(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.w600,
+            color: color,
           ),
         ),
       ],
@@ -879,360 +773,246 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
-      margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
+      margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 40.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 모던 섹션 헤더
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 4.w,
-                      height: 24.h,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                        ),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      "4-10위 랭킹",
-                      style: TextStyle(
-                        fontSize: 28.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.getTextColor(context),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 16.w),
-                  child: Text(
-                    "인기 상승 토론방",
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ).animate()
-                .fadeIn(duration: 600.ms, delay: 600.ms)
-                .slideX(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
-          ),
-          
-          SizedBox(height: 24.h),
-          
-          // 리스트 컨테이너
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(
-                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isDark ? Colors.black : Colors.grey).withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  ...remaining.asMap().entries.map((entry) {
-                    final index = entry.key + 4; // 4등부터 시작
-                    final room = entry.value;
-                    final isLast = entry.key == remaining.length - 1;
-                    return _buildCompactCard(room, index, isLast);
-                  }).toList(),
-                ],
-              ),
+          // 미니멀 헤더
+          Text(
+            "다른 인기 토론",
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.getTextColor(context),
             ),
           ).animate()
-              .fadeIn(duration: 600.ms, delay: 800.ms)
-              .slideY(begin: 0.03, end: 0, duration: 600.ms),
+              .fadeIn(duration: 600.ms, delay: 500.ms),
+          
+          SizedBox(height: 16.h),
+          
+          // 리스트 카드들
+          ...remaining.asMap().entries.map((entry) {
+            final index = entry.key + 4;
+            final room = entry.value;
+            return _buildModernCompactCard(room, index);
+          }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildCompactCard(DiscussionRoom room, int rank, bool isLast) {
+  Widget _buildModernCompactCard(DiscussionRoom room, int rank) {
     final isDark = AppTheme.isDark(context);
-    final cardColor = isDark ? Color(0xFF232B38) : Colors.white;
-    final darkerCardColor = isDark ? Color(0xFF232B38) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black87;
     final category = room.category;
     final categoryColor = CategoryColors.getCategoryColor(category);
-    
-    return Container(
-      decoration: BoxDecoration(
-        border: isLast ? null : Border(
-          bottom: BorderSide(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.push('/discussion/${room.id}'),
-          borderRadius: BorderRadius.circular(12.r),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1번줄: 랭크  카테고리
-                Row(
-                  children: [
-                    Container(
-                      width: 28.w,
-                      height: 28.w,
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: Alignment(-0.3, -0.3),
-                          colors: isDark ? [
-                            Colors.grey[500]!,
-                            Colors.grey[600]!,
-                          ] : [
-                            Colors.grey[350]!,
-                            Colors.grey[400]!,
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$rank',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: categoryColor.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: categoryColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-                // 2번줄: 키워드명
-                Text(
-                  room.keyword,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                    height: 1.2,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 10.h),
-                // 3번줄: 프로그레스바
-                _buildCompactReactionBar(room),
-                SizedBox(height: 12.h),
-                // 4번줄: 댓글 공감 ---- N분전
-                Row(
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.comment, size: 12.sp, color: textColor.withOpacity(0.6)),
-                        SizedBox(width: 4.w),
-                        Text('${room.comment_count ?? 0}', 
-                          style: TextStyle(fontSize: 11.sp, color: textColor.withOpacity(0.6))),
-                      ],
-                    ),
-                    SizedBox(width: 16.w),
-                    Row(
-                      children: [
-                        Icon(Icons.thumb_up, size: 12.sp, color: textColor.withOpacity(0.6)),
-                        SizedBox(width: 4.w),
-                        Text('${_getTotalReactions(room)}', 
-                          style: TextStyle(fontSize: 11.sp, color: textColor.withOpacity(0.6))),
-                      ],
-                    ),
-                    Spacer(),
-                    Text(
-                      _getRelativeTime(room.updated_at ?? room.created_at),
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: textColor.withOpacity(0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ).animate(delay: Duration(milliseconds: isLast ? 0 : rank * 150))
-        .fadeIn(duration: 600.ms)
-        .slideX(begin: 0.03, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
-  }
-
-  Widget _buildCompactReactionBar(DiscussionRoom room) {
-    final isDark = AppTheme.isDark(context);
-    final textColor = isDark ? Colors.white : Colors.black;
     
     final positive = room.positive_count ?? 0;
     final neutral = room.neutral_count ?? 0;
     final negative = room.negative_count ?? 0;
     final total = positive + neutral + negative;
     
-    if (total == 0) {
-      return Container(
-        height: 6.h,
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[700] : Colors.grey[300],
-          borderRadius: BorderRadius.circular(3.r),
-        ),
-      );
+    Color dominantColor = Colors.grey;
+    String dominantEmoji = '😐';
+    if (total > 0) {
+      if (positive >= neutral && positive >= negative) {
+        dominantColor = Colors.green;
+        dominantEmoji = '😊';
+      } else if (negative >= positive && negative >= neutral) {
+        dominantColor = Colors.red;
+        dominantEmoji = '😔';
+      }
     }
     
-    final positivePercent = ((positive / total) * 100).round();
-    final neutralPercent = ((neutral / total) * 100).round();
-    final negativePercent = ((negative / total) * 100).round();
-    
-    // 자연스러운 색상 (컴팩트 버전)
-    final positiveColor = isDark ? Color(0xFF389E0D) : Color(0xFF52C41A);
-    final neutralColor = isDark ? Color(0xFF8C8C8C) : Color(0xFFA6A6A6);
-    final negativeColor = isDark ? Color(0xFFFF4D4F) : Color(0xFFFF7875);
-    
-    return Column(
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 6.w,
-              height: 6.w,
-              decoration: BoxDecoration(
-                color: positiveColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text('긍정 $positivePercent%', style: TextStyle(
-              color: textColor.withOpacity(0.8), 
-              fontSize: 10.sp, 
-              fontWeight: FontWeight.w500
-            )),
-            SizedBox(width: 12.w),
-            Container(
-              width: 6.w,
-              height: 6.w,
-              decoration: BoxDecoration(
-                color: neutralColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text('중립 $neutralPercent%', style: TextStyle(
-              color: textColor.withOpacity(0.8), 
-              fontSize: 10.sp, 
-              fontWeight: FontWeight.w500
-            )),
-            SizedBox(width: 12.w),
-            Container(
-              width: 6.w,
-              height: 6.w,
-              decoration: BoxDecoration(
-                color: negativeColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text('부정 $negativePercent%', style: TextStyle(
-              color: textColor.withOpacity(0.8), 
-              fontSize: 10.sp, 
-              fontWeight: FontWeight.w500
-            )),
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark ? [
+            Color(0xFF2D3748),
+            Color(0xFF1A202C),
+          ] : [
+            Colors.white,
+            Color(0xFFF7FAFC),
           ],
         ),
-        SizedBox(height: 6.h),
-        Container(
-          height: 6.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(3.r),
-            color: isDark ? Colors.grey[700] : Colors.grey[300],
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: dominantColor.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: dominantColor.withOpacity(0.08),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
-          child: Row(
-            children: [
-              if (positive > 0)
-                Expanded(
-                  flex: positive,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: positiveColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(3.r),
-                        bottomLeft: Radius.circular(3.r),
-                        topRight: neutral == 0 && negative == 0 ? Radius.circular(3.r) : Radius.zero,
-                        bottomRight: neutral == 0 && negative == 0 ? Radius.circular(3.r) : Radius.zero,
-                      ),
+          BoxShadow(
+            color: isDark 
+              ? Colors.black.withOpacity(0.2)
+              : Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/discussion/${room.id}'),
+          borderRadius: BorderRadius.circular(16.r),
+          child: Padding(
+            padding: EdgeInsets.all(14.w),
+            child: Row(
+              children: [
+                // 왼쪽: 순위 + 감정 아이콘
+                Container(
+                  width: 48.w,
+                  height: 48.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark ? [
+                        dominantColor.withOpacity(0.3),
+                        dominantColor.withOpacity(0.1),
+                      ] : [
+                        dominantColor.withOpacity(0.15),
+                        dominantColor.withOpacity(0.05),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Text(
+                        dominantEmoji,
+                        style: TextStyle(fontSize: 24.sp),
+                      ),
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: Container(
+                          width: 16.w,
+                          height: 16.w,
+                          decoration: BoxDecoration(
+                            color: isDark ? Color(0xFF2D3748) : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: dominantColor,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$rank',
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w900,
+                                color: dominantColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              if (neutral > 0)
+                
+                SizedBox(width: 12.w),
+                
+                // 중앙: 제목 + 카테고리
                 Expanded(
-                  flex: neutral,
-                  child: Container(color: neutralColor),
-                ),
-              if (negative > 0)
-                Expanded(
-                  flex: negative,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: negativeColor,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(3.r),
-                        bottomRight: Radius.circular(3.r),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        room.keyword,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: categoryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6.r),
+                            ),
+                            child: Text(
+                              category,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w600,
+                                color: categoryColor,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.forum, size: 10.sp, color: textColor.withOpacity(0.4)),
+                          SizedBox(width: 3.w),
+                          Text(
+                            '${room.comment_count ?? 0}',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: textColor.withOpacity(0.5),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.favorite, size: 10.sp, color: textColor.withOpacity(0.4)),
+                          SizedBox(width: 3.w),
+                          Text(
+                            '${_getTotalReactions(room)}',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: textColor.withOpacity(0.5),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-            ],
+                
+                // 오른쪽: 시간 + 화살표
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _getCompactTime(room.updated_at ?? room.created_at),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: textColor.withOpacity(0.4),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14.sp,
+                      color: dominantColor.withOpacity(0.6),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ],
-    );
+      ),
+    ).animate(delay: Duration(milliseconds: (rank - 4) * 100))
+        .fadeIn(duration: 500.ms)
+        .slideX(begin: 0.05, end: 0, duration: 500.ms, curve: Curves.easeOutCubic);
   }
 }
