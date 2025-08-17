@@ -28,12 +28,8 @@ mixin _$CapsuleModel {
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
 
-  /// Serializes this CapsuleModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CapsuleModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CapsuleModelCopyWith<CapsuleModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -61,8 +57,6 @@ class _$CapsuleModelCopyWithImpl<$Res, $Val extends CapsuleModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CapsuleModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -115,8 +109,6 @@ class __$$CapsuleModelImplCopyWithImpl<$Res>
       _$CapsuleModelImpl _value, $Res Function(_$CapsuleModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CapsuleModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -205,7 +197,7 @@ class _$CapsuleModelImpl implements _CapsuleModel {
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -214,9 +206,7 @@ class _$CapsuleModelImpl implements _CapsuleModel {
       const DeepCollectionEquality().hash(_hourlyKeywords),
       createdAt);
 
-  /// Create a copy of CapsuleModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CapsuleModelImplCopyWith<_$CapsuleModelImpl> get copyWith =>
@@ -253,11 +243,8 @@ abstract class _CapsuleModel implements CapsuleModel {
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
-
-  /// Create a copy of CapsuleModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CapsuleModelImplCopyWith<_$CapsuleModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -277,12 +264,8 @@ mixin _$Top3Keyword {
   @JsonKey(name: 'last_keyword_id')
   int? get lastKeywordId => throw _privateConstructorUsedError;
 
-  /// Serializes this Top3Keyword to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Top3Keyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $Top3KeywordCopyWith<Top3Keyword> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -311,8 +294,6 @@ class _$Top3KeywordCopyWithImpl<$Res, $Val extends Top3Keyword>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Top3Keyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -371,8 +352,6 @@ class __$$Top3KeywordImplCopyWithImpl<$Res>
       _$Top3KeywordImpl _value, $Res Function(_$Top3KeywordImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Top3Keyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -453,14 +432,12 @@ class _$Top3KeywordImpl implements _Top3Keyword {
                 other.lastKeywordId == lastKeywordId));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, keyword, score, appearanceCount, avgRank, lastKeywordId);
 
-  /// Create a copy of Top3Keyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$Top3KeywordImplCopyWith<_$Top3KeywordImpl> get copyWith =>
@@ -499,11 +476,8 @@ abstract class _Top3Keyword implements Top3Keyword {
   @override
   @JsonKey(name: 'last_keyword_id')
   int? get lastKeywordId;
-
-  /// Create a copy of Top3Keyword
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$Top3KeywordImplCopyWith<_$Top3KeywordImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -517,12 +491,8 @@ mixin _$HourlyKeyword {
   String get time => throw _privateConstructorUsedError;
   List<SimpleKeyword> get keywords => throw _privateConstructorUsedError;
 
-  /// Serializes this HourlyKeyword to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of HourlyKeyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $HourlyKeywordCopyWith<HourlyKeyword> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -546,8 +516,6 @@ class _$HourlyKeywordCopyWithImpl<$Res, $Val extends HourlyKeyword>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of HourlyKeyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -586,8 +554,6 @@ class __$$HourlyKeywordImplCopyWithImpl<$Res>
       _$HourlyKeywordImpl _value, $Res Function(_$HourlyKeywordImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of HourlyKeyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -642,14 +608,12 @@ class _$HourlyKeywordImpl implements _HourlyKeyword {
             const DeepCollectionEquality().equals(other._keywords, _keywords));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, time, const DeepCollectionEquality().hash(_keywords));
 
-  /// Create a copy of HourlyKeyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$HourlyKeywordImplCopyWith<_$HourlyKeywordImpl> get copyWith =>
@@ -675,11 +639,8 @@ abstract class _HourlyKeyword implements HourlyKeyword {
   String get time;
   @override
   List<SimpleKeyword> get keywords;
-
-  /// Create a copy of HourlyKeyword
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$HourlyKeywordImplCopyWith<_$HourlyKeywordImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -696,12 +657,8 @@ mixin _$SimpleKeyword {
   String get category => throw _privateConstructorUsedError;
   String? get type2 => throw _privateConstructorUsedError;
 
-  /// Serializes this SimpleKeyword to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SimpleKeyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SimpleKeywordCopyWith<SimpleKeyword> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -725,8 +682,6 @@ class _$SimpleKeywordCopyWithImpl<$Res, $Val extends SimpleKeyword>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SimpleKeyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -780,8 +735,6 @@ class __$$SimpleKeywordImplCopyWithImpl<$Res>
       _$SimpleKeywordImpl _value, $Res Function(_$SimpleKeywordImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SimpleKeyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -858,14 +811,12 @@ class _$SimpleKeywordImpl implements _SimpleKeyword {
             (identical(other.type2, type2) || other.type2 == type2));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode =>
       Object.hash(runtimeType, id, keyword, rank, category, type2);
 
-  /// Create a copy of SimpleKeyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SimpleKeywordImplCopyWith<_$SimpleKeywordImpl> get copyWith =>
@@ -900,11 +851,8 @@ abstract class _SimpleKeyword implements SimpleKeyword {
   String get category;
   @override
   String? get type2;
-
-  /// Create a copy of SimpleKeyword
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SimpleKeywordImplCopyWith<_$SimpleKeywordImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

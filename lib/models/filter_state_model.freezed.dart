@@ -68,12 +68,8 @@ mixin _$HistoryFilterState {
 // 활동 수준 필터
   String get activityLevel => throw _privateConstructorUsedError;
 
-  /// Serializes this HistoryFilterState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of HistoryFilterState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $HistoryFilterStateCopyWith<HistoryFilterState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -130,8 +126,6 @@ class _$HistoryFilterStateCopyWithImpl<$Res, $Val extends HistoryFilterState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of HistoryFilterState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -358,8 +352,6 @@ class __$$HistoryFilterStateImplCopyWithImpl<$Res>
       $Res Function(_$HistoryFilterStateImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of HistoryFilterState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -766,7 +758,7 @@ class _$HistoryFilterStateImpl implements _HistoryFilterState {
                 other.activityLevel == activityLevel));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -805,9 +797,7 @@ class _$HistoryFilterStateImpl implements _HistoryFilterState {
         activityLevel
       ]);
 
-  /// Create a copy of HistoryFilterState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$HistoryFilterStateImplCopyWith<_$HistoryFilterStateImpl> get copyWith =>
@@ -861,8 +851,7 @@ abstract class _HistoryFilterState implements HistoryFilterState {
   factory _HistoryFilterState.fromJson(Map<String, dynamic> json) =
       _$HistoryFilterStateImpl.fromJson;
 
-// 기존 필드들 (이전 호환성 유지)
-  @override
+  @override // 기존 필드들 (이전 호환성 유지)
   String get searchQuery;
   @override
   String get selectedCategory;
@@ -881,9 +870,9 @@ abstract class _HistoryFilterState implements HistoryFilterState {
   @override
   String get sentimentFilter;
   @override
-  bool get isAdvancedMode; // DiscussionRoom 모델 기반 새 필터들
+  bool get isAdvancedMode;
+  @override // DiscussionRoom 모델 기반 새 필터들
 // 날짜 범위 필터 (created_at, updated_at, closed_at 기준)
-  @override
   DateTime? get dateFromCreated;
   @override
   DateTime? get dateToCreated;
@@ -896,9 +885,9 @@ abstract class _HistoryFilterState implements HistoryFilterState {
   @override
   DateTime? get dateToUpdated;
   @override
-  String get dateFilterType; // 'created_at', 'updated_at', 'closed_at'
+  String get dateFilterType;
+  @override // 'created_at', 'updated_at', 'closed_at'
 // 감정 반응 필터 (positive_count, neutral_count, negative_count)
-  @override
   int? get minPositiveReactions;
   @override
   int? get maxPositiveReactions;
@@ -915,30 +904,27 @@ abstract class _HistoryFilterState implements HistoryFilterState {
   @override
   int? get maxTotalReactions;
   @override
-  String get dominantSentiment; // 'positive', 'neutral', 'negative', 'all'
+  String get dominantSentiment;
+  @override // 'positive', 'neutral', 'negative', 'all'
 // 토론방 상태 필터 (is_closed)
-  @override
-  String get roomStatus; // 'all', 'closed', 'active'
+  String get roomStatus;
+  @override // 'all', 'closed', 'active'
 // 키워드 관련 필터 (keyword_id_list)
-  @override
   List<int> get relatedKeywordIds;
   @override
-  bool get hasMultipleKeywords; // 기타 필터
-  @override
-  bool get hasSummary; // comment_summary가 있는지
+  bool get hasMultipleKeywords;
+  @override // 기타 필터
+  bool get hasSummary;
+  @override // comment_summary가 있는지
 // 시간대별 필터
-  @override
-  String get timeOfDay; // 'morning', 'afternoon', 'evening', 'night', 'all'
-  @override
-  String get dayOfWeek; // 'monday', 'tuesday', ..., 'weekend', 'weekday', 'all'
+  String get timeOfDay;
+  @override // 'morning', 'afternoon', 'evening', 'night', 'all'
+  String get dayOfWeek;
+  @override // 'monday', 'tuesday', ..., 'weekend', 'weekday', 'all'
 // 활동 수준 필터
-  @override
   String get activityLevel;
-
-  /// Create a copy of HistoryFilterState
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$HistoryFilterStateImplCopyWith<_$HistoryFilterStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

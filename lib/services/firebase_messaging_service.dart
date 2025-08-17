@@ -5,8 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'api_service.dart';
 import '../router.dart';
+
+/// 권한 요청 결과
+enum PermissionRequestResult {
+  granted,        // 권한 허용됨
+  denied,         // 권한 거부됨
+  settingsOpened, // 설정 앱으로 이동됨
+  error,          // 오류 발생
+}
 
 /// Firebase Cloud Messaging 서비스
 /// FCM 토큰 관리, 푸시 알림 권한 요청, 토큰 등록/업데이트 등을 담당
@@ -593,33 +602,172 @@ class FirebaseMessagingService {
   }
 
   /// 사용자가 푸시 알림 설정을 변경했을 때 호출
-  Future<void> updatePushNotificationPermission(bool isAllowed) async {
+  Future<bool> updatePushNotificationPermission(bool isAllowed) async {
     try {
       // 시뮬레이터에서는 처리하지 않음
       if (_isSimulator()) {
         print('🎭 [FCM] Simulator detected - skipping permission update');
-        return;
+        return true; // 시뮬레이터에서는 성공으로 처리
+      }
+      
+      if (isAllowed) {
+        // 푸시 알림을 켜려는 경우만 시스템 권한 요청
+        print('🔥 [FCM] Requesting system permission for push notifications');
+        final permissionResult = await _requestAdvancedPermission();
+        
+        if (permissionResult != PermissionRequestResult.granted) {
+          print('⚠️ [FCM] Advanced permission request failed: $permissionResult');
+          return false; // 권한 요청 실패
+        }
+        
+        print('✅ [FCM] Advanced permission granted');
+      } else {
+        // 푸시 알림을 끄려는 경우는 기기 권한은 그대로 두고 서버 상태만 변경
+        print('🔥 [FCM] Disabling push notifications (keeping device permission)');
       }
       
       final prefs = await SharedPreferences.getInstance();
-      final String? currentToken = prefs.getString('fcm_token');
+      String? currentToken = prefs.getString('fcm_token');
       
-      if (currentToken != null) {
-        print('🔥 [FCM] Updating push permission: $isAllowed');
-        
-        // 서버에 업데이트된 권한 상태 전송
-        await _registerTokenToServer(currentToken, isAllowed);
-        
-        // 로컬에 업데이트된 권한 상태 저장
-        await prefs.setBool('push_notification_allowed', isAllowed);
-        await prefs.setString('last_token_update', DateTime.now().toIso8601String());
-        
-        print('🔥 [FCM] Push permission updated successfully');
+      if (isAllowed) {
+        // 푸시 알림 켜기: 시나리오별 토큰 처리
+        if (currentToken == null) {
+          // 시나리오 1: 처음 허용하는 사용자 (토큰 없음)
+          print('🔄 [FCM] New user: Getting first token...');
+          currentToken = await _getToken();
+          
+          if (currentToken == null) {
+            print('❌ [FCM] Failed to get first token');
+            return false;
+          }
+        } else {
+          // 시나리오 2: 기존에 허용했다가 끈 사용자 (토큰 있음)
+          print('✅ [FCM] Existing user: Reusing existing token');
+          // 기존 토큰 재사용 (토큰은 여전히 유효함)
+        }
       } else {
-        print('⚠️ [FCM] No token found for permission update');
+        // 푸시 알림 끄기: 토큰은 유지
+        if (currentToken == null) {
+          print('⚠️ [FCM] No token found for disabling push notifications');
+          // 토큰이 없어도 로컬 설정은 업데이트
+          currentToken = await _getToken(); // 혹시 모르니 토큰 시도
+        }
       }
+      
+      // 최종 토큰 확인
+      if (currentToken == null) {
+        print('❌ [FCM] No token available after processing');
+        return false;
+      }
+      
+      print('🔥 [FCM] Updating push permission: $isAllowed with token: ${currentToken.substring(0, 20)}...');
+      
+      // 서버에 업데이트된 권한 상태 전송
+      await _registerTokenToServer(currentToken, isAllowed);
+      
+      // 로컬에 업데이트된 권한 상태 저장
+      await _saveTokenLocally(currentToken, isAllowed);
+      
+      print('✅ [FCM] Push permission updated successfully');
+      return true;
+      
     } catch (e) {
       print('❌ [FCM] Error updating push permission: $e');
+      return false;
+    }
+  }
+
+  /// 고급 알림 권한 처리 (설정 앱 연동 포함)
+  Future<PermissionRequestResult> _requestAdvancedPermission() async {
+    try {
+      // 1. 현재 권한 상태 확인
+      final currentStatus = await Permission.notification.status;
+      print('🔥 [FCM] Current permission status: $currentStatus');
+      
+      // 이미 허용된 경우
+      if (currentStatus.isGranted) {
+        return PermissionRequestResult.granted;
+      }
+      
+      // 2. 권한 요청 (첫 번째 시도)
+      if (currentStatus.isDenied) {
+        print('🔥 [FCM] Requesting notification permission...');
+        final requestResult = await Permission.notification.request();
+        print('🔥 [FCM] Permission request result: $requestResult');
+        
+        if (requestResult.isGranted) {
+          return PermissionRequestResult.granted;
+        }
+        
+        if (requestResult.isPermanentlyDenied) {
+          // 영구 거부된 경우 설정 앱으로 안내
+          return await _handlePermanentlyDenied();
+        }
+        
+        return PermissionRequestResult.denied;
+      }
+      
+      // 3. 영구 거부된 경우 바로 설정 앱으로 안내
+      if (currentStatus.isPermanentlyDenied) {
+        return await _handlePermanentlyDenied();
+      }
+      
+      return PermissionRequestResult.denied;
+      
+    } catch (e) {
+      print('❌ [FCM] Error in advanced permission request: $e');
+      return PermissionRequestResult.error;
+    }
+  }
+
+  /// 영구 거부된 경우 설정 앱으로 안내
+  Future<PermissionRequestResult> _handlePermanentlyDenied() async {
+    try {
+      final context = AppRouter.navigatorKey.currentContext;
+      if (context == null || !context.mounted) {
+        return PermissionRequestResult.error;
+      }
+      
+      // 사용자에게 설정 앱으로 이동할지 물어보기
+      final shouldOpenSettings = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('알림 권한 필요'),
+            content: Text('푸시 알림을 받으려면 시스템 설정에서 알림을 허용해주세요.\n\n설정 앱으로 이동하시겠습니까?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('취소'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('설정으로 이동'),
+              ),
+            ],
+          );
+        },
+      ) ?? false;
+      
+      if (shouldOpenSettings) {
+        print('🔥 [FCM] Opening app settings...');
+        final opened = await openAppSettings();
+        
+        if (opened) {
+          print('✅ [FCM] App settings opened successfully');
+          return PermissionRequestResult.settingsOpened;
+        } else {
+          print('❌ [FCM] Failed to open app settings');
+          return PermissionRequestResult.error;
+        }
+      }
+      
+      return PermissionRequestResult.denied;
+      
+    } catch (e) {
+      print('❌ [FCM] Error handling permanently denied permission: $e');
+      return PermissionRequestResult.error;
     }
   }
 
@@ -637,6 +785,17 @@ class FirebaseMessagingService {
     } catch (e) {
       print('❌ [FCM] Error getting current token: $e');
       return null;
+    }
+  }
+
+  /// 로그 전송용 토큰 가져오기 (토큰이 없으면 빈 문자열 반환)
+  Future<String> getTokenForLogging() async {
+    try {
+      final token = await getCurrentToken();
+      return token ?? '';
+    } catch (e) {
+      print('❌ [FCM] Error getting token for logging: $e');
+      return '';
     }
   }
 

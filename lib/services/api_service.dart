@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/_models.dart';
 
@@ -10,13 +12,32 @@ class ApiService {
   static const String _baseUrl = 'https://trendly.servehttp.com:10443/api';
   // static const String _baseUrl = 'http://localhost:8000/api';
 
+  // SSL 인증서 우회 설정 (개발 환경에서만 true로 설정)
+  static const bool _bypassSSL = true; // 프로덕션에서는 false로 변경해야 함
+
   // 싱글톤 패턴 구현
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
-  ApiService._internal();
+  ApiService._internal() {
+    _initializeClient();
+  }
 
   // HTTP 클라이언트
-  final http.Client _client = http.Client();
+  late final http.Client _client;
+  
+  // HTTP 클라이언트 초기화
+  void _initializeClient() {
+    if (_bypassSSL) {
+      // SSL 인증서 검증을 우회하는 HttpClient 생성
+      final httpClient = HttpClient()
+        ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      _client = IOClient(httpClient);
+      print('⚠️ WARNING: SSL certificate verification is bypassed. This should only be used in development!');
+    } else {
+      // 일반 HTTP 클라이언트 사용
+      _client = http.Client();
+    }
+  }
 
   // 공통 헤더 설정
   Map<String, String> get _headers => {
@@ -343,6 +364,64 @@ class ApiService {
     } catch (e) {
       // 네트워크 오류 시 임시 데이터 반환
       return _generateMockClosedRoomsResponse(page, category);
+    }
+  }
+
+  /// 여러 토론방을 ID 리스트로 한번에 조회
+  /// POST /discussion/get-many/
+  Future<List<DiscussionRoom>> getDiscussionRoomsByIds(List<int> idList) async {
+    const String url = '$_baseUrl/discussion/get-many/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'id_list': idList,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        
+        return data.map((json) => DiscussionRoom.fromJson(json)).toList();
+      } else {
+        print('Failed to get discussion rooms by IDs: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error getting discussion rooms by IDs: $e');
+      return [];
+    }
+  }
+  
+  /// 여러 댓글을 ID 리스트로 한번에 조회
+  /// POST /comment/get-many/
+  Future<List<Comment>> getCommentsByIds(List<int> idList) async {
+    const String url = '$_baseUrl/comment/get-many/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'id_list': idList,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> data = json.decode(decodedBody);
+        
+        return data.map((json) => Comment.fromJson(json)).toList();
+      } else {
+        print('Failed to get comments by IDs: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error getting comments by IDs: $e');
+      return [];
     }
   }
 
@@ -1468,7 +1547,7 @@ class ApiService {
 
   /// 키워드 조회 로그 기록
   /// POST /log/keyword-view/
-  Future<Map<String, dynamic>> logKeywordView({
+  Future<Map<String, dynamic>?> logKeywordView({
     required String token,
     required String category,
     String? keyword,
@@ -1476,6 +1555,12 @@ class ApiService {
     final String url = '$_baseUrl/log/keyword-view/';
     
     try {
+      // 토큰이 비어있으면 로그 전송을 스킵하고 null 반환
+      if (token.isEmpty) {
+        print('⚠️ [API] FCM token not available - skipping keyword view log');
+        return null;
+      }
+      
       final Map<String, dynamic> requestBody = {
         'token': token,
         'category': category,
@@ -1496,14 +1581,17 @@ class ApiService {
         final String decodedBody = utf8.decode(response.bodyBytes);
         return json.decode(decodedBody);
       } else if (response.statusCode == 404) {
-        throw Exception('Device token not found');
+        print('⚠️ [API] Device token not found - log skipped');
+        return null;
       } else if (response.statusCode == 400) {
-        throw Exception('Token and category are required');
+        print('⚠️ [API] Invalid request - log skipped');
+        return null;
       } else {
         throw Exception('Failed to log keyword view: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Network error: $e');
+      print('❌ [API] Error logging keyword view (continuing without log): $e');
+      return null; // 로그 실패해도 앱 사용에 지장이 없도록 null 반환
     }
   }
 

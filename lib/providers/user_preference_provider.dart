@@ -1,98 +1,134 @@
 // lib/providers/user_preference_provider.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../services/user_preference_service.dart';
+import '../services/hive_service.dart';
+import '../services/firebase_messaging_service.dart';
+import '../models/hive/user_preferences.dart';
 
 class UserPreferenceProvider with ChangeNotifier {
-  final UserPreferenceService _prefService = UserPreferenceService();
-
-  // 상태 저장 변수들
-  List<int> _commentedRooms = [];
-  List<int> _commentIds = [];
-  String? _nickname;
-  String? _password;
-  Map<int, String> _roomSentiments = {};
-  Map<int, String> _commentReactions = {};
-
+  final HiveService _hiveService = HiveService();
+  
+  // 캐시된 UserPreferences 객체
+  UserPreferences? _userPreferences;
+  
   // 로딩 상태
   bool _isLoadingProfile = false;
   bool _isLoadingComments = false;
   bool _isLoadingSentiments = false;
   bool _isLoadingReactions = false;
-  bool _isDarkMode = false;
 
-  // Getters
-  List<int> get commentedRooms => _commentedRooms;
-
-  List<int> get commentIds => _commentIds;
-
-  String? get nickname => _nickname;
-
-  String? get password => _password;
-
-  Map<int, String> get roomSentiments => _roomSentiments;
-
-  Map<int, String> get commentReactions => _commentReactions;
-
+  // Getters - UserPreferences 객체에서 직접 가져오기
+  List<int> get commentedRooms => _userPreferences?.commentedRooms ?? [];
+  
+  List<int> get commentIds => _userPreferences?.commentIds ?? [];
+  
+  String? get nickname => _userPreferences?.nickname;
+  
+  String? get password => _userPreferences?.password;
+  
+  Map<int, String> get roomSentiments => _userPreferences?.roomSentiments ?? {};
+  
+  Map<int, String> get commentReactions => _userPreferences?.commentReactions ?? {};
+  
+  bool get isDarkMode => _userPreferences?.isDarkMode ?? false;
+  
+  ThemeMode get themeMode => isDarkMode ? ThemeMode.dark : ThemeMode.light;
+  
+  DateTime? get installDate => _userPreferences?.installDate;
+  
+  bool get isPushNotificationEnabled => _userPreferences?.isPushNotificationEnabled ?? true;
+  
   bool get isLoadingProfile => _isLoadingProfile;
-
+  
   bool get isLoadingComments => _isLoadingComments;
-
+  
   bool get isLoadingSentiments => _isLoadingSentiments;
-
+  
   bool get isLoadingReactions => _isLoadingReactions;
 
-  bool get isDarkMode => _isDarkMode;
-  ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
-
-  // 앱 시작 시 기본 정보 로드 (기존 메서드 수정)
+  // 앱 시작 시 기본 정보 로드
   Future<void> loadBasicInfo() async {
     _isLoadingProfile = true;
     notifyListeners();
 
     try {
-      _nickname = await _prefService.getDiscussionNickname();
-      _password = await _prefService.getDiscussionPassword();
-
-      // 테마 모드 로드 추가
-      _isDarkMode = await _prefService.getDarkModePreference();
+      // Hive에서 UserPreferences 로드
+      _userPreferences = _hiveService.getUserPreferences();
+      print('✅ [PROVIDER] 사용자 정보 로드 완료');
     } catch (e) {
-      print('기본 정보 로드 오류: $e');
+      print('❌ [PROVIDER] 기본 정보 로드 오류: $e');
+      // Hive가 초기화되지 않은 경우 기본값 사용
+      _userPreferences = null;
     } finally {
       _isLoadingProfile = false;
       notifyListeners();
     }
   }
-  // 테마 모드 전환 메서드 추가
+
+  // 테마 모드 전환
   Future<void> toggleThemeMode() async {
     try {
-      _isDarkMode = !_isDarkMode;
-      await _prefService.saveDarkModePreference(_isDarkMode);
+      final newMode = !isDarkMode;
+      await _hiveService.setDarkMode(newMode);
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     } catch (e) {
       print('테마 모드 저장 오류: $e');
     }
   }
 
-// 특정 테마 모드 설정 메서드 추가
+  // 특정 테마 모드 설정
   Future<void> setDarkMode(bool value) async {
-    if (_isDarkMode != value) {
-      _isDarkMode = value;
-      await _prefService.saveDarkModePreference(_isDarkMode);
+    try {
+      if (isDarkMode != value) {
+        await _hiveService.setDarkMode(value);
+        _userPreferences = _hiveService.getUserPreferences();
+        notifyListeners();
+      }
+    } catch (e) {
+      print('다크 모드 설정 오류: $e');
+    }
+  }
+
+  // 푸시 알림 설정
+  Future<bool> setPushNotificationEnabled(bool enabled) async {
+    if (isPushNotificationEnabled == enabled) {
+      return true; // 이미 같은 상태면 성공으로 처리
+    }
+    
+    // Firebase 서비스에 시스템 권한 요청 및 서버 업데이트
+    bool firebaseSuccess = true;
+    try {
+      firebaseSuccess = await FirebaseMessagingService().updatePushNotificationPermission(enabled);
+      if (!firebaseSuccess && enabled) {
+        // 푸시 알림 켜기를 시도했지만 시스템 권한이 거부된 경우
+        return false;
+      }
+    } catch (e) {
+      print('Firebase 서비스 업데이트 오류: $e');
+      firebaseSuccess = false;
+    }
+    
+    // 로컬 설정 업데이트 (Firebase 성공 여부와 관계없이)
+    final localSuccess = await _hiveService.setPushNotificationEnabled(enabled);
+    if (localSuccess) {
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
+    
+    return localSuccess && firebaseSuccess;
   }
 
   // 댓글 관련 정보 로드 (필요할 때만)
   Future<void> loadCommentInfo() async {
-    if (_commentedRooms.isNotEmpty && _commentIds.isNotEmpty) return;
+    if (commentedRooms.isNotEmpty && commentIds.isNotEmpty) return;
 
     _isLoadingComments = true;
     notifyListeners();
 
     try {
-      _commentedRooms = await _prefService.getCommentedRooms();
-      _commentIds = await _prefService.getCommentIds();
+      // Hive는 이미 메모리에 캐시되어 있으므로 추가 로드 불필요
+      _userPreferences = _hiveService.getUserPreferences();
     } catch (e) {
       print('댓글 정보 로드 오류: $e');
     } finally {
@@ -107,7 +143,7 @@ class UserPreferenceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _roomSentiments = await _prefService.getAllRoomSentiments();
+      _userPreferences = _hiveService.getUserPreferences();
     } catch (e) {
       print('의견 정보 로드 오류: $e');
     } finally {
@@ -116,14 +152,15 @@ class UserPreferenceProvider with ChangeNotifier {
     }
   }
 
+  // 댓글 반응 정보 로드
   Future<void> loadCommentReactions() async {
-    if (_commentReactions.isNotEmpty) return; // 이미 로드된 경우 중복 로드 방지
+    if (commentReactions.isNotEmpty) return;
 
     _isLoadingReactions = true;
     notifyListeners();
 
     try {
-      _commentReactions = await _prefService.getAllCommentReactions();
+      _userPreferences = _hiveService.getUserPreferences();
     } catch (e) {
       print('댓글 반응 정보 로드 오류: $e');
     } finally {
@@ -132,77 +169,68 @@ class UserPreferenceProvider with ChangeNotifier {
     }
   }
 
-  // 특정 토론방 의견 확인 (로드 확인 후 반환)
+  // 특정 토론방 의견 확인
   Future<String?> checkRoomSentiment(int roomId) async {
-    // 메모리에 없으면 개별적으로 로드
-    if (_roomSentiments.isEmpty) {
-      final sentiment = await _prefService.getRoomSentiment(roomId);
-      if (sentiment != null) {
-        _roomSentiments[roomId] = sentiment;
-        notifyListeners();
-      }
-      return sentiment;
-    }
-
-    return _roomSentiments[roomId];
+    _userPreferences = _hiveService.getUserPreferences();
+    return roomSentiments[roomId];
   }
 
   // 댓글 작성한 토론방 추가
   Future<void> addCommentedRoom(int roomId) async {
-    if (_commentedRooms.contains(roomId)) return;
+    if (commentedRooms.contains(roomId)) return;
 
-    final success = await _prefService.saveCommentedRoom(roomId);
+    final success = await _hiveService.addCommentedRoom(roomId);
     if (success) {
-      _commentedRooms.add(roomId);
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 댓글 ID 추가
   Future<void> addCommentId(int commentId) async {
-    if (_commentIds.contains(commentId)) return;
+    if (commentIds.contains(commentId)) return;
 
-    final success = await _prefService.saveCommentId(commentId);
+    final success = await _hiveService.addCommentId(commentId);
     if (success) {
-      _commentIds.add(commentId);
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 닉네임 설정
   Future<void> setNickname(String nickname) async {
-    final success = await _prefService.saveDiscussionNickname(nickname);
+    final success = await _hiveService.setNickname(nickname);
     if (success) {
-      _nickname = nickname;
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 비밀번호 설정
   Future<void> setPassword(String password) async {
-    final success = await _prefService.saveDiscussionPassword(password);
+    final success = await _hiveService.setPassword(password);
     if (success) {
-      _password = password;
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 좋아요/싫어요 여부 확인
   String? getCommentReaction(int commentId) {
-    return _commentReactions[commentId];
+    return commentReactions[commentId];
   }
 
   // 댓글 좋아요/싫어요 설정
   Future<void> setCommentReaction(int commentId, String reaction) async {
     // 이미 같은 반응이 있으면 제거 (토글 효과)
-    if (_commentReactions[commentId] == reaction) {
+    if (commentReactions[commentId] == reaction) {
       await removeCommentReaction(commentId);
       return;
     }
 
-    final success = await _prefService.saveCommentReaction(commentId, reaction);
+    final success = await _hiveService.setCommentReaction(commentId, reaction);
     if (success) {
-      _commentReactions[commentId] = reaction;
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
@@ -210,12 +238,12 @@ class UserPreferenceProvider with ChangeNotifier {
   // 좋아요 토글
   Future<void> toggleLike(int commentId) async {
     // 이미 싫어요 누른 경우 싫어요 제거
-    if (_commentReactions[commentId] == 'dislike') {
+    if (commentReactions[commentId] == 'dislike') {
       await removeCommentReaction(commentId);
     }
 
     // 좋아요 토글
-    if (_commentReactions[commentId] == 'like') {
+    if (commentReactions[commentId] == 'like') {
       await removeCommentReaction(commentId);
     } else {
       await setCommentReaction(commentId, 'like');
@@ -225,12 +253,12 @@ class UserPreferenceProvider with ChangeNotifier {
   // 싫어요 토글
   Future<void> toggleDislike(int commentId) async {
     // 이미 좋아요 누른 경우 좋아요 제거
-    if (_commentReactions[commentId] == 'like') {
+    if (commentReactions[commentId] == 'like') {
       await removeCommentReaction(commentId);
     }
 
     // 싫어요 토글
-    if (_commentReactions[commentId] == 'dislike') {
+    if (commentReactions[commentId] == 'dislike') {
       await removeCommentReaction(commentId);
     } else {
       await setCommentReaction(commentId, 'dislike');
@@ -239,63 +267,54 @@ class UserPreferenceProvider with ChangeNotifier {
 
   // 댓글 반응 제거
   Future<void> removeCommentReaction(int commentId) async {
-    final success = await _prefService.removeCommentReaction(commentId);
+    final success = await _hiveService.removeCommentReaction(commentId);
     if (success) {
-      _commentReactions.remove(commentId);
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 좋아요 누른 댓글 목록 가져오기
   List<int> getLikedComments() {
-    return _commentReactions.entries
-        .where((entry) => entry.value == 'like')
-        .map((entry) => entry.key)
-        .toList();
+    return _userPreferences?.getLikedComments() ?? [];
   }
 
   // 싫어요 누른 댓글 목록 가져오기
   List<int> getDislikedComments() {
-    return _commentReactions.entries
-        .where((entry) => entry.value == 'dislike')
-        .map((entry) => entry.key)
-        .toList();
+    return _userPreferences?.getDislikedComments() ?? [];
   }
 
   // 토론방 의견 설정
   Future<void> setRoomSentiment(int roomId, String sentiment) async {
-    final success = await _prefService.saveRoomSentiment(roomId, sentiment);
+    final success = await _hiveService.setRoomSentiment(roomId, sentiment);
     if (success) {
-      _roomSentiments[roomId] = sentiment;
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 토론방 의견 삭제
   Future<void> removeRoomSentiment(int roomId) async {
-    final success = await _prefService.removeRoomSentiment(roomId);
+    final success = await _hiveService.removeRoomSentiment(roomId);
     if (success) {
-      _roomSentiments.remove(roomId);
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 특정 의견(긍정/중립/부정)에 해당하는 토론방 목록 가져오기
   List<int> getRoomsBySentiment(String sentiment) {
-    return _roomSentiments.entries
-        .where((entry) => entry.value == sentiment)
-        .map((entry) => entry.key)
-        .toList();
+    return _userPreferences?.getRoomsBySentiment(sentiment) ?? [];
   }
 
   // 내 댓글인지 확인
   bool isMyComment(int commentId) {
-    return _commentIds.contains(commentId);
+    return _userPreferences?.isMyComment(commentId) ?? false;
   }
 
   // 내가 참여한 토론방인지 확인
   bool hasParticipatedInRoom(int roomId) {
-    return _commentedRooms.contains(roomId);
+    return _userPreferences?.hasParticipatedInRoom(roomId) ?? false;
   }
 
   // 댓글 작성 및 토론방 참여 처리 (한번에 두 정보 저장)
@@ -312,23 +331,21 @@ class UserPreferenceProvider with ChangeNotifier {
 
   // 모든 사용자 데이터 초기화
   Future<void> clearAllData() async {
-    final success = await _prefService.clearAllData();
+    final success = await _hiveService.clearAllData();
     if (success) {
-      _commentedRooms = [];
-      _commentIds = [];
-      _nickname = null;
-      _password = null;
-      _roomSentiments = {};
+      _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
   }
 
   // 참여 통계 가져오기
   Map<String, int> getParticipationStats() {
-    return {
-      'roomCount': _commentedRooms.length,
-      'commentCount': _commentIds.length,
-      'sentimentCount': _roomSentiments.length,
+    return _userPreferences?.getParticipationStats() ?? {
+      'roomCount': 0,
+      'commentCount': 0,
+      'sentimentCount': 0,
+      'likeCount': 0,
+      'dislikeCount': 0,
     };
   }
 }

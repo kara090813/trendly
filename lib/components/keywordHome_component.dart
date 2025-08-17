@@ -176,14 +176,17 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
       // 사용자가 직접 클릭한 경우에만 로그 기록
       if (isManualClick) {
         try {
-          final token = await _fcmService.getCurrentToken();
-          if (token != null) {
-            await _apiService.logKeywordView(
-              token: token,
-              category: keyword.category ?? '기타',
-              keyword: keyword.keyword,
-            );
+          final token = await _fcmService.getTokenForLogging();
+          final result = await _apiService.logKeywordView(
+            token: token,
+            category: keyword.category ?? '기타',
+            keyword: keyword.keyword,
+          );
+          
+          if (result != null) {
             print('📊 [LOG] Keyword view logged: ${keyword.keyword}');
+          } else {
+            print('📊 [LOG] Keyword view log skipped (no token): ${keyword.keyword}');
           }
         } catch (e) {
           print('❌ [LOG] Failed to log keyword view: $e');
@@ -388,20 +391,18 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                                 height: 50,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF19B3F6),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 6,
-                                      spreadRadius: 0.5,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12.r),
                                 ),
-                                child: Text("로고",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 14)),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  child: Image.asset(
+                                    'assets/img/logo_img.png',
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -409,10 +410,15 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                         Expanded(
                           child: Align(
                             alignment: Alignment.center,
-                            child: Text(
-                              "트렌들리",
-                              style: TextStyle(
-                                  fontSize: 22.sp, fontWeight: FontWeight.bold),
+                            child: Column(
+                              children: [
+                                SizedBox(height: 4.h,),
+                                Image.asset(
+                                  'assets/img/logo_title.png',
+                                  height: 18.h,
+                                  fit: BoxFit.contain,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -430,16 +436,6 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                                       themeProvider.toggleThemeMode();
                                     },
                                     assetImagePath: 'assets/img/items/dark.png',
-                                    color: Colors.blue,
-                                    iconSize: 30.w,
-                                    containerSize: 42.w,
-                                    imagePadding: EdgeInsets.all(8.w),
-                                  ),
-                                  SizedBox(width: 10.w),
-                                  CircleButtonWidget(
-                                    context: context,
-                                    onTap: () {},
-                                    assetImagePath: 'assets/img/items/alarm.png',
                                     color: Colors.blue,
                                     iconSize: 30.w,
                                     containerSize: 42.w,

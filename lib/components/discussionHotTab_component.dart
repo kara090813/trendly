@@ -425,7 +425,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           SizedBox(height: 20.h),
           
           SizedBox(
-            height: 180.h, // 높이 조정
+            height: 254.h, // 높이 조정 (오버플로우 방지)
             child: PageView.builder(
               controller: PageController(viewportFraction: 0.9),
               itemCount: topThree.length,
@@ -688,78 +688,169 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     final negativePercent = (negative / total * 100).round();
     
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildSentimentChip('😊', positivePercent, Colors.green),
-            _buildSentimentChip('😐', neutralPercent, Colors.grey),
-            _buildSentimentChip('😔', negativePercent, Colors.red),
-          ],
-        ),
-        SizedBox(height: 8.h),
+        // 베스트 댓글 영역
         Container(
-          height: 4.h,
+          padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(2.r),
-            color: isDark ? Colors.grey[800] : Colors.grey[300],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark 
+                ? [Color(0xFF2A2A36).withOpacity(0.5), Color(0xFF1E293B).withOpacity(0.3)]
+                : [Color(0xFFF8F9FA), Color(0xFFE8ECF0)],
+            ),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: isDark 
+                ? Colors.white.withOpacity(0.05) 
+                : Colors.black.withOpacity(0.05),
+              width: 0.5,
+            ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (positive > 0)
-                Expanded(
-                  flex: positive,
-                  child: Container(
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(2.r),
-                        bottomLeft: Radius.circular(2.r),
-                        topRight: neutral == 0 && negative == 0 ? Radius.circular(2.r) : Radius.zero,
-                        bottomRight: neutral == 0 && negative == 0 ? Radius.circular(2.r) : Radius.zero,
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                       ),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          size: 10.sp,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          'BEST',
+                          style: TextStyle(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              if (neutral > 0)
-                Expanded(
-                  flex: neutral,
-                  child: Container(color: Colors.grey),
-                ),
-              if (negative > 0)
-                Expanded(
-                  flex: negative,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(2.r),
-                        bottomRight: Radius.circular(2.r),
-                      ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    '익명',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
+                  Spacer(),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.thumb_up,
+                        size: 10.sp,
+                        color: const Color(0xFF00AEEF),
+                      ),
+                      SizedBox(width: 2.w),
+                      Text(
+                        '127',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF00AEEF),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                room.comment_summary ?? '이 토론방에서 가장 많은 공감을 받은 댓글입니다. 많은 사용자들이 이 의견에 동의하고 있습니다.',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  height: 1.3,
+                  color: isDark ? Colors.grey[300] : Colors.grey[800],
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
+        ),
+        SizedBox(height: 10.h),
+        // DiscussionReactionWidget 스타일의 반응 바
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6.r),
+          child: Container(
+            height: 8.h,
+            child: Row(
+              children: [
+                if (positive > 0)
+                  Expanded(
+                    flex: positive,
+                    child: Container(color: const Color(0xFF00AEEF)),
+                  ),
+                if (neutral > 0)
+                  Expanded(
+                    flex: neutral,
+                    child: Container(color: Colors.grey.shade400),
+                  ),
+                if (negative > 0)
+                  Expanded(
+                    flex: negative,
+                    child: Container(color: const Color(0xFFFF5A5F)),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 8.h),
+        // DiscussionReactionWidget 스타일의 라벨
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildCompactReactionLabel(context, '긍정', '$positivePercent%', const Color(0xFF00AEEF)),
+            SizedBox(width: 16.w),
+            _buildCompactReactionLabel(context, '중립', '$neutralPercent%', Colors.grey.shade600),
+            SizedBox(width: 16.w),
+            _buildCompactReactionLabel(context, '부정', '$negativePercent%', const Color(0xFFFF5A5F)),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildSentimentChip(String emoji, int percent, Color color) {
-    return Column(
+  Widget _buildCompactReactionLabel(
+      BuildContext context, String text, String percentage, Color dotColor) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          emoji,
-          style: TextStyle(fontSize: 16.sp),
+        Container(
+          width: 8.w,
+          height: 8.w,
+          decoration: BoxDecoration(
+            color: dotColor,
+            shape: BoxShape.circle,
+          ),
         ),
-        SizedBox(height: 2.h),
+        SizedBox(width: 6.w),
         Text(
-          '$percent%',
+          '$text $percentage',
           style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w600,
-            color: color,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.isDark(context) 
+              ? Colors.grey[300] 
+              : Colors.grey[800],
           ),
         ),
       ],
@@ -779,7 +870,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
         children: [
           // 미니멀 헤더
           Text(
-            "다른 인기 토론",
+            "TOP 4~10",
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
@@ -813,14 +904,17 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     final total = positive + neutral + negative;
     
     Color dominantColor = Colors.grey;
-    String dominantEmoji = '😐';
+    IconData dominantIcon = Icons.thumbs_up_down_rounded;
     if (total > 0) {
       if (positive >= neutral && positive >= negative) {
-        dominantColor = Colors.green;
-        dominantEmoji = '😊';
+        dominantColor = const Color(0xFF00AEEF);
+        dominantIcon = Icons.thumb_up_rounded;
       } else if (negative >= positive && negative >= neutral) {
-        dominantColor = Colors.red;
-        dominantEmoji = '😔';
+        dominantColor = const Color(0xFFFF5A5F);
+        dominantIcon = Icons.thumb_down_rounded;
+      } else {
+        dominantColor = Colors.grey.shade600;
+        dominantIcon = Icons.thumbs_up_down_rounded;
       }
     }
     
@@ -886,9 +980,10 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Text(
-                        dominantEmoji,
-                        style: TextStyle(fontSize: 24.sp),
+                      Icon(
+                        dominantIcon,
+                        size: 26.sp,
+                        color: dominantColor,
                       ),
                       Positioned(
                         top: 2,

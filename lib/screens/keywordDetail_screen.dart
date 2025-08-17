@@ -97,14 +97,17 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   // 키워드 조회 로그 기록 메서드
   Future<void> _logKeywordView(Keyword keyword) async {
     try {
-      final token = await _fcmService.getCurrentToken();
-      if (token != null) {
-        await _apiService.logKeywordView(
-          token: token,
-          category: keyword.category ?? '기타',
-          keyword: keyword.keyword,
-        );
+      final token = await _fcmService.getTokenForLogging();
+      final result = await _apiService.logKeywordView(
+        token: token,
+        category: keyword.category ?? '기타',
+        keyword: keyword.keyword,
+      );
+      
+      if (result != null) {
         print('📊 [LOG] Keyword detail view logged: ${keyword.keyword}');
+      } else {
+        print('📊 [LOG] Keyword detail view log skipped (no token): ${keyword.keyword}');
       }
     } catch (e) {
       print('❌ [LOG] Failed to log keyword detail view: $e');

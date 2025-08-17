@@ -31,12 +31,8 @@ mixin _$Keyword {
   dynamic get references => throw _privateConstructorUsedError;
   int? get current_discussion_room => throw _privateConstructorUsedError;
 
-  /// Serializes this Keyword to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Keyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $KeywordCopyWith<Keyword> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -68,8 +64,6 @@ class _$KeywordCopyWithImpl<$Res, $Val extends Keyword>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Keyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -157,8 +151,6 @@ class __$$KeywordImplCopyWithImpl<$Res>
       _$KeywordImpl _value, $Res Function(_$KeywordImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Keyword
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -285,7 +277,7 @@ class _$KeywordImpl implements _Keyword {
                 other.current_discussion_room == current_discussion_room));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -300,9 +292,7 @@ class _$KeywordImpl implements _Keyword {
       const DeepCollectionEquality().hash(references),
       current_discussion_room);
 
-  /// Create a copy of Keyword
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$KeywordImplCopyWith<_$KeywordImpl> get copyWith =>
@@ -351,11 +341,8 @@ abstract class _Keyword implements Keyword {
   dynamic get references;
   @override
   int? get current_discussion_room;
-
-  /// Create a copy of Keyword
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$KeywordImplCopyWith<_$KeywordImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -372,12 +359,8 @@ mixin _$Reference {
   String get date => throw _privateConstructorUsedError;
   String? get thumbnail => throw _privateConstructorUsedError;
 
-  /// Serializes this Reference to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Reference
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ReferenceCopyWith<Reference> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -401,8 +384,6 @@ class _$ReferenceCopyWithImpl<$Res, $Val extends Reference>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Reference
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -457,8 +438,6 @@ class __$$ReferenceImplCopyWithImpl<$Res>
       _$ReferenceImpl _value, $Res Function(_$ReferenceImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Reference
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -535,14 +514,12 @@ class _$ReferenceImpl implements _Reference {
                 other.thumbnail == thumbnail));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode =>
       Object.hash(runtimeType, type, title, link, date, thumbnail);
 
-  /// Create a copy of Reference
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ReferenceImplCopyWith<_$ReferenceImpl> get copyWith =>
@@ -577,11 +554,8 @@ abstract class _Reference implements Reference {
   String get date;
   @override
   String? get thumbnail;
-
-  /// Create a copy of Reference
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ReferenceImplCopyWith<_$ReferenceImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

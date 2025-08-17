@@ -36,12 +36,8 @@ mixin _$DiscussionRoom {
   List<SentimentSnapshot> get sentiment_snapshot =>
       throw _privateConstructorUsedError;
 
-  /// Serializes this DiscussionRoom to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of DiscussionRoom
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $DiscussionRoomCopyWith<DiscussionRoom> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -79,8 +75,6 @@ class _$DiscussionRoomCopyWithImpl<$Res, $Val extends DiscussionRoom>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of DiscussionRoom
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -193,8 +187,6 @@ class __$$DiscussionRoomImplCopyWithImpl<$Res>
       _$DiscussionRoomImpl _value, $Res Function(_$DiscussionRoomImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of DiscussionRoom
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -383,7 +375,7 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
                 .equals(other._sentiment_snapshot, _sentiment_snapshot));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -402,9 +394,7 @@ class _$DiscussionRoomImpl implements _DiscussionRoom {
       negative_count,
       const DeepCollectionEquality().hash(_sentiment_snapshot));
 
-  /// Create a copy of DiscussionRoom
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$DiscussionRoomImplCopyWith<_$DiscussionRoomImpl> get copyWith =>
@@ -467,11 +457,8 @@ abstract class _DiscussionRoom implements DiscussionRoom {
   int get negative_count;
   @override
   List<SentimentSnapshot> get sentiment_snapshot;
-
-  /// Create a copy of DiscussionRoom
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$DiscussionRoomImplCopyWith<_$DiscussionRoomImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -487,12 +474,8 @@ mixin _$SentimentSnapshot {
   int get neu => throw _privateConstructorUsedError;
   int get neg => throw _privateConstructorUsedError;
 
-  /// Serializes this SentimentSnapshot to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SentimentSnapshot
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SentimentSnapshotCopyWith<SentimentSnapshot> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -516,8 +499,6 @@ class _$SentimentSnapshotCopyWithImpl<$Res, $Val extends SentimentSnapshot>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SentimentSnapshot
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -566,8 +547,6 @@ class __$$SentimentSnapshotImplCopyWithImpl<$Res>
       $Res Function(_$SentimentSnapshotImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SentimentSnapshot
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -634,13 +613,11 @@ class _$SentimentSnapshotImpl implements _SentimentSnapshot {
             (identical(other.neg, neg) || other.neg == neg));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, t, pos, neu, neg);
 
-  /// Create a copy of SentimentSnapshot
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SentimentSnapshotImplCopyWith<_$SentimentSnapshotImpl> get copyWith =>
@@ -673,11 +650,8 @@ abstract class _SentimentSnapshot implements SentimentSnapshot {
   int get neu;
   @override
   int get neg;
-
-  /// Create a copy of SentimentSnapshot
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SentimentSnapshotImplCopyWith<_$SentimentSnapshotImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

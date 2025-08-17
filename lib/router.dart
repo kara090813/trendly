@@ -41,6 +41,15 @@ class AppRouter {
           return CommentRoomScreen(commentRoomId: commentRoomId);
         },
       ),
+      // 내 활동 상세 페이지
+      GoRoute(
+        path: '/my-activity/:type',
+        name: 'myActivity',
+        builder: (context, state) {
+          final String type = state.pathParameters['type']!;
+          return MyActivityScreen(initialTab: type);
+        },
+      ),
     ],
     debugLogDiagnostics: true,
   );

@@ -244,6 +244,7 @@ Other discussion room endpoints are not yet implemented in the service layer.
 - `discussionHotTab_component.dart`: Hot discussion rooms with swipeable top 3
 - `discussionLiveTab_component.dart`: Live/active discussion rooms
 - `discussionHistoryTab_component.dart`: Closed discussion rooms history
+- `mypageHome_component.dart`: **NEW** My page with user profile, statistics, and settings
 
 #### Key Widgets (`/lib/widgets/`)
 - `discussionReaction_widget.dart`: Displays discussion sentiment statistics
@@ -262,16 +263,23 @@ Other discussion room endpoints are not yet implemented in the service layer.
    - Sub-comments (replies) support
    - Anonymous commenting with password-based deletion
 
-2. **User Preferences**
-   - Local storage of nickname and password
-   - Comment reaction tracking (like/dislike)
-   - Sentiment selection persistence
-   - "My comments" identification
+2. **User Preferences & My Page**
+   - **NEW** Comprehensive user profile management
+   - Nickname and password editing with inline controls
+   - App install date tracking and display
+   - Activity statistics dashboard (rooms, comments, likes, sentiments)
+   - Activity history sections:
+     - Participated discussion rooms
+     - Written comments list
+     - Liked/disliked comments
+   - Settings management (theme, notifications, data reset)
+   - Anonymous user data with local storage
 
 3. **Theme Support**
-   - Dark/Light mode toggle
-   - Neumorphic design elements
+   - Dark/Light mode toggle with smooth transitions
+   - Neumorphic design elements throughout
    - Consistent color scheme through AppTheme
+   - Real-time theme switching with haptic feedback
 
 ## Key Development Patterns
 
@@ -284,11 +292,25 @@ Other discussion room endpoints are not yet implemented in the service layer.
 
 ## Local Storage
 
-The app uses SharedPreferences for:
-- User nickname and password
-- Comment IDs (to identify user's own comments)
-- Comment reactions (like/dislike states)
-- Room sentiment selections
+The app uses Hive (NoSQL database) for structured data management:
+- **Primary**: Hive with automatic SharedPreferences migration
+- **Legacy**: SharedPreferences (automatically migrated on first run)
+
+**Hive Storage Structure**:
+- `UserPreferences` model: All user data in single structured object
+  - User nickname and password
+  - Comment IDs (to identify user's own comments) 
+  - Comment reactions (like/dislike states)
+  - Room sentiment selections
+  - Participated room history
+  - Activity statistics and preferences
+
+**Migration**: Existing SharedPreferences data is automatically migrated to Hive on app startup without data loss.
+
+**Key Files**:
+- `/lib/models/hive/user_preferences.dart`: Hive data model
+- `/lib/services/hive_service.dart`: Hive database service
+- `/lib/providers/user_preference_provider.dart`: Updated to use Hive
 
 ## Testing Approach
 

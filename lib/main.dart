@@ -9,8 +9,10 @@ import 'router.dart';
 import 'providers/_providers.dart';
 import 'package:flutter/services.dart';
 import 'services/user_preference_service.dart';
+import 'services/hive_service.dart';
 import 'services/firebase_messaging_service.dart';
 import 'dart:ui' as ui;
+import 'dart:async' show unawaited;
 
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -28,16 +30,26 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
+  // Hive 초기화
+  try {
+    print('📦 [MAIN] Initializing Hive...');
+    await HiveService().initializeHive();
+    print('✅ [MAIN] Hive initialized successfully');
+  } catch (e) {
+    print('❌ [MAIN] Failed to initialize Hive: $e');
+    // Hive 초기화 실패 시 앱 실행 중단
+    return;
+  }
+  
   // FCM Background 메시지 핸들러 설정
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // FCM 서비스 초기화 (앱 시작과 함께 바로 실행)
-  try {
-    print('🔥 [MAIN] Starting FCM initialization...');
-    await FirebaseMessagingService().initializeFirebaseMessaging();
-  } catch (e) {
-    print('❌ [MAIN] Failed to initialize FCM: $e');
-  }
+  // FCM 서비스 초기화를 백그라운드에서 비동기로 실행
+  unawaited(
+    FirebaseMessagingService().initializeFirebaseMessaging().catchError((e) {
+      print('❌ [MAIN] Failed to initialize FCM: $e');
+    })
+  );
 
   // MobileAds 초기화를 try-catch로 감싸기
   // try {
