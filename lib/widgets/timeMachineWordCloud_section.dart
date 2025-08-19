@@ -20,9 +20,7 @@ class TimeMachineWordCloudSection extends StatelessWidget {
   List<WordCloudItem> _generateDynamicLayout() {
     // 기본 키워드 (없을 경우 사용)
     final defaultKeywords = [
-      '포켓몬', '갤럭시', 'AI', '트렌드', '뉴스', '키워드', '게임', '스마트폰', '기술', '엔터테인먼트',
-      '스포츠', '경제', '정치', '문화', '음악', '영화', '드라마', '웹툰', '유튜브', '인스타그램',
-      '틱톡', '카카오톡', '넷플릭스', '디즈니', '아마존', '구글', '애플', '테슬라', '비트코인', '메타버스'
+      '데이터 없음', '키워드 없음', '정보 없음'
     ];
     
     final keywordList = keywords ?? defaultKeywords;

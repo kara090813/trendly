@@ -31,6 +31,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   Keyword? _keyword;
   DiscussionRoom? _discussionRoom;
   List<Comment>? _comments;
+  List<Comment>? _topComments;
   bool _isLoading = true;
   String? _error;
   String _selectedSummaryType = '3줄';
@@ -58,11 +59,20 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       // 현재 활성화된 토론방 정보 로드
       DiscussionRoom? discussionRoom;
       List<Comment>? comments;
+      List<Comment>? topComments;
 
       try {
         if (keyword.current_discussion_room != null && keyword.current_discussion_room! > 0) {
           // 토론방 정보가 있는 경우 댓글 목록 가져오기 (인기순으로 변경)
           comments = await _apiService.getDiscussionComments(keyword.current_discussion_room!, isPopular: true);
+
+          // 새로운 API를 사용하여 인기 댓글 3개 가져오기
+          try {
+            final topCommentsResult = await _apiService.getTopComments(keyword.current_discussion_room!, 3);
+            topComments = topCommentsResult['comments'] as List<Comment>?;
+          } catch (e) {
+            print('인기 댓글 로드 실패: $e');
+          }
 
           // 토론방 정보도 가져오기
           try {
@@ -81,6 +91,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           _keyword = keyword;
           _discussionRoom = discussionRoom;
           _comments = comments;
+          _topComments = topComments;
           _isLoading = false;
         });
       }
@@ -195,7 +206,6 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               _buildSummarySection(),
               _buildRelatedNewsSection(),
               _buildDiscussionReactionSection(),
-              _buildTopDiscussionsSection(),
               SizedBox(height: 20.h),
             ]),
           ),
@@ -395,213 +405,13 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     return DiscussionReactionWidget(
       discussionRoom: _discussionRoom,
       keyword: _keyword,
+      topComments: _topComments, // 베스트 댓글 3개 전달
       onEnterTap: () {
         if (_discussionRoom != null) {
           // 토론방으로 이동
           context.push('/discussion/${_discussionRoom!.id}');
         }
       },
-    );
-  }
-
-  // 토론방 인기글 섹션
-  Widget _buildTopDiscussionsSection() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: AppTheme.cardDecoration(context),
-      child: Padding(
-        padding: EdgeInsets.all(15.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 섹션 타이틀과 전체보기 버튼
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '토론방 인기글',
-                  style: TextStyle(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.getTextColor(context),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    if (_keyword!.current_discussion_room != null && _keyword!.current_discussion_room! > 0) {
-                      context.push('/discussion/${_keyword!.current_discussion_room}');
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('활성화된 토론방이 없습니다.')),
-                      );
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      Text(
-                        '전체보기',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Color(0xFF19B3F6),
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 12.sp,
-                        color: Color(0xFF19B3F6),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-
-            // 토론방 인기글 목록
-            _buildOptimizedDiscussionList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 최적화된 토론방 인기글 목록
-  Widget _buildOptimizedDiscussionList() {
-    // 댓글이 없는 경우
-    if (_comments == null || _comments!.isEmpty) {
-      return Container(
-        height: 60.h,
-        alignment: Alignment.centerLeft,
-        child: Row(
-          children: [
-            Icon(
-              Icons.info_outline,
-              size: 16.sp,
-              color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              '아직 의견이 없어요! 첫 의견을 남겨주세요!',
-              style: TextStyle(
-                color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[500],
-                fontSize: 14.sp,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // 댓글이 있는 경우 - 인기순(좋아요 수)으로 정렬하고 최대 3개만 표시
-    List<Comment> sortedComments = List.from(_comments!);
-    sortedComments.sort((a, b) =>
-        (b.like_count ?? 0).compareTo(a.like_count ?? 0));
-
-    final displayComments = sortedComments.length > 3 ?
-    sortedComments.sublist(0, 3) : sortedComments;
-
-    // 댓글 위젯 생성
-    return Column(
-      children: displayComments.map((comment) => _buildCommentItem(comment)).toList(),
-    );
-  }
-
-  // 댓글 아이템 위젯
-  Widget _buildCommentItem(Comment comment) {
-    return RepaintBoundary(
-      child: Container(
-        margin: EdgeInsets.only(bottom: 15.h),
-        decoration: AppTheme.commentDecoration(context),
-        child: Padding(
-          padding: EdgeInsets.all(15.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 댓글, 작성자 및 시간
-              Row(
-                children: [
-                  Text(
-                    comment.nick,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.sp,
-                      color: AppTheme.getTextColor(context),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    _formatTimeAgo(comment.created_at.toString()),
-                    style: TextStyle(
-                      color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey,
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-
-              // 댓글 내용
-              Text(
-                comment.comment,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  color: AppTheme.isDark(context) ? Colors.grey[300] : Colors.black87,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 12.h),
-
-              // 좋아요, 싫어요, 댓글 수
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(Icons.thumb_up_outlined,
-                      size: 16.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    (comment.like_count ?? 0).toString(),
-                    style: TextStyle(
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-
-                  Icon(Icons.thumb_down_outlined,
-                      size: 16.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    (comment.dislike_count ?? 0).toString(),
-                    style: TextStyle(
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-
-                  Icon(Icons.comment_outlined,
-                      size: 16.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600]
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    (comment.sub_comment_count ?? comment.replies ?? 0).toString(),
-                    style: TextStyle(
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

@@ -57,12 +57,17 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
     } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');
       
-      // 해당 날짜의 캡슐이 존재하지 않을 경우 날짜를 사용할 수 없는 목록에 추가
+      // 해당 날짜의 캡슐이 존재하지 않을 경우 빈 데이터로 처리
       if (errorMessage.contains('해당 날짜의 캡슐이 존재하지 않습니다')) {
         final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
         _unavailableDates.add(dateStr);
-        // 자동으로 이전 날짜로 이동
-        _selectPreviousAvailableDate();
+        
+        // 빈 캡슐 데이터 생성
+        setState(() {
+          _capsuleData = null; // null로 설정하여 데이터 없음 상태 표시
+          _isLoading = false;
+          _errorMessage = null; // 에러 메시지는 제거 (정상적인 상태로 처리)
+        });
         return;
       }
       
@@ -173,6 +178,25 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           _buildLoadingWidget()
         else if (_errorMessage != null)
           _buildErrorWidget()
+        else if (_capsuleData == null)
+          CustomScrollView(
+            physics: BouncingScrollPhysics(),
+            slivers: [
+              // 히어로 섹션 (기존과 동일)
+              SliverToBoxAdapter(
+                child: TimeMachineHeroSection(
+                  selectedDate: _selectedDate,
+                  onDateTap: _selectDate,
+                  summaryData: _getDailySummaryData(),
+                ),
+              ),
+              
+              // 데이터 없음 UI
+              SliverToBoxAdapter(
+                child: _buildNoDataWidget(),
+              ),
+            ],
+          )
         else
           CustomScrollView(
             physics: BouncingScrollPhysics(),
@@ -402,20 +426,38 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
 
   Map<String, dynamic> _getDailySummaryData() {
     if (_capsuleData == null) {
-      return {
-        'topKeyword': '로딩 중...',
-        'topKeywordStats': '데이터를 불러오는 중입니다',
-        'topCategory': '기타',
-        'topCategoryStats': '전체 0%',
-        'topDiscussion': '데이터 없음',
-        'topDiscussionStats': '데이터 없음',
-        'insights': [
-          {
-            'icon': '⏳',
-            'text': '데이터를 불러오는 중입니다...',
-          },
-        ],
-      };
+      if (_isLoading) {
+        return {
+          'topKeyword': '로딩 중...',
+          'topKeywordStats': '데이터를 불러오는 중입니다',
+          'topCategory': '기타',
+          'topCategoryStats': '전체 0%',
+          'topDiscussion': '데이터 없음',
+          'topDiscussionStats': '데이터 없음',
+          'insights': [
+            {
+              'icon': '⏳',
+              'text': '데이터를 불러오는 중입니다...',
+            },
+          ],
+        };
+      } else {
+        // 로딩이 끝났는데 데이터가 없는 경우
+        return {
+          'topKeyword': '데이터 없음',
+          'topKeywordStats': '해당 날짜의 데이터가 없습니다',
+          'topCategory': '없음',
+          'topCategoryStats': '전체 0%',
+          'topDiscussion': '데이터 없음',
+          'topDiscussionStats': '데이터 없음',
+          'insights': [
+            {
+              'icon': '📊',
+              'text': '해당 날짜의 키워드 데이터가 없습니다.',
+            },
+          ],
+        };
+      }
     }
     
     final top3 = _capsuleData!.top3Keywords;
@@ -574,6 +616,94 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w500,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildNoDataWidget() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 100.h), // 상단 마진을 60에서 20으로 줄임
+      child: Container(
+        width: double.infinity, // 전체 너비 사용
+        padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 50.h), // padding 조정
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDarkMode
+                ? [Color(0xFF1F2937), Color(0xFF111827)]
+                : [Color(0xFFFAFAFA), Color(0xFFF0F0F0)],
+          ),
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(
+            color: isDarkMode 
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 아이콘
+            Container(
+              width: 80.w,
+              height: 80.w,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF6B7280).withOpacity(0.2),
+                    Color(0xFF4B5563).withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Icon(
+                Icons.calendar_view_day_outlined,
+                size: 40.w,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
+              ),
+            ),
+            
+            SizedBox(height: 24.h),
+            
+            // 제목
+            Text(
+              '데이터가 없습니다',
+              style: TextStyle(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.w700,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            
+            SizedBox(height: 12.h),
+            
+            // 설명
+            Text(
+              '해당 날짜의 키워드 데이터를\n찾을 수 없습니다',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

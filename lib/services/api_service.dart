@@ -1082,9 +1082,9 @@ class ApiService {
         } catch (e) {
           // JSON 파싱 실패시 기본 404 처리
         }
-        // 개발 중에는 테스트 데이터 반환
-        print('404 Error - returning test data');
-        return _getTestCapsuleData(dateStr);
+        // 데이터가 없으면 예외 던지기
+        print('404 Error - no data available for this date');
+        throw Exception('해당 날짜의 캡슐이 존재하지 않습니다.');
       } else if (response.statusCode == 400) {
         throw Exception('올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)');
       } else {
@@ -1099,200 +1099,12 @@ class ApiService {
     }
   }
   
-  /// 테스트용 캡슐 데이터 생성
+  /// 테스트용 캡슐 데이터 생성 (더 이상 사용하지 않음)
   CapsuleModel _getTestCapsuleData(String dateStr) {
     final testData = {
       'date': dateStr,
-      'top3_keywords': [
-        {
-          'keyword': '포켓몬 우유',
-          'score': 85.5,
-          'appearance_count': 12,
-          'avg_rank': 2.5,
-          'last_keyword_id': 1001,
-        },
-        {
-          'keyword': '갤럭시 S25',
-          'score': 78.0,
-          'appearance_count': 10,
-          'avg_rank': 3.2,
-          'last_keyword_id': 1002,
-        },
-        {
-          'keyword': '천국보다 아름다운',
-          'score': 72.3,
-          'appearance_count': 8,
-          'avg_rank': 4.1,
-          'last_keyword_id': 1003,
-        },
-      ],
-      'hourly_keywords': [
-        {
-          'time': '00:00',
-          'keywords': [
-            {
-              'id': 6938,
-              'keyword': '김준호 김지민 결혼식',
-              'rank': 1,
-              'category': '연예/문화',
-              'type2': '김준호와 김지민이 많은 동료들의 축복 속에 결혼식을 올렸다.\n결혼식에는 1200명이 넘는 하객이 참석하여 성황을 이루었다.\n코미디언 동료들뿐 아니라 유재석, 이찬원 등 다양한 분야의 유명인들이 참석하여 두 사람의 결혼을 축하했다.',
-            },
-            {
-              'id': 6939,
-              'keyword': '포켓몬 우유',
-              'rank': 2,
-              'category': '연예/문화',
-              'type2': '포켓몬 우유가 인기를 끌고 있다.',
-            },
-            {
-              'id': 6940,
-              'keyword': '갤럭시 S25',
-              'rank': 3,
-              'category': 'IT',
-              'type2': '갤럭시 S25의 새로운 기능들이 공개되었다.',
-            },
-            {
-              'id': 6941,
-              'keyword': '이재명',
-              'rank': 4,
-              'category': '정치',
-              'type2': '이재명 관련 정치 이슈가 화제가 되고 있다.',
-            },
-          ],
-        },
-        {
-          'time': '00:05',
-          'keywords': [
-            {
-              'id': 6942,
-              'keyword': '천국보다 아름다운',
-              'rank': 1,
-              'category': '연예/문화',
-              'type2': '천국보다 아름다운 드라마가 인기를 끌고 있다.',
-            },
-            {
-              'id': 6943,
-              'keyword': '포켓몬 우유',
-              'rank': 2,
-              'category': '연예/문화',
-              'type2': '포켓몬 우유 관련 이슈가 계속되고 있다.',
-            },
-            {
-              'id': 6944,
-              'keyword': '파워에이드',
-              'rank': 3,
-              'category': '경제',
-              'type2': '파워에이드 관련 경제 뉴스가 있다.',
-            },
-            {
-              'id': 6945,
-              'keyword': '소금 우유',
-              'rank': 4,
-              'category': '문화',
-              'type2': '소금 우유 트렌드가 화제다.',
-            },
-          ],
-        },
-        {
-          'time': '08:00',
-          'keywords': [
-            {
-              'id': 6946,
-              'keyword': '갤럭시 S25',
-              'rank': 1,
-              'category': 'IT',
-              'type2': '갤럭시 S25 출시 관련 소식이 전해졌다.',
-            },
-            {
-              'id': 6947,
-              'keyword': '김소현 복귀',
-              'rank': 2,
-              'category': '연예/문화',
-              'type2': '김소현의 복귀 소식이 화제가 되고 있다.',
-            },
-            {
-              'id': 6948,
-              'keyword': '링스틱',
-              'rank': 3,
-              'category': 'IT',
-              'type2': '링스틱 관련 기술 뉴스가 있다.',
-            },
-            {
-              'id': 6949,
-              'keyword': '투싹',
-              'rank': 4,
-              'category': '스포츠',
-              'type2': '투싹 관련 스포츠 소식이 전해졌다.',
-            },
-          ],
-        },
-        {
-          'time': '16:00',
-          'keywords': [
-            {
-              'id': 6950,
-              'keyword': '갤럭시탭',
-              'rank': 1,
-              'category': 'IT',
-              'type2': '갤럭시탭 새로운 모델이 공개되었다.',
-            },
-            {
-              'id': 6951,
-              'keyword': '새마음',
-              'rank': 2,
-              'category': '사회',
-              'type2': '새마음 관련 사회 이슈가 있다.',
-            },
-            {
-              'id': 6952,
-              'keyword': '포켓몬 우유',
-              'rank': 3,
-              'category': '연예/문화',
-              'type2': '포켓몬 우유 열풍이 계속되고 있다.',
-            },
-            {
-              'id': 6953,
-              'keyword': '천국보다 아름다운',
-              'rank': 4,
-              'category': '연예/문화',
-              'type2': '천국보다 아름다운 드라마의 인기가 지속되고 있다.',
-            },
-          ],
-        },
-        {
-          'time': '20:00',
-          'keywords': [
-            {
-              'id': 6954,
-              'keyword': '이재명',
-              'rank': 1,
-              'category': '정치',
-              'type2': '이재명 관련 정치 소식이 저녁 시간에 화제가 되었다.',
-            },
-            {
-              'id': 6955,
-              'keyword': '크레딧카드 개코',
-              'rank': 2,
-              'category': '연예/문화',
-              'type2': '크레딧카드 개코 관련 이슈가 있다.',
-            },
-            {
-              'id': 6956,
-              'keyword': '갤럭시 S25',
-              'rank': 3,
-              'category': 'IT',
-              'type2': '갤럭시 S25 관련 추가 소식이 전해졌다.',
-            },
-            {
-              'id': 6957,
-              'keyword': '파워에이드',
-              'rank': 4,
-              'category': '경제',
-              'type2': '파워에이드 관련 경제 소식이 저녁에 화제가 되었다.',
-            },
-          ],
-        },
-      ],
+      'top3_keywords': [],
+      'hourly_keywords': [],
       'created_at': DateTime.now().toIso8601String(),
     };
     
@@ -1500,11 +1312,7 @@ class ApiService {
         '2024-07': 467,
       },
       'top_keywords': [
-        {'keyword': '포켓몬 우유', 'discussions': 23},
-        {'keyword': '갤럭시 S25', 'discussions': 19},
-        {'keyword': '천국보다 아름다운', 'discussions': 17},
-        {'keyword': '이재명', 'discussions': 15},
-        {'keyword': '김준호 김지민', 'discussions': 12},
+        {'keyword': '데이터 없음', 'discussions': 0},
       ],
       'engagement_metrics': {
         'avg_comments_per_discussion': 14.7,
@@ -1592,6 +1400,89 @@ class ApiService {
     } catch (e) {
       print('❌ [API] Error logging keyword view (continuing without log): $e');
       return null; // 로그 실패해도 앱 사용에 지장이 없도록 null 반환
+    }
+  }
+
+  /// 베스트 댓글 일괄 조회
+  /// POST /api/discussion/best-comments/
+  /// 여러 토론방의 베스트 댓글을 한 번에 가져오기
+  Future<Map<int, Map<String, dynamic>?>> getBestComments(List<int> discussionRoomIds) async {
+    final String url = '$_baseUrl/discussion/best-comments/';
+    
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode({
+          'discussion_room_ids': discussionRoomIds,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        final List<dynamic> results = data['results'] ?? [];
+        
+        // 토론방 ID를 키로 하는 Map으로 변환
+        final Map<int, Map<String, dynamic>?> bestCommentsMap = {};
+        
+        for (var result in results) {
+          final int roomId = result['discussion_room_id'];
+          final bestComment = result['best_comment'];
+          
+          if (bestComment != null) {
+            bestCommentsMap[roomId] = {
+              'id': bestComment['id'],
+              'user': bestComment['user'] ?? '익명',
+              'comment': bestComment['comment'] ?? '',
+              'like_count': bestComment['like_count'] ?? 0,
+              'created_at': bestComment['created_at'] != null 
+                ? DateTime.parse(bestComment['created_at'])
+                : DateTime.now(),
+            };
+          } else {
+            bestCommentsMap[roomId] = null;
+          }
+        }
+        return bestCommentsMap;
+      } else {
+        throw Exception('Failed to get best comments: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ [API] Error getting best comments: $e');
+      // 에러 시 빈 Map 반환
+      return {};
+    }
+  }
+
+  /// 토론방 인기 댓글 가져오기
+  /// GET /discussion/<int:discussion_room_id>/top-comments/<int:count>/
+  Future<Map<String, dynamic>> getTopComments(int discussionRoomId, int count) async {
+    final String url = '$_baseUrl/discussion/$discussionRoomId/top-comments/$count/';
+    
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        
+        return {
+          'discussion_room_id': data['discussion_room_id'] ?? discussionRoomId,
+          'requested_count': data['requested_count'] ?? count,
+          'actual_count': data['actual_count'] ?? 0,
+          'comments': (data['comments'] as List<dynamic>?)
+              ?.map((json) => Comment.fromJson(json))
+              .toList() ?? [],
+        };
+      } else {
+        throw Exception('Failed to get top comments: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 

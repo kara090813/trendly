@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:html_unescape/html_unescape.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
@@ -19,6 +21,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
   List<Keyword> _randomKeywords = [];
   bool _isLoadingKeywords = true;
   String? _errorMessage;
+  final HtmlUnescape htmlUnescape = HtmlUnescape();
 
   @override
   void initState() {
@@ -231,7 +234,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             
             // 키워드 상세 정보 섹션  
             SliverToBoxAdapter(
-              child: _buildRelatedNews().animate()
+              child: _buildKeywordDetailsSection().animate()
                 .fadeIn(duration: 600.ms, delay: 200.ms)
                 .slideY(begin: 0.03, end: 0, duration: 600.ms),
             ),
@@ -577,7 +580,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
   }
 
   // 키워드 상세 정보 섹션 - TimeMachine 스타일
-  Widget _buildRelatedNews() {
+  Widget _buildKeywordDetailsSection() {
     final bool isDark = AppTheme.isDark(context);
     
     return Container(
@@ -621,7 +624,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                 Padding(
                   padding: EdgeInsets.only(left: 16.w),
                   child: Text(
-                    "상세 설명 및 추가 정보",
+                    "상세 설명 및 관련 정보",
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -709,7 +712,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (currentKeyword.type3.isNotEmpty) ...[
+          if (currentKeyword.type2.isNotEmpty) ...[
             Text(
               '상세 설명',
               style: TextStyle(
@@ -720,17 +723,17 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             ),
             SizedBox(height: 12.h),
             Text(
-              currentKeyword.type3,
+              currentKeyword.type2,
               style: TextStyle(
                 fontSize: 15.sp,
                 height: 1.5,
                 color: AppTheme.getTextColor(context),
               ),
             ),
-            SizedBox(height: 20.h),
+            if (_hasReferences(currentKeyword.references)) SizedBox(height: 24.h),
           ],
           
-          // 참조 링크들
+          // 참조 링크들 - 리스트 스타일
           if (_hasReferences(currentKeyword.references)) ...[
             Text(
               '관련 링크',
@@ -740,17 +743,30 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                 color: AppTheme.getTextColor(context),
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 16.h),
             ..._buildReferencesList(currentKeyword.references, isDark),
-          ] else ...[
+          ],
+          
+          // 데이터가 없을 때
+          if (currentKeyword.type2.isEmpty && !_hasReferences(currentKeyword.references)) ...[
             Center(
-              child: Text(
-                '추가 정보가 곧 업데이트됩니다.',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 48.sp,
+                    color: isDark ? Colors.grey[400] : Colors.grey[500],
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    '추가 정보가 곧 업데이트됩니다.',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -772,86 +788,265 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
     return false;
   }
 
-  // references 데이터를 위젯 리스트로 변환하는 헬퍼 메서드
+  // 참조 링크 리스트 생성
   List<Widget> _buildReferencesList(dynamic references, bool isDark) {
-    List<Widget> widgets = [];
+    List<Map<String, String>> linkData = [];
     
+    // references 데이터 파싱
     if (references is Map<String, dynamic>) {
-      // Map 형태의 references 처리
-      for (var entry in references.entries) {
-        widgets.add(
-          Padding(
-            padding: EdgeInsets.only(bottom: 8.h),
-            child: Row(
-              children: [
-                Container(
-                  width: 8.w,
-                  height: 8.w,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    entry.key,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-    } else if (references is List) {
-      // List 형태의 references 처리
-      for (int i = 0; i < references.length; i++) {
-        final ref = references[i];
-        String displayText = '';
-        
-        if (ref is String) {
-          displayText = ref;
-        } else if (ref is Map) {
-          displayText = ref['title']?.toString() ?? ref['url']?.toString() ?? ref.toString();
-        } else {
-          displayText = ref.toString();
+      references.forEach((key, value) {
+        if (value is String) {
+          linkData.add({
+            'title': htmlUnescape.convert(key),
+            'url': value,
+            'description': _extractDomain(value),
+            'thumbnail': '',
+          });
+        } else if (value is Map) {
+          linkData.add({
+            'title': htmlUnescape.convert(value['title']?.toString() ?? key),
+            'url': value['link']?.toString() ?? value['url']?.toString() ?? '',
+            'description': value['type']?.toString() ?? _extractDomain(value['link']?.toString() ?? value['url']?.toString() ?? ''),
+            'thumbnail': value['thumbnail']?.toString() ?? '',
+            'date': value['date']?.toString() ?? '',
+          });
         }
-        
-        widgets.add(
-          Padding(
-            padding: EdgeInsets.only(bottom: 8.h),
-            child: Row(
-              children: [
-                Container(
-                  width: 8.w,
-                  height: 8.w,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    displayText,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+      });
+    } else if (references is List) {
+      for (var ref in references) {
+        if (ref is String) {
+          linkData.add({
+            'title': htmlUnescape.convert(_extractTitle(ref)),
+            'url': ref,
+            'description': _extractDomain(ref),
+            'thumbnail': '',
+          });
+        } else if (ref is Map) {
+          linkData.add({
+            'title': htmlUnescape.convert(ref['title']?.toString() ?? _extractTitle(ref['link']?.toString() ?? ref['url']?.toString() ?? '')),
+            'url': ref['link']?.toString() ?? ref['url']?.toString() ?? '',
+            'description': ref['type']?.toString() ?? _extractDomain(ref['link']?.toString() ?? ref['url']?.toString() ?? ''),
+            'thumbnail': ref['thumbnail']?.toString() ?? '',
+            'date': ref['date']?.toString() ?? '',
+          });
+        }
       }
     }
     
-    return widgets;
+    if (linkData.isEmpty) {
+      return [];
+    }
+    
+    return linkData.asMap().entries.map((entry) {
+      final index = entry.key;
+      final link = entry.value;
+      
+      return _buildLinkItem(
+        title: link['title'] ?? '',
+        url: link['url'] ?? '',
+        description: link['description'] ?? '',
+        thumbnail: link['thumbnail'] ?? '',
+        date: link['date'] ?? '',
+        isDark: isDark,
+        index: index,
+      );
+    }).toList();
+  }
+  
+  // 링크 아이템 위젯 - KeywordDetailScreen 스타일 참고
+  Widget _buildLinkItem({
+    required String title,
+    required String url,
+    required String description,
+    required String thumbnail,
+    required String date,
+    required bool isDark,
+    required int index,
+  }) {
+    return InkWell(
+      onTap: () => _launchUrl(url),
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [Color(0xFF2D3748), Color(0xFF1A202C)]
+                : [Colors.white, Color(0xFFF7FAFC)],
+          ),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : Colors.grey).withOpacity(0.08),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 썸네일
+            Container(
+              width: 60.w,
+              height: 60.w,
+              decoration: BoxDecoration(
+                color: isDark ? Color(0xFF333340) : Colors.grey[200],
+                borderRadius: BorderRadius.circular(8.r),
+                image: thumbnail.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(thumbnail),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: thumbnail.isEmpty
+                  ? Icon(
+                      _getIconForUrl(url),
+                      color: isDark ? Colors.grey[600] : Colors.grey[500],
+                      size: 24.sp,
+                    )
+                  : null,
+            ),
+            
+            SizedBox(width: 12.w),
+            
+            // 뉴스 정보
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      height: 1.3,
+                      color: AppTheme.getTextColor(context),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    '${description}${date.isNotEmpty ? ' · ${date}' : ''}',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // URL에서 도메인 추출
+  String _extractDomain(String url) {
+    try {
+      final uri = Uri.parse(url);
+      String domain = uri.host.replaceAll('www.', '');
+      // 도메인이 너무 길면 줄이기
+      if (domain.length > 25) {
+        domain = domain.substring(0, 22) + '...';
+      }
+      return domain;
+    } catch (e) {
+      return '외부 링크';
+    }
+  }
+  
+  // URL에서 제목 추출
+  String _extractTitle(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final pathSegments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+      if (pathSegments.isNotEmpty) {
+        String title = pathSegments.last
+            .replaceAll('-', ' ')
+            .replaceAll('_', ' ')
+            .replaceAll('%20', ' ');
+        
+        // 제목을 적절한 길이로 제한
+        if (title.length > 30) {
+          title = title.substring(0, 27) + '...';
+        }
+        
+        // 첫 글자 대문자화
+        if (title.isNotEmpty) {
+          title = title[0].toUpperCase() + title.substring(1);
+        }
+        
+        return title.isNotEmpty ? title : '관련 링크';
+      }
+      return uri.host.replaceAll('www.', '');
+    } catch (e) {
+      return '관련 링크';
+    }
+  }
+  
+  // URL에 따른 아이콘 선택
+  IconData _getIconForUrl(String url) {
+    final lowerUrl = url.toLowerCase();
+    if (lowerUrl.contains('youtube') || lowerUrl.contains('youtu.be')) {
+      return Icons.play_circle_outline;
+    } else if (lowerUrl.contains('github')) {
+      return Icons.code;
+    } else if (lowerUrl.contains('twitter') || lowerUrl.contains('x.com')) {
+      return Icons.alternate_email;
+    } else if (lowerUrl.contains('facebook') || lowerUrl.contains('fb.')) {
+      return Icons.people_outline;
+    } else if (lowerUrl.contains('instagram')) {
+      return Icons.photo_camera_outlined;
+    } else if (lowerUrl.contains('news') || lowerUrl.contains('article') || lowerUrl.contains('naver') || lowerUrl.contains('daum')) {
+      return Icons.article_outlined;
+    } else if (lowerUrl.contains('blog') || lowerUrl.contains('tistory')) {
+      return Icons.edit_note;
+    } else if (lowerUrl.contains('wiki')) {
+      return Icons.menu_book;
+    } else if (lowerUrl.contains('reddit')) {
+      return Icons.forum;
+    } else if (lowerUrl.contains('stackoverflow')) {
+      return Icons.help_outline;
+    } else {
+      return Icons.language;
+    }
+  }
+  
+  // URL 열기 함수 - KeywordDetailScreen 방식
+  Future<void> _launchUrl(String url) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.inAppWebView,
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('URL을 열 수 없습니다: $url')),
+          );
+        }
+      }
+    } catch (e) {
+      print('URL 열기 오류: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('링크를 여는 중 오류가 발생했습니다')),
+        );
+      }
+    }
   }
 
 }

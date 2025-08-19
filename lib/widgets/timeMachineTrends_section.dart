@@ -69,7 +69,108 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
     final bool isDark = AppTheme.isDark(context);
     
     if (widget.availableTimes.isEmpty) {
-      return Container();
+      return Container(
+        margin: EdgeInsets.fromLTRB(0, 0, 0, 40.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 섹션 헤더
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 4.w,
+                        height: 24.h,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                          ),
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Text(
+                        "실시간 트렌드",
+                        style: TextStyle(
+                          fontSize: 28.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.getTextColor(context),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  Padding(
+                    padding: EdgeInsets.only(left: 16.w),
+                    child: Text(
+                      "시간대별 키워드 순위",
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 28.h),
+            
+            // 데이터 없음 표시
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: isDark 
+                    ? Colors.grey[800]?.withOpacity(0.3)
+                    : Colors.grey[100]?.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(
+                  color: isDark 
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.06),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.timeline_outlined,
+                    size: 48.w,
+                    color: isDark ? Colors.grey[400] : Colors.grey[500],
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    '시간대별 데이터 없음',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.getTextColor(context),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    '해당 날짜의 실시간 트렌드 데이터가 없습니다',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
@@ -162,7 +263,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
       final newIndex = _selectedTimeIndex + direction;
       if (newIndex >= 0 && newIndex < widget.availableTimes.length) {
         _selectedTimeIndex = newIndex;
-        _showAll = false;
+        // _showAll 상태를 유지 (제거됨)
       }
     });
   }
@@ -211,7 +312,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
             onTap: () {
               setState(() {
                 _selectedTimeIndex = index;
-                _showAll = false;
+                // _showAll 상태를 유지 (제거됨)
               });
             },
             child: AnimatedContainer(

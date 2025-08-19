@@ -19,6 +19,9 @@ class DiscussionReactionWidget extends StatelessWidget {
   // 일시적 통제 변수: 각 요약(긍정/중립/부정) 존재 여부 제어
   final List<bool> summaryAvailability;
 
+  // 베스트 댓글 3개
+  final List<Comment>? topComments;
+
   const DiscussionReactionWidget({
     Key? key,
     required this.discussionRoom,
@@ -30,6 +33,8 @@ class DiscussionReactionWidget extends StatelessWidget {
     // 일시적 통제 변수에 대한 기본값 설정 (추후 실제 데이터로 대체 예정)
     this.hasSummaries = true,
     this.summaryAvailability = const [true, true, false], // [긍정, 중립, 부정]
+    // 베스트 댓글
+    this.topComments,
   }) : super(key: key);
 
   @override
@@ -96,9 +101,9 @@ class DiscussionReactionWidget extends StatelessWidget {
               // 상단 부분: 반응바 + 퍼센트 (또는 안내 메시지)
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                    20.w,
+                    showEnterButtons ? 20.w : 8.w,
                     showEnterButtons ? 20.h : 0,
-                    showEnterButtons ? 80.w : 20.w,
+                    showEnterButtons ? 80.w : 8.w,
                     20.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +111,7 @@ class DiscussionReactionWidget extends StatelessWidget {
                     // 제목
                     showEnterButtons
                         ? Text(
-                            '토론방 반응',
+                            '토론방',
                             style: TextStyle(
                               fontSize: 22.sp,
                               fontWeight: FontWeight.bold,
@@ -154,15 +159,8 @@ class DiscussionReactionWidget extends StatelessWidget {
                               const Color(0xFFFF5A5F)),
                         ],
                       ),
-                    ] else if (!hasSummaries) ...[
-                      // 경우의 수 1: 반응 바 없음, 한줄 요약도 없음
-                      _buildNoDataMessage(
-                        context: context,
-                        icon: Icons.analytics_outlined,
-                        message: '토론방 데이터가 없습니다.',
-                      ),
                     ] else ...[
-                      // 경우의 수 3: 반응 바 없음, 한줄 요약 있음
+                      // 반응 바 없음 - 간단한 안내 메시지
                       _buildNoDataMessage(
                         context: context,
                         icon: Icons.add_reaction_outlined,
@@ -193,26 +191,22 @@ class DiscussionReactionWidget extends StatelessWidget {
                     )
                   : SizedBox.shrink(),
 
-              // 의견 요약 또는 안내 메시지가 들어갈 배경 영역
-              Container(
-                width: double.infinity,
-                padding: showEnterButtons
-                    ? EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h)
-                    : EdgeInsets.only(left: 15.w,right: 15.w, top: 2.h,bottom: 15.h),
-                decoration: BoxDecoration(
-                  color: showEnterButtons
-                      ? (AppTheme.isDark(context)
-                          ? Color(0xFF242430)
-                          : Color(0xFFF8F8F8))
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20.r),
-                    bottomRight: Radius.circular(20.r),
+              // showEnterButtons가 false일 때는 하단 컨텐츠 숨김 (요약 없음)
+              if (showEnterButtons)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                  decoration: BoxDecoration(
+                    color: AppTheme.isDark(context)
+                        ? Color(0xFF242430)
+                        : Color(0xFFF8F8F8),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20.r),
+                      bottomRight: Radius.circular(20.r),
+                    ),
                   ),
+                  child: _buildBottomContent(context, hasReactionBar, hasSummaries),
                 ),
-                child:
-                    _buildBottomContent(context, hasReactionBar, hasSummaries),
-              ),
             ],
           ),
         ),
@@ -324,38 +318,52 @@ class DiscussionReactionWidget extends StatelessWidget {
         ],
       );
     } else {
-      // 한줄 요약 있음 - 경우의 수 3, 4
+      // 베스트 댓글 있음 - topComments 사용
+      final bool hasTopComments = topComments != null && topComments!.isNotEmpty;
+      
+      if (!hasTopComments) {
+        return Column(
+          children: [
+            Text(
+              '아직 의견이 없어요! 첫 의견을 남겨주세요!',
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: AppTheme.isDark(context)
+                    ? Colors.grey[400]
+                    : Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (showEnterButtons)
+              Column(
+                children: [
+                  SizedBox(height: 15.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLargeEnterButton(context),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                ],
+              ),
+          ],
+        );
+      }
+      
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 긍정 의견 카드
-          _buildOpinionCard(
-            context: context,
-            icon: Icons.thumb_up,
-            label: '긍정',
-            opinion: summaryAvailability[0] ? '긍정 의견 요약 내용입니다' : null,
-            color: const Color(0xFF00AEEF),
-          ),
-          SizedBox(height: 10.h),
-
-          // 중립 의견 카드
-          _buildOpinionCard(
-            context: context,
-            icon: Icons.thumbs_up_down,
-            label: '중립',
-            opinion: summaryAvailability[1] ? '중립 의견 요약 내용입니다' : null,
-            color: Colors.grey.shade600,
-          ),
-          SizedBox(height: 10.h),
-
-          // 부정 의견 카드
-          _buildOpinionCard(
-            context: context,
-            icon: Icons.thumb_down,
-            label: '부정',
-            opinion: summaryAvailability[2] ? '부정 의견 요약 내용입니다' : null,
-            color: const Color(0xFFFF5A5F),
-          ),
+          // 베스트 댓글들을 실제 개수만큼만 표시
+          for (int i = 0; i < topComments!.length && i < 3; i++) ...[
+            if (i > 0) SizedBox(height: 10.h),
+            _buildBestCommentCard(
+              context: context,
+              comment: topComments![i],
+              rank: i + 1,
+            ),
+          ],
         ],
       );
     }
@@ -365,7 +373,7 @@ class DiscussionReactionWidget extends StatelessWidget {
   Widget _buildLargeEnterButton(BuildContext context) {
     return Container(
       width: 180.w, // 너비 지정
-      height: 50.h, // 높이 지정
+      height: 40.h, // 높이 지정
       child: ElevatedButton(
         onPressed: onEnterTap ??
             () {
@@ -487,6 +495,144 @@ class DiscussionReactionWidget extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  // 베스트 댓글 카드 위젯 (기존 의견 카드 스타일 재사용)
+  Widget _buildBestCommentCard({
+    required BuildContext context,
+    Comment? comment,
+    required int rank,
+  }) {
+    // 댓글이 있는지 확인
+    final bool hasComment = comment != null;
+    
+    // 순위별 색상 설정
+    final Color rankColor = rank == 1 
+        ? Color(0xFFFFC107) // 골드
+        : rank == 2 
+            ? Color(0xFFC0C0C0) // 실버
+            : Color(0xFFCD7F32); // 브론즈
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(context),
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(hasComment ? 0.4 : 0.2)
+                : Colors.black.withOpacity(hasComment ? 0.15 : 0.05),
+            blurRadius: hasComment ? 2 : 1,
+            spreadRadius: 1,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: hasComment
+            ? null
+            : Border.all(
+                color: AppTheme.isDark(context)
+                    ? Colors.grey.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.3),
+                width: 1,
+              ),
+      ),
+      child: Stack(
+        children: [
+          // 순위 배지
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: hasComment ? rankColor : rankColor.withOpacity(0.5),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12.r),
+                  bottomRight: Radius.circular(8.r),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.star,
+                    size: 14.sp,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 4.w),
+                  Text(
+                    'BEST',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 댓글 내용 또는 안내 메시지
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 32.h, 16.w, 12.h),
+            child: hasComment
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        comment!.comment,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          height: 1.3,
+                          color: AppTheme.getTextColor(context),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(
+                            Icons.thumb_up,
+                            size: 12.sp,
+                            color: rankColor,
+                          ),
+                          SizedBox(width: 2.w),
+                          Text(
+                            (comment.like_count ?? 0).toString(),
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: rankColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    child: Text(
+                      "베스트 댓글이 아직 없습니다.",
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        height: 1.3,
+                        color: AppTheme.isDark(context)
+                            ? Colors.grey[500]
+                            : Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -115,9 +115,9 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
         keywords.add({
           'rank': rank,
           'keyword': '데이터 없음',
-          'stats': '0회 등장, 평균 등수 0.0등',
+          'stats': '이 날짜에는 데이터가 없습니다',
           'countValue': 0,
-          'category': '기타',
+          'category': '없음',
           'gradient': gradient,
           'bgGradient': bgGradient,
           'rankColor': rankColor,
