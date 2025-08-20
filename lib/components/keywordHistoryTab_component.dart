@@ -29,6 +29,9 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
   String _selectedKeyword = '강선우'; // 기본 키워드
   String? _errorMessage;
   
+  // 인기 검색어 표시 토글 (조작 위험 방지)
+  static const bool _enablePopularKeywords = false; // false로 설정하여 비활성화
+  
   // 자동완성 관련 변수
   List<Map<String, dynamic>> _autocompleteResults = [];
   bool _isLoadingAutocomplete = false;
@@ -67,8 +70,10 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
     
     // 랜덤 키워드 로드 후 히스토리 로드
     _loadRandomKeywordAndHistory();
-    // 인기 키워드 로드
-    _loadPopularKeywords();
+    // 인기 키워드 로드 (토글이 활성화된 경우에만)
+    if (_enablePopularKeywords) {
+      _loadPopularKeywords();
+    }
     // 최근 검색어 로드
     _loadRecentSearches();
     
@@ -2659,6 +2664,9 @@ class _SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<_SearchPage> {
+  // 인기 검색어 표시 토글 (조작 위험 방지)
+  static const bool _enablePopularKeywords = false; // false로 설정하여 비활성화
+  
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   List<Map<String, dynamic>> _autocompleteResults = [];
@@ -3010,8 +3018,8 @@ class _SearchPageState extends State<_SearchPage> {
               
               SizedBox(height: 32.h),
               
-              // 인기 검색어 제안 (간단한 버전)
-              if (widget.popularKeywords.isNotEmpty) ...[
+              // 인기 검색어 제안 (간단한 버전) - 토글로 제어
+              if (_enablePopularKeywords && widget.popularKeywords.isNotEmpty) ...[
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   decoration: BoxDecoration(
@@ -3322,8 +3330,8 @@ class _SearchPageState extends State<_SearchPage> {
           SizedBox(height: 32.h),
         ],
         
-        // 인기 키워드 (키보드가 없을 때만 표시)
-        if (!hasKeyboard && widget.popularKeywords.isNotEmpty) ...[
+        // 인기 키워드 (키보드가 없을 때만 표시) - 토글로 제어
+        if (_enablePopularKeywords && !hasKeyboard && widget.popularKeywords.isNotEmpty) ...[
           // 섹션 헤더 (기존 스타일과 통일)
           Row(
             children: [

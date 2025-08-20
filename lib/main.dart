@@ -13,6 +13,7 @@ import 'services/hive_service.dart';
 import 'services/firebase_messaging_service.dart';
 import 'dart:ui' as ui;
 import 'dart:async' show unawaited;
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -105,6 +106,16 @@ class Trendly extends StatelessWidget {
                             theme: AppTheme.lightTheme,
                             darkTheme: AppTheme.darkTheme,
                             themeMode: preferences.themeMode,
+                            locale: const Locale('ko', 'KR'),
+                            localizationsDelegates: const [
+                              GlobalMaterialLocalizations.delegate,
+                              GlobalWidgetsLocalizations.delegate,
+                              GlobalCupertinoLocalizations.delegate,
+                            ],
+                            supportedLocales: const [
+                              Locale('ko', 'KR'),
+                              Locale('en', 'US'),
+                            ],
                           );
                         },
                       );

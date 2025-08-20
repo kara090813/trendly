@@ -445,7 +445,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           SizedBox(height: 20.h),
           
           SizedBox(
-            height: 260.h, // 높이 조정 (오버플로우 방지)
+            height: 300.h, // 높이 증가 (3분할 구조에 맞게 조정)
             child: PageView.builder(
               controller: PageController(viewportFraction: 0.9),
               itemCount: topThree.length,
@@ -612,57 +612,53 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                 ),
               ),
               
-              // 하단 영역: 감정 반응 + 통계
+              // 하단 영역: 3분할 구조 (5:3:2 비율)
               Expanded(
                 child: Column(
                   children: [
-                    // 베스트 댓글과 감정 반응 영역 (확장)
+                    // 1. 베스트 댓글 영역 (5/10 비율)
                     Expanded(
+                      flex: 5,
                       child: Padding(
-                        padding: EdgeInsets.all(14.w),
-                        child: _buildCompactSentimentBar(room),
+                        padding: EdgeInsets.fromLTRB(14.w, 14.w, 14.w, 8.w),
+                        child: _buildBestCommentSection(room),
                       ),
                     ),
                     
-                    // 구분선
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 14.w),
-                      height: 1.h,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Colors.transparent,
-                            (textColor).withOpacity(0.1),
-                            Colors.transparent,
+                    // 2. 감정 반응 프로그레스 영역 (3/10 비율)
+                    Expanded(
+                      flex: 3,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.w),
+                        child: _buildProgressSection(room),
+                      ),
+                    ),
+                    
+                    // 3. 통계 정보 영역 (2/10 비율)
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(14.w, 8.w, 14.w, 14.w),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildMiniStat(
+                              icon: Icons.chat_bubble_outline,
+                              value: '${room.comment_count ?? 0}',
+                              color: textColor.withOpacity(0.6),
+                            ),
+                            _buildMiniStat(
+                              icon: Icons.people_outline,
+                              value: '${_getTotalReactions(room)}',
+                              color: textColor.withOpacity(0.6),
+                            ),
+                            _buildMiniStat(
+                              icon: Icons.access_time,
+                              value: _getCompactTime(room.updated_at ?? room.created_at),
+                              color: textColor.withOpacity(0.6),
+                            ),
                           ],
                         ),
-                      ),
-                    ),
-                    
-                    // 통계 정보 (하단 고정)
-                    Padding(
-                      padding: EdgeInsets.all(14.w),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildMiniStat(
-                            icon: Icons.chat_bubble_outline,
-                            value: '${room.comment_count ?? 0}',
-                            color: textColor.withOpacity(0.6),
-                          ),
-                          _buildMiniStat(
-                            icon: Icons.people_outline,
-                            value: '${_getTotalReactions(room)}',
-                            color: textColor.withOpacity(0.6),
-                          ),
-                          _buildMiniStat(
-                            icon: Icons.access_time,
-                            value: _getCompactTime(room.updated_at ?? room.created_at),
-                            color: textColor.withOpacity(0.6),
-                          ),
-                        ],
                       ),
                     ),
                   ],
@@ -701,6 +697,189 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     );
   }
 
+  // 베스트 댓글 섹션 (5/10 비율)
+  Widget _buildBestCommentSection(DiscussionRoom room) {
+    final isDark = AppTheme.isDark(context);
+    final bestComment = _bestComments[room.id];
+    final hasBestComment = bestComment != null;
+    
+    if (!hasBestComment) {
+      return Center(
+        child: Text(
+          '토론 참여를 기다리고 있습니다',
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: isDark ? Colors.grey[500] : Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(10.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark 
+            ? [Color(0xFF2A2A36).withOpacity(0.6), Color(0xFF1E293B).withOpacity(0.4)]
+            : [Color(0xFFF8F9FA), Color(0xFFE8ECF0)],
+        ),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(
+          color: isDark 
+            ? Colors.white.withOpacity(0.08) 
+            : Colors.black.withOpacity(0.08),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 베스트 배지와 좋아요 수
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  ),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.star_rounded,
+                      size: 10.sp,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'BEST',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Spacer(),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00AEEF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.thumb_up,
+                      size: 10.sp,
+                      color: const Color(0xFF00AEEF),
+                    ),
+                    SizedBox(width: 3.w),
+                    Text(
+                      bestComment['like_count'].toString(),
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF00AEEF),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          // 베스트 댓글 내용
+          Expanded(
+            child: Text(
+              bestComment['comment'] ?? '',
+              style: TextStyle(
+                fontSize: 12.sp,
+                height: 1.3,
+                color: isDark ? Colors.grey[300] : Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 감정 반응 프로그레스 섹션 (3/10 비율)
+  Widget _buildProgressSection(DiscussionRoom room) {
+    final isDark = AppTheme.isDark(context);
+    final positive = room.positive_count ?? 0;
+    final neutral = room.neutral_count ?? 0;
+    final negative = room.negative_count ?? 0;
+    final total = positive + neutral + negative;
+    
+    if (total == 0) {
+      return SizedBox.shrink();
+    }
+    
+    final positivePercent = (positive / total * 100).round();
+    final neutralPercent = (neutral / total * 100).round();
+    final negativePercent = (negative / total * 100).round();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 프로그레스 바
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6.r),
+          child: Container(
+            height: 8.h,
+            child: Row(
+              children: [
+                if (positive > 0)
+                  Expanded(
+                    flex: positive,
+                    child: Container(color: const Color(0xFF00AEEF)),
+                  ),
+                if (neutral > 0)
+                  Expanded(
+                    flex: neutral,
+                    child: Container(color: Colors.grey.shade400),
+                  ),
+                if (negative > 0)
+                  Expanded(
+                    flex: negative,
+                    child: Container(color: const Color(0xFFFF5A5F)),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        // 라벨들
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildCompactReactionLabel(context, '긍정', '$positivePercent%', const Color(0xFF00AEEF)),
+            SizedBox(width: 8.w),
+            _buildCompactReactionLabel(context, '중립', '$neutralPercent%', Colors.grey.shade600),
+            SizedBox(width: 8.w),
+            _buildCompactReactionLabel(context, '부정', '$negativePercent%', const Color(0xFFFF5A5F)),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildCompactSentimentBar(DiscussionRoom room) {
     final isDark = AppTheme.isDark(context);
     
@@ -709,11 +888,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     final negative = room.negative_count ?? 0;
     final total = positive + neutral + negative;
     
-    // 베스트 댓글 데이터 가져오기 (sentiment와 관계없이 가져오기)
+    // 베스트 댓글 데이터 가져오기
     final bestComment = _bestComments[room.id];
     final hasBestComment = bestComment != null;
-    
-    // 베스트 댓글이 있으면 sentiment 상관없이 표시
     
     final positivePercent = total > 0 ? (positive / total * 100).round() : 0;
     final neutralPercent = total > 0 ? (neutral / total * 100).round() : 0;
@@ -722,181 +899,142 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 베스트 댓글 영역 (댓글이 있을 때만 표시) - 확장 가능
-        if (hasBestComment)
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark 
-                    ? [Color(0xFF2A2A36).withOpacity(0.6), Color(0xFF1E293B).withOpacity(0.4)]
-                    : [Color(0xFFF8F9FA), Color(0xFFE8ECF0)],
+        // 베스트 댓글 영역 - 고정 공간 할당
+        Container(
+          height: hasBestComment ? 55.h : 0, // 베스트 댓글이 있을 때만 공간 할당
+          child: hasBestComment
+            ? Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark 
+                      ? [Color(0xFF2A2A36).withOpacity(0.6), Color(0xFF1E293B).withOpacity(0.4)]
+                      : [Color(0xFFF8F9FA), Color(0xFFE8ECF0)],
+                  ),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: isDark 
+                      ? Colors.white.withOpacity(0.08) 
+                      : Colors.black.withOpacity(0.08),
+                    width: 0.5,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(
-                  color: isDark 
-                    ? Colors.white.withOpacity(0.08) 
-                    : Colors.black.withOpacity(0.08),
-                  width: 0.5,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                          ),
-                          borderRadius: BorderRadius.circular(8.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFFFFD700).withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.star_rounded,
-                              size: 12.sp,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
+                            size: 10.sp,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 2.w),
+                          Text(
+                            'BEST',
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
-                            SizedBox(width: 3.w),
-                            Text(
-                              'BEST',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        bestComment['user'] ?? '익명',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                      Spacer(),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00AEEF).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.thumb_up,
-                              size: 12.sp,
-                              color: const Color(0xFF00AEEF),
-                            ),
-                            SizedBox(width: 3.w),
-                            Text(
-                              bestComment['like_count'].toString(),
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF00AEEF),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-                  // 베스트 댓글 내용 - 확장 가능한 영역
-                  Expanded(
-                    child: SingleChildScrollView(
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
                       child: Text(
                         bestComment['comment'] ?? '',
                         style: TextStyle(
-                          fontSize: 15.sp,
-                          height: 1.5,
-                          color: isDark ? Colors.grey[200] : Colors.grey[800],
+                          fontSize: 12.sp,
+                          height: 1.3,
+                          color: isDark ? Colors.grey[300] : Colors.grey[700],
                           fontWeight: FontWeight.w500,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : null,
+        ),
+        
+        // 베스트 댓글과 감정 반응 사이 간격
+        if (hasBestComment) SizedBox(height: 8.h),
+        
+        // 감정 반응 영역 - 고정 공간 할당
+        Container(
+          height: 25.h, // 감정 반응 영역 고정 높이
+          child: total > 0
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // DiscussionReactionWidget 스타일의 반응 바
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6.r),
+                    child: Container(
+                      height: 8.h,
+                      child: Row(
+                        children: [
+                          if (positive > 0)
+                            Expanded(
+                              flex: positive,
+                              child: Container(color: const Color(0xFF00AEEF)),
+                            ),
+                          if (neutral > 0)
+                            Expanded(
+                              flex: neutral,
+                              child: Container(color: Colors.grey.shade400),
+                            ),
+                          if (negative > 0)
+                            Expanded(
+                              flex: negative,
+                              child: Container(color: const Color(0xFFFF5A5F)),
+                            ),
+                        ],
                       ),
                     ),
                   ),
+                  SizedBox(height: 6.h),
+                  // DiscussionReactionWidget 스타일의 라벨
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildCompactReactionLabel(context, '긍정', '$positivePercent%', const Color(0xFF00AEEF)),
+                      SizedBox(width: 12.w),
+                      _buildCompactReactionLabel(context, '중립', '$neutralPercent%', Colors.grey.shade600),
+                      SizedBox(width: 12.w),
+                      _buildCompactReactionLabel(context, '부정', '$negativePercent%', const Color(0xFFFF5A5F)),
+                    ],
+                  ),
                 ],
+              )
+            : Center(
+                child: Text(
+                  hasBestComment ? '' : '토론 참여를 기다리고 있습니다',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-          ),
-        
-        // sentiment 반응이 있을 때만 반응 바와 라벨 표시
-        if (total > 0) ...[
-          // DiscussionReactionWidget 스타일의 반응 바
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6.r),
-            child: Container(
-              height: 8.h,
-              child: Row(
-                children: [
-                  if (positive > 0)
-                    Expanded(
-                      flex: positive,
-                      child: Container(color: const Color(0xFF00AEEF)),
-                    ),
-                  if (neutral > 0)
-                    Expanded(
-                      flex: neutral,
-                      child: Container(color: Colors.grey.shade400),
-                    ),
-                  if (negative > 0)
-                    Expanded(
-                      flex: negative,
-                      child: Container(color: const Color(0xFFFF5A5F)),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 8.h),
-          // DiscussionReactionWidget 스타일의 라벨
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _buildCompactReactionLabel(context, '긍정', '$positivePercent%', const Color(0xFF00AEEF)),
-              SizedBox(width: 16.w),
-              _buildCompactReactionLabel(context, '중립', '$neutralPercent%', Colors.grey.shade600),
-              SizedBox(width: 16.w),
-              _buildCompactReactionLabel(context, '부정', '$negativePercent%', const Color(0xFFFF5A5F)),
-            ],
-          ),
-        ] else if (!hasBestComment) ...[
-          // 베스트 댓글도 없고 sentiment도 없을 때만 "아직 참여자가 없습니다" 표시
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 8.h),
-            child: Text(
-              '토론 참여를 기다리고 있습니다',
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: isDark ? Colors.grey[500] : Colors.grey[600],
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
+        ),
       ],
     );
   }

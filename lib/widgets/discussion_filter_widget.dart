@@ -135,6 +135,7 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
       helpText: isStartDate ? '시작일 선택' : '종료일 선택',
       cancelText: '취소',
       confirmText: '확인',
+      locale: const Locale('ko', 'KR'),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -501,6 +502,7 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
+            width: double.infinity,  // 전체 너비로 설정
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -724,7 +726,7 @@ class _DiscussionFilterComponentState extends State<DiscussionFilterComponent> {
                       Text(
                         hasDate
                           ? '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}'
-                          : '선택해주세요',
+                          : '날짜 선택',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: hasDate ? FontWeight.w700 : FontWeight.w500,

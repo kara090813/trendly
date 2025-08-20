@@ -213,15 +213,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
                   ),
                 ),
-                SizedBox(height: 6.h),
-                Text(
-                  _getActivitySummary(preferences),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 4.h),
                 // 설치일
                 Row(
                   children: [

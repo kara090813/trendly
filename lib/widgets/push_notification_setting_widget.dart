@@ -110,7 +110,6 @@ class _PushNotificationSettingWidgetState extends State<PushNotificationSettingW
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.dark.surface : AppTheme.light.surface,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -220,7 +219,6 @@ class PushNotificationPermissionDialog extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.dark.surface : AppTheme.light.surface,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
