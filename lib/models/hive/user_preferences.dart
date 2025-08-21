@@ -11,7 +11,7 @@ class UserPreferences extends HiveObject {
   String? password;
 
   @HiveField(2)
-  bool isDarkMode;
+  bool? isDarkMode; // null means follow system theme
 
   @HiveField(3)
   List<int> commentedRooms;
@@ -34,10 +34,16 @@ class UserPreferences extends HiveObject {
   @HiveField(9)
   bool isPushNotificationEnabled;
 
+  @HiveField(10)
+  int discussionHomeLastTabIndex;
+
+  @HiveField(11)
+  int historyHomeLastTabIndex;
+
   UserPreferences({
     this.nickname,
     this.password,
-    this.isDarkMode = false,
+    this.isDarkMode, // null means follow system theme
     List<int>? commentedRooms,
     List<int>? commentIds,
     Map<int, String>? roomSentiments,
@@ -45,6 +51,8 @@ class UserPreferences extends HiveObject {
     this.lastUpdated,
     this.installDate,
     this.isPushNotificationEnabled = true,
+    this.discussionHomeLastTabIndex = 0,
+    this.historyHomeLastTabIndex = 0,
   })  : commentedRooms = commentedRooms ?? [],
         commentIds = commentIds ?? [],
         roomSentiments = roomSentiments ?? {},
@@ -54,7 +62,7 @@ class UserPreferences extends HiveObject {
   factory UserPreferences.empty() {
     final now = DateTime.now();
     return UserPreferences(
-      isDarkMode: false,
+      isDarkMode: null, // Follow system theme by default
       commentedRooms: [],
       commentIds: [],
       roomSentiments: {},
@@ -62,6 +70,8 @@ class UserPreferences extends HiveObject {
       lastUpdated: now,
       installDate: now, // 첫 생성 시가 설치일
       isPushNotificationEnabled: true,
+      discussionHomeLastTabIndex: 0,
+      historyHomeLastTabIndex: 0,
     );
   }
 
@@ -166,5 +176,19 @@ class UserPreferences extends HiveObject {
       'likeCount': getLikedComments().length,
       'dislikeCount': getDislikedComments().length,
     };
+  }
+
+  // 토론방 홈 탭 인덱스 설정
+  void setDiscussionHomeTabIndex(int index) {
+    discussionHomeLastTabIndex = index;
+    lastUpdated = DateTime.now();
+    save();
+  }
+
+  // 히스토리 홈 탭 인덱스 설정
+  void setHistoryHomeTabIndex(int index) {
+    historyHomeLastTabIndex = index;
+    lastUpdated = DateTime.now();
+    save();
   }
 }

@@ -103,8 +103,8 @@ class HiveService {
     }
   }
 
-  // 다크 모드 설정
-  Future<bool> setDarkMode(bool isDarkMode) async {
+  // 다크 모드 설정 (null = system, false = light, true = dark)
+  Future<bool> setDarkMode(bool? isDarkMode) async {
     try {
       final prefs = getUserPreferences();
       prefs.isDarkMode = isDarkMode;
@@ -243,8 +243,12 @@ class HiveService {
       userPrefs.nickname = prefs.getString('discussion_nickname');
       userPrefs.password = prefs.getString('discussion_password');
       
-      // 다크 모드
-      userPrefs.isDarkMode = prefs.getBool('dark_mode_enabled') ?? false;
+      // 다크 모드 (기존 설정이 없으면 null로 시스템 따라가기)
+      if (prefs.containsKey('dark_mode_enabled')) {
+        userPrefs.isDarkMode = prefs.getBool('dark_mode_enabled');
+      } else {
+        userPrefs.isDarkMode = null; // Follow system theme by default
+      }
       
       // 댓글 작성한 토론방 목록
       final commentedRooms = prefs.getStringList('commented_rooms') ?? [];
@@ -309,6 +313,32 @@ class HiveService {
       
     } catch (e) {
       print('마이그레이션 중 오류 발생: $e');
+    }
+  }
+
+  // 토론방 홈 탭 인덱스 설정
+  Future<bool> setDiscussionHomeTabIndex(int index) async {
+    try {
+      final prefs = getUserPreferences();
+      prefs.setDiscussionHomeTabIndex(index);
+      await saveUserPreferences(prefs);
+      return true;
+    } catch (e) {
+      print('토론방 홈 탭 인덱스 저장 오류: $e');
+      return false;
+    }
+  }
+
+  // 히스토리 홈 탭 인덱스 설정
+  Future<bool> setHistoryHomeTabIndex(int index) async {
+    try {
+      final prefs = getUserPreferences();
+      prefs.setHistoryHomeTabIndex(index);
+      await saveUserPreferences(prefs);
+      return true;
+    } catch (e) {
+      print('히스토리 홈 탭 인덱스 저장 오류: $e');
+      return false;
     }
   }
 

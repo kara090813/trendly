@@ -24,15 +24,33 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-
-    // 탭 변경 리스너 추가
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
+    
+    // 기본 TabController 먼저 초기화 (기본값 0)
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    
+    // Provider에서 마지막 탭 인덱스 가져와서 업데이트
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userPrefProvider = Provider.of<UserPreferenceProvider>(context, listen: false);
+      final lastTabIndex = userPrefProvider.historyHomeLastTabIndex;
+      
+      if (lastTabIndex != _selectedTabIndex) {
         setState(() {
-          _selectedTabIndex = _tabController.index;
+          _selectedTabIndex = lastTabIndex;
         });
+        _tabController.animateTo(lastTabIndex);
       }
+      
+      // 탭 변경 리스너 추가
+      _tabController.addListener(() {
+        if (!_tabController.indexIsChanging) {
+          final newIndex = _tabController.index;
+          setState(() {
+            _selectedTabIndex = newIndex;
+          });
+          // 탭 변경 시 저장
+          userPrefProvider.setHistoryHomeTabIndex(newIndex);
+        }
+      });
     });
   }
 
@@ -81,6 +99,9 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
                   _selectedTabIndex = index;
                   _tabController.animateTo(index);
                 });
+                // 탭 선택 시 저장
+                final userPrefProvider = Provider.of<UserPreferenceProvider>(context, listen: false);
+                userPrefProvider.setHistoryHomeTabIndex(index);
               },
             ),
           ),

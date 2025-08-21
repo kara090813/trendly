@@ -37,7 +37,8 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
   }
 
   void _loadUserData() {
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final provider =
+        Provider.of<UserPreferenceProvider>(context, listen: false);
     _nicknameController.text = provider.nickname ?? '';
     _passwordController.text = provider.password ?? '';
   }
@@ -54,11 +55,11 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+
     return Consumer<UserPreferenceProvider>(
       builder: (context, preferences, child) {
-        final isDark = preferences.isDarkMode;
-        
+        final isDark = AppTheme.isDark(context);
+
         return Scaffold(
           body: CustomScrollView(
             controller: _scrollController,
@@ -100,9 +101,11 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                         child: Text(
                           "마이페이지",
                           style: TextStyle(
-                            fontSize: 22.sp, 
+                            fontSize: 22.sp,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                            color: AppTheme.isDark(context)
+                                ? AppTheme.darkText
+                                : AppTheme.lightText,
                           ),
                         ),
                       ),
@@ -118,22 +121,22 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                   delegate: SliverChildListDelegate([
                     // 프로필 정보 카드 (헤더에서 이동)
                     _buildProfileInfoCard(preferences),
-                    
+
                     SizedBox(height: 16.h),
-                    
+
                     // 내 활동
                     _buildActivitySection(preferences),
-                    
+
                     SizedBox(height: 16.h),
-                    
+
                     // 빠른 설정
                     _buildQuickSettings(preferences),
-                    
+
                     SizedBox(height: 16.h),
-                    
+
                     // 프로필 관리
                     _buildProfileSection(preferences),
-                    
+
                     SizedBox(height: 80.h), // 하단 여백
                   ]),
                 ),
@@ -164,9 +167,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.isDark(context) 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.2),
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -197,20 +200,22 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             ),
           ),
           SizedBox(width: 16.w),
-          
+
           // 사용자 정보
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  preferences.nickname?.isNotEmpty == true 
-                    ? '${preferences.nickname}님' 
-                    : '익명 사용자',
+                  preferences.nickname?.isNotEmpty == true
+                      ? '${preferences.nickname}님'
+                      : '익명 사용자',
                   style: TextStyle(
-                    fontSize: 20.sp, 
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -240,8 +245,6 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
     ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.3, end: 0);
   }
 
-
-
   // 빠른 설정
   Widget _buildQuickSettings(UserPreferenceProvider preferences) {
     return Container(
@@ -251,9 +254,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.isDark(context) 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.2),
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -271,14 +274,16 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                  color: AppTheme.isDark(context)
+                      ? AppTheme.darkText
+                      : AppTheme.lightText,
                 ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
-          
-          // 다크 모드 토글
+
+          // 테마 모드 선택
           Row(
             children: [
               Icon(
@@ -289,27 +294,64 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  '다크 모드',
+                  '테마 설정',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText,
                   ),
                 ),
               ),
-              Switch(
-                value: preferences.isDarkMode,
-                onChanged: (value) async {
-                  await preferences.setDarkMode(value);
-                  HapticFeedback.lightImpact();
-                },
-                activeColor: AppTheme.primaryBlue,
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: AppTheme.isDark(context)
+                      ? Colors.grey[800]
+                      : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: DropdownButton<ThemeMode>(
+                  value: preferences.themeMode,
+                  underline: SizedBox(),
+                  isDense: true,
+                  dropdownColor: AppTheme.isDark(context)
+                      ? Colors.grey[800]
+                      : Colors.grey[100],
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText,
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: ThemeMode.system,
+                      child: Text('시스템'),
+                    ),
+                    DropdownMenuItem(
+                      value: ThemeMode.light,
+                      child: Text('라이트'),
+                    ),
+                    DropdownMenuItem(
+                      value: ThemeMode.dark,
+                      child: Text('다크'),
+                    ),
+                  ],
+                  onChanged: (ThemeMode? mode) async {
+                    if (mode != null) {
+                      await preferences.setThemeMode(mode);
+                      HapticFeedback.lightImpact();
+                    }
+                  },
+                ),
               ),
             ],
           ),
-          
+
           SizedBox(height: 8.h),
-          
+
           // 푸시 알림 토글
           Row(
             children: [
@@ -325,18 +367,22 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText,
                   ),
                 ),
               ),
               Switch(
                 value: preferences.isPushNotificationEnabled,
                 onChanged: (value) async {
-                  final success = await preferences.setPushNotificationEnabled(value);
+                  final success =
+                      await preferences.setPushNotificationEnabled(value);
                   HapticFeedback.lightImpact();
-                  
+
                   if (success) {
-                    _showSnackBarImmediate(value ? '푸시 알림이 활성화되었습니다' : '푸시 알림이 비활성화되었습니다');
+                    _showSnackBarImmediate(
+                        value ? '푸시 알림이 활성화되었습니다' : '푸시 알림이 비활성화되었습니다');
                   } else {
                     if (value) {
                       // 켜려고 했지만 실패한 경우
@@ -354,7 +400,10 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 100.ms, duration: 600.ms).slideY(begin: 0.3, end: 0);
+    )
+        .animate()
+        .fadeIn(delay: 100.ms, duration: 600.ms)
+        .slideY(begin: 0.3, end: 0);
   }
 
   // 프로필 관리 섹션 (항상 열린 형태)
@@ -366,9 +415,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.isDark(context) 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.2),
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -380,14 +429,17 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           // 섹션 헤더
           Row(
             children: [
-              Icon(Icons.account_circle_outlined, color: AppTheme.primaryBlue, size: 20.sp),
+              Icon(Icons.account_circle_outlined,
+                  color: AppTheme.primaryBlue, size: 20.sp),
               SizedBox(width: 8.w),
               Text(
                 '프로필 관리',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                  color: AppTheme.isDark(context)
+                      ? AppTheme.darkText
+                      : AppTheme.lightText,
                 ),
               ),
             ],
@@ -401,7 +453,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             ),
           ),
           SizedBox(height: 16.h),
-          
+
           // 닉네임 설정
           _buildEditableField(
             label: '닉네임',
@@ -423,9 +475,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             },
             placeholder: '닉네임을 입력하세요',
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // 비밀번호 변경
           _buildEditableField(
             label: '비밀번호',
@@ -439,7 +491,8 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             },
             onSave: () async {
               if (_newPasswordController.text.trim().isNotEmpty) {
-                await preferences.setPassword(_newPasswordController.text.trim());
+                await preferences
+                    .setPassword(_newPasswordController.text.trim());
                 setState(() {
                   _showNewPasswordField = false;
                   _passwordController.text = _newPasswordController.text.trim();
@@ -455,11 +508,16 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             },
             placeholder: '새 비밀번호를 입력하세요',
             obscureText: false,
-            displayText: preferences.password?.isEmpty ?? true ? '비밀번호를 설정하세요' : '••••••••',
+            displayText: preferences.password?.isEmpty ?? true
+                ? '비밀번호를 설정하세요'
+                : '••••••••',
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 200.ms, duration: 600.ms).slideY(begin: 0.3, end: 0);
+    )
+        .animate()
+        .fadeIn(delay: 200.ms, duration: 600.ms)
+        .slideY(begin: 0.3, end: 0);
   }
 
   // 내 활동 섹션 (항상 열린 형태)
@@ -471,9 +529,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.isDark(context) 
-              ? Colors.black.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.2),
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -492,7 +550,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                  color: AppTheme.isDark(context)
+                      ? AppTheme.darkText
+                      : AppTheme.lightText,
                 ),
               ),
             ],
@@ -506,7 +566,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             ),
           ),
           SizedBox(height: 16.h),
-          
+
           // 활동 카드들
           _buildActivityCard(
             '참여한 토론방',
@@ -528,10 +588,14 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 100.ms, duration: 600.ms).slideY(begin: 0.3, end: 0);
+    )
+        .animate()
+        .fadeIn(delay: 100.ms, duration: 600.ms)
+        .slideY(begin: 0.3, end: 0);
   }
 
-  Widget _buildActivityCard(String title, String count, IconData icon, VoidCallback onTap) {
+  Widget _buildActivityCard(
+      String title, String count, IconData icon, VoidCallback onTap) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -555,22 +619,25 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
                     Text(
                       title,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                        color: AppTheme.isDark(context)
+                            ? AppTheme.darkText
+                            : AppTheme.lightText,
                       ),
                     ),
+                    SizedBox(width: 8.w),
                     Text(
                       count,
                       style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey[600],
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
                       ),
                     ),
                   ],
@@ -634,26 +701,30 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
               ),
           ],
         ),
-        
         SizedBox(height: 8.h),
-        
         if (isEditing) ...[
           Row(
             children: [
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   decoration: BoxDecoration(
-                    color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[100],
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[800]
+                        : Colors.grey[100],
                     borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
+                    border: Border.all(
+                        color: AppTheme.primaryBlue.withOpacity(0.3)),
                   ),
                   child: TextField(
                     controller: controller,
                     obscureText: obscureText,
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
+                      color: AppTheme.isDark(context)
+                          ? AppTheme.darkText
+                          : AppTheme.lightText,
                     ),
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -705,15 +776,24 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[100],
+              color: AppTheme.isDark(context)
+                  ? Colors.grey[800]
+                  : Colors.grey[100],
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Text(
-              displayText ?? (controller.text.isEmpty ? placeholder : (obscureText ? '••••••••' : controller.text)),
+              displayText ??
+                  (controller.text.isEmpty
+                      ? placeholder
+                      : (obscureText ? '••••••••' : controller.text)),
               style: TextStyle(
                 fontSize: 14.sp,
-                color: (displayText != null && displayText == placeholder) || controller.text.isEmpty ? Colors.grey[500] : 
-                       (AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText),
+                color: (displayText != null && displayText == placeholder) ||
+                        controller.text.isEmpty
+                    ? Colors.grey[500]
+                    : (AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText),
               ),
             ),
           ),
@@ -721,8 +801,6 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
       ],
     );
   }
-
-
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -741,7 +819,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
   void _showSnackBarImmediate(String message) {
     // 현재 표시되고 있는 스낵바 즉시 제거
     ScaffoldMessenger.of(context).clearSnackBars();
-    
+
     // 새로운 스낵바 표시
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

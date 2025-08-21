@@ -400,9 +400,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       // 실검 요약 섹션 추가 (on/off 토글 가능)
                       _buildCollapsibleSummarySection(),
                       SizedBox(height: 12.h),
-                      _isDisabled
-                          ? SizedBox.shrink()
-                          : AnimatedSwitcher(
+                      AnimatedSwitcher(
                         duration: Duration(milliseconds: 600),
                         transitionBuilder: (Widget child,
                             Animation<double> animation) {
@@ -419,7 +417,9 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             ),
                           );
                         },
-                        child: _buildEmotionButtonsWithReaction(),
+                        child: _isDisabled
+                            ? _buildClosedDiscussionReaction()
+                            : _buildEmotionButtonsWithReaction(),
                       ),
                       _buildWarningMessage(),
                       SizedBox(height: 4.h),
@@ -794,6 +794,34 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
               fontWeight: FontWeight.w500,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // 종료된 토론방용 프로그레스바만 표시하는 섹션
+  Widget _buildClosedDiscussionReaction() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      width: double.infinity,
+      decoration: AppTheme.cardDecoration(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 헤더
+          Text(
+            "토론 결과",
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.getTextColor(context),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          
+          // 토론방 의견 프로그레스바
+          _buildDiscussionProgressBar(),
         ],
       ),
     );

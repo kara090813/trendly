@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'services/user_preference_service.dart';
 import 'services/hive_service.dart';
 import 'services/firebase_messaging_service.dart';
+import 'services/ad_service.dart';
 import 'dart:ui' as ui;
 import 'dart:async' show unawaited;
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -52,12 +53,8 @@ void main() async {
     })
   );
 
-  // MobileAds 초기화를 try-catch로 감싸기
-  // try {
-  //   await MobileAds.instance.initialize();
-  // } catch (e) {
-  //   print('Failed to initialize MobileAds: $e');
-  // }
+  // AdMob 초기화
+  await AdService.initialize();
 
   runApp(Trendly());
 }
@@ -150,7 +147,7 @@ class _AnimatedThemeBuilderState extends State<AnimatedThemeBuilder>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  bool? _prevIsDarkMode;
+  ThemeMode? _prevThemeMode;
 
   @override
   void initState() {
@@ -175,17 +172,17 @@ class _AnimatedThemeBuilderState extends State<AnimatedThemeBuilder>
   Widget build(BuildContext context) {
     return Consumer<UserPreferenceProvider>(
       builder: (context, preferences, child) {
-        final isDarkMode = preferences.isDarkMode;
+        final themeMode = preferences.themeMode;
 
         // 테마 모드가 변경되었는지 확인
-        if (_prevIsDarkMode != null && _prevIsDarkMode != isDarkMode) {
+        if (_prevThemeMode != null && _prevThemeMode != themeMode) {
           // 애니메이션 재설정 및 시작
           _controller.reset();
           _controller.forward();
         }
 
         // 현재 테마 모드 저장
-        _prevIsDarkMode = isDarkMode;
+        _prevThemeMode = themeMode;
 
         // 빌더 호출
         return widget.builder(context, _animation);

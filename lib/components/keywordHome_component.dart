@@ -9,6 +9,7 @@ import 'dart:math'; // 랜덤 함수 사용을 위해 추가
 import '../app_theme.dart';
 import '../providers/_providers.dart';
 import '../services/api_service.dart';
+import '../services/ad_service.dart';
 import '../services/firebase_messaging_service.dart';
 import '../models/_models.dart';
 import '../widgets/_widgets.dart';
@@ -339,7 +340,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
         : _keywords;
 
     final themeProvider = Provider.of<UserPreferenceProvider>(context);
-    final isDark = themeProvider.isDarkMode;
+    final isDark = AppTheme.isDark(context);
 
     return Scaffold(
       body: CustomScrollView(
@@ -657,45 +658,96 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     );
   }
 
-  // 키워드 리스트 생성 함수 (별도로 분리)
+  // 키워드 리스트 생성 함수 (별도로 분리) - 광고 포함
   Widget _buildKeywordList(List<Keyword> keywords) {
     if (keywords.isEmpty) return SizedBox();
 
-    // 애니메이션 사용 여부
-    final bool useAnimation = _showKeywordAnimation && !_isRefreshing;
+    // 🎯 성능 최적화: 애니메이션 조건 강화
+    final bool useAnimation = AdService.enableAnimations && 
+                             _showKeywordAnimation && 
+                             !_isRefreshing && 
+                             !_isInitialLoading;
+    
+    // 📌 성능 최적화: 광고 위젯을 const로 미리 생성하여 재사용
+    const bannerAd1 = BannerAdWidget(key: ValueKey('banner_ad_1'));
+    const bannerAd2 = BannerAdWidget(key: ValueKey('banner_ad_2'));
+    
+    // 광고를 포함한 위젯 리스트 생성
+    List<Widget> widgetList = [];
+
+    for (int i = 0; i < keywords.length; i++) {
+      final Widget keywordWidget = RepaintBoundary(
+        child: KeywordBoxWidget(
+          keyword: keywords[i],
+          rank: i + 1,
+          isSelected: _selectedKeyword?.id == keywords[i].id,
+          onTap: () => _selectKeyword(keywords[i], isManualClick: true),
+        ),
+      );
+
+      // 애니메이션 적용 여부에 따라 다른 위젯 추가
+      if (useAnimation) {
+        widgetList.add(
+          AnimationConfiguration.staggeredList(
+            position: widgetList.length,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: keywordWidget,
+              ),
+            ),
+          ),
+        );
+      } else {
+        widgetList.add(keywordWidget);
+      }
+      
+      // 3-4위 사이에 첫 번째 광고 삽입 (인덱스 3 다음)
+      if (i == 3 && keywords.length > 4) {
+        if (useAnimation) {
+          widgetList.add(
+            AnimationConfiguration.staggeredList(
+              position: widgetList.length,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: bannerAd1, // ✅ 미리 생성한 const 위젯 재사용
+                ),
+              ),
+            ),
+          );
+        } else {
+          widgetList.add(bannerAd1); // ✅ 미리 생성한 const 위젯 재사용
+        }
+      }
+      
+      // 7-8위 사이에 두 번째 광고 삽입 (인덱스 7 다음)
+      if (i == 7 && keywords.length > 8) {
+        if (useAnimation) {
+          widgetList.add(
+            AnimationConfiguration.staggeredList(
+              position: widgetList.length,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: bannerAd2, // ✅ 미리 생성한 const 위젯 재사용
+                ),
+              ),
+            ),
+          );
+        } else {
+          widgetList.add(bannerAd2); // ✅ 미리 생성한 const 위젯 재사용
+        }
+      }
+    }
 
     return AnimationLimiter(
       child: Column(
         mainAxisSize: MainAxisSize.min, // 필요한 높이만 사용
-        children: List.generate(
-          keywords.length,
-              (index) {
-            final Widget keywordWidget = RepaintBoundary(
-              child: KeywordBoxWidget(
-                keyword: keywords[index],
-                rank: index + 1,
-                isSelected: _selectedKeyword?.id == keywords[index].id,
-                onTap: () => _selectKeyword(keywords[index], isManualClick: true),
-              ),
-            );
-
-            // 애니메이션 적용 여부에 따라 다른 위젯 반환
-            if (useAnimation) {
-              return AnimationConfiguration.staggeredList(
-                position: index,
-                duration: const Duration(milliseconds: 375),
-                child: SlideAnimation(
-                  verticalOffset: 50.0,
-                  child: FadeInAnimation(
-                    child: keywordWidget,
-                  ),
-                ),
-              );
-            } else {
-              return keywordWidget;
-            }
-          },
-        ),
+        children: widgetList,
       ),
     );
   }

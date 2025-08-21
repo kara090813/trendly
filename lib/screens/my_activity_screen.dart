@@ -23,8 +23,9 @@ class MyActivityScreen extends StatefulWidget {
 }
 
 class _MyActivityScreenState extends State<MyActivityScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _animationController;
   late String _currentTab;
   final ApiService _apiService = ApiService();
   
@@ -39,14 +40,13 @@ class _MyActivityScreenState extends State<MyActivityScreen>
     'comments': '작성한 댓글',
     'likes': '좋아요한 댓글',
   };
+  
 
   // 데이터 상태
   List<DiscussionRoom>? _discussion_rooms;
   List<Comment>? _myComments;
   List<Comment>? _likedComments;
-  bool _isLoadingRooms = false;
-  bool _isLoadingComments = false;
-  bool _isLoadingLikes = false;
+  bool _isLoadingData = false;
 
   @override
   void initState() {
@@ -58,110 +58,115 @@ class _MyActivityScreenState extends State<MyActivityScreen>
       initialIndex: _tabIndexMap[widget.initialTab] ?? 0,
     );
     
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
+        HapticFeedback.lightImpact();
         final newTab = _tabIndexMap.keys.elementAt(_tabController.index);
         setState(() {
           _currentTab = newTab;
         });
-        // 탭 변경시 해당 데이터 로드
-        _loadDataForTab(newTab);
+        _animationController.forward(from: 0);
       }
     });
 
-    // 초기 탭 데이터 로드
+    // 모든 데이터를 한번에 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDataForTab(_currentTab);
+      _loadAllData();
+      _animationController.forward();
     });
   }
 
-  void _loadDataForTab(String tab) {
+  // 모든 데이터를 한번에 로드하는 메서드
+  Future<void> _loadAllData() async {
     final preferences = Provider.of<UserPreferenceProvider>(context, listen: false);
     
-    switch (tab) {
-      case 'rooms':
-        _loadDiscussionRooms(preferences);
-        break;
-      case 'comments':
-        _loadMyComments(preferences);
-        break;
-      case 'likes':
-        _loadLikedComments(preferences);
-        break;
+    setState(() => _isLoadingData = true);
+    
+    try {
+      // 세 가지 데이터를 병렬로 로드
+      await Future.wait([
+        _loadDiscussionRooms(preferences),
+        _loadMyComments(preferences),
+        _loadLikedComments(preferences),
+      ]);
+      
+      // 모든 데이터 로드 완료 후 UI 업데이트
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      print('🚨 전체 데이터 로드 오류: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingData = false);
+      }
     }
   }
 
   Future<void> _loadDiscussionRooms(UserPreferenceProvider preferences) async {
-    if (_discussion_rooms != null || _isLoadingRooms) return;
-    
-    setState(() => _isLoadingRooms = true);
-    
     try {
       // 댓글을 작성한 토론방 + 감정을 표시한 토론방을 모두 포함
       final commentedRooms = preferences.commentedRooms.toSet();
       final sentimentRooms = preferences.roomSentiments.keys.toSet();
       final allRoomIds = commentedRooms.union(sentimentRooms).toList();
       
-      
       if (allRoomIds.isNotEmpty) {
         final rooms = await _apiService.getDiscussionRoomsByIds(allRoomIds);
-        setState(() => _discussion_rooms = rooms);
+        _discussion_rooms = rooms;
       } else {
-        setState(() => _discussion_rooms = []);
+        _discussion_rooms = [];
       }
     } catch (e) {
       // 토론방 로드 오류
-      setState(() => _discussion_rooms = []);
-    } finally {
-      setState(() => _isLoadingRooms = false);
+      print('🚨 토론방 로드 오류: $e');
+      print('🔍 요청한 Room IDs: ${preferences.commentedRooms.toSet().union(preferences.roomSentiments.keys.toSet()).toList()}');
+      _discussion_rooms = [];
     }
   }
 
   Future<void> _loadMyComments(UserPreferenceProvider preferences) async {
-    if (_myComments != null || _isLoadingComments) return;
-    
-    setState(() => _isLoadingComments = true);
-    
     try {
       final commentIds = preferences.commentIds;
       if (commentIds.isNotEmpty) {
         final comments = await _apiService.getCommentsByIds(commentIds);
-        setState(() => _myComments = comments);
+        _myComments = comments;
       } else {
-        setState(() => _myComments = []);
+        _myComments = [];
       }
     } catch (e) {
       // 댓글 로드 오류
-      setState(() => _myComments = []);
-    } finally {
-      setState(() => _isLoadingComments = false);
+      print('🚨 댓글 로드 오류: $e');
+      print('🔍 요청한 Comment IDs: ${preferences.commentIds}');
+      _myComments = [];
     }
   }
 
   Future<void> _loadLikedComments(UserPreferenceProvider preferences) async {
-    if (_likedComments != null || _isLoadingLikes) return;
-    
-    setState(() => _isLoadingLikes = true);
-    
     try {
       final likedCommentIds = preferences.getLikedComments();
       if (likedCommentIds.isNotEmpty) {
         final comments = await _apiService.getCommentsByIds(likedCommentIds);
-        setState(() => _likedComments = comments);
+        _likedComments = comments;
       } else {
-        setState(() => _likedComments = []);
+        _likedComments = [];
       }
     } catch (e) {
       // 좋아요 댓글 로드 오류
-      setState(() => _likedComments = []);
-    } finally {
-      setState(() => _isLoadingLikes = false);
+      print('🚨 좋아요 댓글 로드 오류: $e');
+      print('🔍 요청한 Liked Comment IDs: ${preferences.getLikedComments()}');
+      _likedComments = [];
     }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -173,7 +178,10 @@ class _MyActivityScreenState extends State<MyActivityScreen>
           backgroundColor: AppTheme.getBackgroundColor(context),
           appBar: AppBar(
             backgroundColor: AppTheme.getContainerColor(context),
-            elevation: 0,
+            elevation: 4,
+            shadowColor: AppTheme.isDark(context) 
+              ? Colors.black.withOpacity(0.3)
+              : Colors.grey.withOpacity(0.2),
             leading: IconButton(
               icon: Icon(
                 Icons.arrow_back_ios,
@@ -190,25 +198,33 @@ class _MyActivityScreenState extends State<MyActivityScreen>
                 color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
               ),
             ),
-            bottom: TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primaryBlue,
-              unselectedLabelColor: Colors.grey[600],
-              indicatorColor: AppTheme.primaryBlue,
-              indicatorWeight: 3.0,
-              labelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
+            bottom: PreferredSize(
+              preferredSize: Size.fromHeight(48.h),
+              child: Container(
+                color: AppTheme.getContainerColor(context),
+                child: TabBar(
+                  controller: _tabController,
+                  labelColor: AppTheme.primaryBlue,
+                  unselectedLabelColor: Colors.grey[600],
+                  indicatorColor: AppTheme.primaryBlue,
+                  indicatorWeight: 3.0,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelStyle: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  unselectedLabelStyle: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  tabs: [
+                    Tab(text: '토론방'),
+                    Tab(text: '댓글'),
+                    Tab(text: '좋아요'),
+                  ],
+                ),
               ),
-              unselectedLabelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-              tabs: [
-                Tab(text: '토론방'),
-                Tab(text: '댓글'),
-                Tab(text: '좋아요'),
-              ],
             ),
           ),
           body: TabBarView(
@@ -223,9 +239,10 @@ class _MyActivityScreenState extends State<MyActivityScreen>
       },
     );
   }
+  
 
   Widget _buildRoomsTab(UserPreferenceProvider preferences) {
-    if (_isLoadingRooms) {
+    if (_isLoadingData) {
       return _buildLoadingState();
     }
 
@@ -243,26 +260,27 @@ class _MyActivityScreenState extends State<MyActivityScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        setState(() => _discussion_rooms = null);
-        await _loadDiscussionRooms(preferences);
+        setState(() {
+          _discussion_rooms = null;
+          _myComments = null;
+          _likedComments = null;
+        });
+        await _loadAllData();
       },
       child: ListView.builder(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(20.w),
         itemCount: _discussion_rooms!.length,
         itemBuilder: (context, index) {
           final room = _discussion_rooms![index];
           final sentiment = preferences.roomSentiments[room.id];
-          return _buildRoomCard(room, sentiment, index).animate().fadeIn(
-            delay: Duration(milliseconds: index * 100),
-            duration: 600.ms,
-          );
+          return _buildRoomCard(room, sentiment, index);
         },
       ),
     );
   }
 
   Widget _buildCommentsTab(UserPreferenceProvider preferences) {
-    if (_isLoadingComments) {
+    if (_isLoadingData) {
       return _buildLoadingState();
     }
 
@@ -280,25 +298,26 @@ class _MyActivityScreenState extends State<MyActivityScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        setState(() => _myComments = null);
-        await _loadMyComments(preferences);
+        setState(() {
+          _discussion_rooms = null;
+          _myComments = null;
+          _likedComments = null;
+        });
+        await _loadAllData();
       },
       child: ListView.builder(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(20.w),
         itemCount: _myComments!.length,
         itemBuilder: (context, index) {
           final comment = _myComments![index];
-          return _buildCommentCard(comment, index).animate().fadeIn(
-            delay: Duration(milliseconds: index * 100),
-            duration: 600.ms,
-          );
+          return _buildCommentCard(comment, index);
         },
       ),
     );
   }
 
   Widget _buildLikesTab(UserPreferenceProvider preferences) {
-    if (_isLoadingLikes) {
+    if (_isLoadingData) {
       return _buildLoadingState();
     }
 
@@ -316,18 +335,19 @@ class _MyActivityScreenState extends State<MyActivityScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        setState(() => _likedComments = null);
-        await _loadLikedComments(preferences);
+        setState(() {
+          _discussion_rooms = null;
+          _myComments = null;
+          _likedComments = null;
+        });
+        await _loadAllData();
       },
       child: ListView.builder(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(20.w),
         itemCount: _likedComments!.length,
         itemBuilder: (context, index) {
           final comment = _likedComments![index];
-          return _buildLikedCommentCard(comment, index).animate().fadeIn(
-            delay: Duration(milliseconds: index * 100),
-            duration: 600.ms,
-          );
+          return _buildLikedCommentCard(comment, index);
         },
       ),
     );
@@ -387,17 +407,23 @@ class _MyActivityScreenState extends State<MyActivityScreen>
       onTap: () => context.push('/discussion/${room.id}'),
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
           color: AppTheme.getContainerColor(context),
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: AppTheme.isDark(context) 
+              ? Colors.grey[800]!.withOpacity(0.3)
+              : Colors.grey[200]!.withOpacity(0.5),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: AppTheme.isDark(context)
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 2),
+                  ? Colors.black.withOpacity(0.6)
+                  : Colors.grey.withOpacity(0.35),
+              blurRadius: 16,
+              offset: Offset(0, 6),
             ),
           ],
         ),
@@ -495,46 +521,7 @@ class _MyActivityScreenState extends State<MyActivityScreen>
                   ),
               ],
             ),
-            
-            SizedBox(height: 12.h),
-            
-            // 통계 정보
-            Row(
-              children: [
-                _buildStatChip(Icons.comment_outlined, '${room.comment_count ?? 0}', Colors.blue),
-                SizedBox(width: 8.w),
-                _buildStatChip(Icons.thumb_up_outlined, '${room.positive_count}', Colors.green),
-                SizedBox(width: 8.w),
-                _buildStatChip(Icons.thumbs_up_down_outlined, '${room.neutral_count}', Colors.orange),
-                SizedBox(width: 8.w),
-                _buildStatChip(Icons.thumb_down_outlined, '${room.negative_count}', Colors.red),
-              ],
-            ),
-            
-            // 요약 (있는 경우)
-            if (room.comment_summary?.isNotEmpty == true) ...[
-              SizedBox(height: 8.h),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: AppTheme.isDark(context) 
-                    ? Colors.grey[800]?.withOpacity(0.5)
-                    : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  room.comment_summary!,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+             
           ],
         ),
       ),
@@ -555,18 +542,23 @@ class _MyActivityScreenState extends State<MyActivityScreen>
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
           color: AppTheme.getContainerColor(context),
           borderRadius: BorderRadius.circular(12.r),
-          border: isSubComment ? Border.all(color: Colors.orange.withOpacity(0.3), width: 1) : null,
+          border: Border.all(
+            color: AppTheme.isDark(context) 
+              ? Colors.grey[800]!.withOpacity(0.3)
+              : Colors.grey[200]!.withOpacity(0.5),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: AppTheme.isDark(context)
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 2),
+                  ? Colors.black.withOpacity(0.6)
+                  : Colors.grey.withOpacity(0.35),
+              blurRadius: 16,
+              offset: Offset(0, 6),
             ),
           ],
         ),
@@ -596,35 +588,40 @@ class _MyActivityScreenState extends State<MyActivityScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            comment.nick,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
-                            ),
-                          ),
-                          if (isSubComment) ...[
-                            SizedBox(width: 6.w),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(3.r),
-                              ),
-                              child: Text(
-                                '답글',
+                      FutureBuilder<String>(
+                        future: _getRoomKeywordInfo(comment.discussion_room),
+                        builder: (context, snapshot) {
+                          return Row(
+                            children: [
+                              Text(
+                                snapshot.data ?? '토론방 #${comment.discussion_room}',
                                 style: TextStyle(
-                                  fontSize: 9.sp,
-                                  color: Colors.orange,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
+                                  color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
                                 ),
                               ),
-                            ),
-                          ],
-                        ],
+                              if (isSubComment) ...[
+                                SizedBox(width: 6.w),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(3.r),
+                                  ),
+                                  child: Text(
+                                    '답글',
+                                    style: TextStyle(
+                                      fontSize: 9.sp,
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
                       ),
                       SizedBox(height: 2.h),
                       Text(
@@ -674,26 +671,10 @@ class _MyActivityScreenState extends State<MyActivityScreen>
               ),
             ),
             
-            SizedBox(height: 8.h),
-            
-            // 하단 정보
-            Row(
-              children: [
-                Icon(
-                  Icons.forum_outlined,
-                  size: 12.sp,
-                  color: Colors.grey[500],
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '토론방 #${comment.discussion_room}',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                if (comment.sub_comment_count > 0) ...[
-                  SizedBox(width: 12.w),
+            if (comment.sub_comment_count > 0) ...[
+              SizedBox(height: 8.h),
+              Row(
+                children: [
                   Icon(
                     Icons.reply,
                     size: 12.sp,
@@ -708,8 +689,8 @@ class _MyActivityScreenState extends State<MyActivityScreen>
                     ),
                   ),
                 ],
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
@@ -730,18 +711,23 @@ class _MyActivityScreenState extends State<MyActivityScreen>
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
           color: AppTheme.getContainerColor(context),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.orange.withOpacity(0.2), width: 1),
+          border: Border.all(
+            color: AppTheme.isDark(context) 
+              ? Colors.grey[800]!.withOpacity(0.3)
+              : Colors.grey[200]!.withOpacity(0.5),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: AppTheme.isDark(context)
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 2),
+                  ? Colors.black.withOpacity(0.6)
+                  : Colors.grey.withOpacity(0.35),
+              blurRadius: 16,
+              offset: Offset(0, 6),
             ),
           ],
         ),
@@ -771,54 +757,32 @@ class _MyActivityScreenState extends State<MyActivityScreen>
                     children: [
                       Row(
                         children: [
-                          Text(
-                            comment.nick,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(3.r),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.thumb_up,
-                                  size: 8.sp,
-                                  color: Colors.orange,
+                          FutureBuilder<String>(
+                            future: _getRoomKeywordInfo(comment.discussion_room),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? '토론방 #${comment.discussion_room}',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.isDark(context) ? AppTheme.darkText : AppTheme.lightText,
                                 ),
-                                SizedBox(width: 2.w),
-                                Text(
-                                  '좋아요',
-                                  style: TextStyle(
-                                    fontSize: 9.sp,
-                                    color: Colors.orange,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                           if (isSubComment) ...[
-                            SizedBox(width: 4.w),
+                            SizedBox(width: 6.w),
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                               decoration: BoxDecoration(
-                                color: Colors.grey.withOpacity(0.1),
+                                color: Colors.orange.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(3.r),
                               ),
                               child: Text(
                                 '답글',
                                 style: TextStyle(
                                   fontSize: 9.sp,
-                                  color: Colors.grey[600],
+                                  color: Colors.orange,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -872,26 +836,10 @@ class _MyActivityScreenState extends State<MyActivityScreen>
               ),
             ),
             
-            SizedBox(height: 8.h),
-            
-            // 하단 정보
-            Row(
-              children: [
-                Icon(
-                  Icons.forum_outlined,
-                  size: 12.sp,
-                  color: Colors.grey[500],
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '토론방 #${comment.discussion_room}',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                if (comment.sub_comment_count > 0) ...[
-                  SizedBox(width: 12.w),
+            if (comment.sub_comment_count > 0) ...[
+              SizedBox(height: 8.h),
+              Row(
+                children: [
                   Icon(
                     Icons.reply,
                     size: 12.sp,
@@ -906,8 +854,8 @@ class _MyActivityScreenState extends State<MyActivityScreen>
                     ),
                   ),
                 ],
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
@@ -917,70 +865,233 @@ class _MyActivityScreenState extends State<MyActivityScreen>
 
   // 헬퍼 메서드들
   Widget _buildLoadingState() {
+    final isDark = AppTheme.isDark(context);
+    
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            color: AppTheme.primaryBlue,
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            '데이터를 불러오는 중...',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
+      child: Padding(
+        padding: EdgeInsets.all(32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80.w,
+              height: 80.w,
+              decoration: BoxDecoration(
+                color: AppTheme.getBackgroundColor(context),
+                shape: BoxShape.circle,
+                boxShadow: isDark
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          offset: const Offset(4, 4),
+                          blurRadius: 8,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.08),
+                          offset: const Offset(-4, -4),
+                          blurRadius: 8,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          offset: const Offset(4, 4),
+                          blurRadius: 8,
+                        ),
+                        const BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(-4, -4),
+                          blurRadius: 8,
+                        ),
+                      ],
+              ),
+              child: CircularProgressIndicator(
+                color: AppTheme.primaryBlue,
+                strokeWidth: 3,
+              ),
+            ).animate(onPlay: (controller) => controller.repeat())
+              .rotate(duration: 1000.ms),
+            
+            SizedBox(height: 24.h),
+            
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: AppTheme.getContainerColor(context),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: isDark
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          offset: const Offset(2, 2),
+                          blurRadius: 4,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.05),
+                          offset: const Offset(-2, -2),
+                          blurRadius: 4,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          offset: const Offset(2, 2),
+                          blurRadius: 4,
+                        ),
+                        const BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(-2, -2),
+                          blurRadius: 4,
+                        ),
+                      ],
+              ),
+              child: Text(
+                '데이터를 불러오는 중...',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildErrorState(String message) {
+    final isDark = AppTheme.isDark(context);
+    
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 48.sp,
-            color: Colors.red[300],
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey[600],
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Padding(
+        padding: EdgeInsets.all(32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100.w,
+              height: 100.w,
+              decoration: BoxDecoration(
+                color: AppTheme.getBackgroundColor(context),
+                shape: BoxShape.circle,
+                boxShadow: isDark
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          offset: const Offset(6, 6),
+                          blurRadius: 12,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.08),
+                          offset: const Offset(-6, -6),
+                          blurRadius: 12,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          offset: const Offset(6, 6),
+                          blurRadius: 12,
+                        ),
+                        const BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(-6, -6),
+                          blurRadius: 12,
+                        ),
+                      ],
+              ),
+              child: Container(
+                width: 80.w,
+                height: 80.w,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.red.withOpacity(0.1),
+                      Colors.red.withOpacity(0.05),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.error_outline_rounded,
+                  size: 40.sp,
+                  color: Colors.red.withOpacity(0.7),
+                ),
+              ),
+            ).animate().scale(begin: const Offset(0, 0), duration: 400.ms, curve: Curves.bounceOut),
+            
+            SizedBox(height: 24.h),
+            
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+              decoration: BoxDecoration(
+                color: AppTheme.getContainerColor(context),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: isDark
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(4, 4),
+                          blurRadius: 8,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.05),
+                          offset: const Offset(-4, -4),
+                          blurRadius: 8,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          offset: const Offset(4, 4),
+                          blurRadius: 8,
+                        ),
+                        const BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(-4, -4),
+                          blurRadius: 8,
+                        ),
+                      ],
+              ),
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ).animate(delay: 200.ms).fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildStatChip(IconData icon, String count, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 10.sp,
+            size: 14.sp,
             color: color,
           ),
-          SizedBox(width: 2.w),
+          SizedBox(width: 4.w),
           Text(
             count,
             style: TextStyle(
-              fontSize: 10.sp,
+              fontSize: 13.sp,
               color: color,
               fontWeight: FontWeight.w600,
             ),
@@ -988,6 +1099,16 @@ class _MyActivityScreenState extends State<MyActivityScreen>
         ],
       ),
     );
+  }
+  
+
+  Future<String> _getRoomKeywordInfo(int discussionRoomId) async {
+    try {
+      final room = await _apiService.getDiscussionRoomById(discussionRoomId);
+      return room.keyword; // 키워드명만 반환
+    } catch (e) {
+      return '토론방 #$discussionRoomId';
+    }
   }
 
   String _getTimeAgo(DateTime dateTime) {

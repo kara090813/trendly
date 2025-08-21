@@ -30,13 +30,23 @@ class UserPreferenceProvider with ChangeNotifier {
   
   Map<int, String> get commentReactions => _userPreferences?.commentReactions ?? {};
   
-  bool get isDarkMode => _userPreferences?.isDarkMode ?? false;
+  bool? get isDarkMode => _userPreferences?.isDarkMode;
   
-  ThemeMode get themeMode => isDarkMode ? ThemeMode.dark : ThemeMode.light;
+  ThemeMode get themeMode {
+    final darkModeValue = _userPreferences?.isDarkMode;
+    if (darkModeValue == null) {
+      return ThemeMode.system; // Follow system theme
+    }
+    return darkModeValue ? ThemeMode.dark : ThemeMode.light;
+  }
   
   DateTime? get installDate => _userPreferences?.installDate;
   
   bool get isPushNotificationEnabled => _userPreferences?.isPushNotificationEnabled ?? true;
+  
+  int get discussionHomeLastTabIndex => _userPreferences?.discussionHomeLastTabIndex ?? 0;
+  
+  int get historyHomeLastTabIndex => _userPreferences?.historyHomeLastTabIndex ?? 0;
   
   bool get isLoadingProfile => _isLoadingProfile;
   
@@ -65,10 +75,23 @@ class UserPreferenceProvider with ChangeNotifier {
     }
   }
 
-  // 테마 모드 전환
+  // 테마 모드 전환 (시스템 -> 라이트 -> 다크 -> 시스템)
   Future<void> toggleThemeMode() async {
     try {
-      final newMode = !isDarkMode;
+      bool? newMode;
+      final currentMode = isDarkMode;
+      
+      if (currentMode == null) {
+        // 시스템 -> 라이트
+        newMode = false;
+      } else if (currentMode == false) {
+        // 라이트 -> 다크
+        newMode = true;
+      } else {
+        // 다크 -> 시스템 (null)
+        newMode = null;
+      }
+      
       await _hiveService.setDarkMode(newMode);
       _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
@@ -77,16 +100,29 @@ class UserPreferenceProvider with ChangeNotifier {
     }
   }
 
-  // 특정 테마 모드 설정
-  Future<void> setDarkMode(bool value) async {
+  // 특정 테마 모드 설정 (null = system, false = light, true = dark)
+  Future<void> setThemeMode(ThemeMode mode) async {
     try {
-      if (isDarkMode != value) {
-        await _hiveService.setDarkMode(value);
+      bool? newValue;
+      switch (mode) {
+        case ThemeMode.system:
+          newValue = null;
+          break;
+        case ThemeMode.light:
+          newValue = false;
+          break;
+        case ThemeMode.dark:
+          newValue = true;
+          break;
+      }
+      
+      if (isDarkMode != newValue) {
+        await _hiveService.setDarkMode(newValue);
         _userPreferences = _hiveService.getUserPreferences();
         notifyListeners();
       }
     } catch (e) {
-      print('다크 모드 설정 오류: $e');
+      print('테마 모드 설정 오류: $e');
     }
   }
 
@@ -347,5 +383,23 @@ class UserPreferenceProvider with ChangeNotifier {
       'likeCount': 0,
       'dislikeCount': 0,
     };
+  }
+
+  // 토론방 홈 탭 인덱스 설정
+  Future<void> setDiscussionHomeTabIndex(int index) async {
+    final success = await _hiveService.setDiscussionHomeTabIndex(index);
+    if (success) {
+      _userPreferences = _hiveService.getUserPreferences();
+      notifyListeners();
+    }
+  }
+
+  // 히스토리 홈 탭 인덱스 설정
+  Future<void> setHistoryHomeTabIndex(int index) async {
+    final success = await _hiveService.setHistoryHomeTabIndex(index);
+    if (success) {
+      _userPreferences = _hiveService.getUserPreferences();
+      notifyListeners();
+    }
   }
 }

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:trendly/widgets/circleButton_widget.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../providers/user_preference_provider.dart';
 import '../widgets/sortingToggle_widget.dart';
 import '../widgets/_widgets.dart';
 import 'discussionHotTab_component.dart';
@@ -29,15 +31,33 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-
-    // 탭 변경 리스너 추가
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
+    
+    // 기본 TabController 먼저 초기화 (기본값 0)
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    
+    // Provider에서 마지막 탭 인덱스 가져와서 업데이트
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userPrefProvider = Provider.of<UserPreferenceProvider>(context, listen: false);
+      final lastTabIndex = userPrefProvider.discussionHomeLastTabIndex;
+      
+      if (lastTabIndex != _selectedTabIndex) {
         setState(() {
-          _selectedTabIndex = _tabController.index;
+          _selectedTabIndex = lastTabIndex;
         });
+        _tabController.animateTo(lastTabIndex);
       }
+      
+      // 탭 변경 리스너 추가
+      _tabController.addListener(() {
+        if (!_tabController.indexIsChanging) {
+          final newIndex = _tabController.index;
+          setState(() {
+            _selectedTabIndex = newIndex;
+          });
+          // 탭 변경 시 저장
+          userPrefProvider.setDiscussionHomeTabIndex(newIndex);
+        }
+      });
     });
   }
 
@@ -87,6 +107,9 @@ class _DiscussionHomeComponentState extends State<DiscussionHomeComponent>
                   _selectedTabIndex = index;
                   _tabController.animateTo(index);
                 });
+                // 탭 선택 시 저장
+                final userPrefProvider = Provider.of<UserPreferenceProvider>(context, listen: false);
+                userPrefProvider.setDiscussionHomeTabIndex(index);
               },
             ),
           ),
