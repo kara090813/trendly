@@ -29,8 +29,12 @@ class HiveService {
       _userPreferencesBox = await Hive.openBox<UserPreferences>(userPreferencesBoxName);
     } catch (e) {
       print('⚠️ [HIVE] Box 열기 실패, 기존 데이터 삭제 후 재시도: $e');
-      // 기존 Box 삭제
-      await Hive.deleteBoxFromDisk(userPreferencesBoxName);
+      try {
+        // 기존 Box 삭제
+        await Hive.deleteBoxFromDisk(userPreferencesBoxName);
+      } catch (deleteError) {
+        print('⚠️ [HIVE] Box 삭제 실패 (무시하고 계속): $deleteError');
+      }
       // 다시 시도
       _userPreferencesBox = await Hive.openBox<UserPreferences>(userPreferencesBoxName);
     }

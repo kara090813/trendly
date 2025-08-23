@@ -1490,7 +1490,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "키워드 히스토리",
+                      "키워드 탐색",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -1500,7 +1500,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "키워드의 과거 순위 변화를 추적하고 분석하세요",
+                      "검색어의 과거 순위 변화를 추적하고 분석하세요",
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],

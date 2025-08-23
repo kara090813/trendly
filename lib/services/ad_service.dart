@@ -17,7 +17,7 @@ class AdService {
   // 1. 광고 버전: isAdEnabled = true
   // 2. 광고 제거 버전: isAdEnabled = false
   // ========================================
-  static const bool isAdEnabled = false;
+  static const bool isAdEnabled = true;
   
   // ========================================
   // 성능 최적화 설정
@@ -36,6 +36,19 @@ class AdService {
       return 'ca-app-pub-3940256099942544/6300978111'; // Android 배너 테스트 ID
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/2934735716'; // iOS 배너 테스트 ID
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+
+  // 네이티브 광고 테스트 ID
+  static String get nativeAdUnitId {
+    if (kIsWeb) {
+      return ''; // 웹은 지원하지 않음
+    } else if (Platform.isAndroid) {
+      return 'ca-app-pub-3940256099942544/2247696110'; // Android 네이티브 테스트 ID
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-3940256099942544/3986624511'; // iOS 네이티브 테스트 ID
     } else {
       throw UnsupportedError('Unsupported platform');
     }

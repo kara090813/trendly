@@ -54,7 +54,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "키워드 타임머신",
+                      "실검 타임머신",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -64,7 +64,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "과거의 트렌드를 탐험하고 인사이트를 발견하세요",
+                      "과거의 실시간 검색어를 조회해보세요",
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],

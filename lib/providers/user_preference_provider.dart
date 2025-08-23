@@ -40,6 +40,16 @@ class UserPreferenceProvider with ChangeNotifier {
     return darkModeValue ? ThemeMode.dark : ThemeMode.light;
   }
   
+  // 실제 표시되는 다크모드 상태 (시스템 설정 고려)
+  bool get effectiveDarkMode {
+    final darkModeValue = _userPreferences?.isDarkMode;
+    if (darkModeValue == null) {
+      final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      return brightness == Brightness.dark;
+    }
+    return darkModeValue;
+  }
+  
   DateTime? get installDate => _userPreferences?.installDate;
   
   bool get isPushNotificationEnabled => _userPreferences?.isPushNotificationEnabled ?? true;
@@ -75,54 +85,40 @@ class UserPreferenceProvider with ChangeNotifier {
     }
   }
 
-  // 테마 모드 전환 (시스템 -> 라이트 -> 다크 -> 시스템)
-  Future<void> toggleThemeMode() async {
+  // 다크모드/라이트모드 토글
+  Future<void> toggleDarkMode() async {
     try {
-      bool? newMode;
+      bool newMode;
       final currentMode = isDarkMode;
       
       if (currentMode == null) {
-        // 시스템 -> 라이트
-        newMode = false;
-      } else if (currentMode == false) {
-        // 라이트 -> 다크
-        newMode = true;
+        // 시스템 기본값 상태에서는 시스템 테마를 기반으로 반대로 토글
+        // 시스템이 다크면 라이트로, 라이트면 다크로
+        final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+        newMode = brightness == Brightness.light; // 시스템이 라이트면 다크로 토글
       } else {
-        // 다크 -> 시스템 (null)
-        newMode = null;
+        // 다크/라이트 토글
+        newMode = !currentMode;
       }
       
       await _hiveService.setDarkMode(newMode);
       _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     } catch (e) {
-      print('테마 모드 저장 오류: $e');
+      print('다크모드 설정 오류: $e');
     }
   }
 
-  // 특정 테마 모드 설정 (null = system, false = light, true = dark)
-  Future<void> setThemeMode(ThemeMode mode) async {
+  // 다크모드 설정 (true = 다크모드 강제, null = 시스템 기본값 따름)
+  Future<void> setDarkMode(bool? isDark) async {
     try {
-      bool? newValue;
-      switch (mode) {
-        case ThemeMode.system:
-          newValue = null;
-          break;
-        case ThemeMode.light:
-          newValue = false;
-          break;
-        case ThemeMode.dark:
-          newValue = true;
-          break;
-      }
-      
-      if (isDarkMode != newValue) {
-        await _hiveService.setDarkMode(newValue);
+      if (isDarkMode != isDark) {
+        await _hiveService.setDarkMode(isDark);
         _userPreferences = _hiveService.getUserPreferences();
         notifyListeners();
       }
     } catch (e) {
-      print('테마 모드 설정 오류: $e');
+      print('다크모드 설정 오류: $e');
     }
   }
 

@@ -96,7 +96,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                       ),
                       SizedBox(width: 12.w),
                       Text(
-                        "실시간 트렌드",
+                        "시간별 검색어",
                         style: TextStyle(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.w800,
@@ -110,7 +110,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Padding(
                     padding: EdgeInsets.only(left: 16.w),
                     child: Text(
-                      "시간대별 키워드 순위",
+                      "시간대별 검색어 순위",
                       style: TextStyle(
                         fontSize: 15.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -158,7 +158,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    '해당 날짜의 실시간 트렌드 데이터가 없습니다',
+                    '해당 날짜의 실시간 검색어 데이터가 없습니다',
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -200,7 +200,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                     ),
                     SizedBox(width: 12.w),
                     Text(
-                      "실시간 트렌드",
+                      "시간별 검색어",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -214,7 +214,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                 Padding(
                   padding: EdgeInsets.only(left: 16.w),
                   child: Text(
-                    "시간대별 키워드 순위",
+                    "시간대별 검색어 순위",
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],

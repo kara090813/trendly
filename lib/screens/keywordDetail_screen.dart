@@ -6,6 +6,7 @@ import 'package:html_unescape/html_unescape.dart';
 import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../services/firebase_messaging_service.dart';
+import '../services/ad_service.dart';
 import '../widgets/_widgets.dart';
 import '../app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -461,6 +462,22 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             Column(
               children: [
                 _buildNewsItem(_keyword!.references[i]),
+                
+                // 첫 번째 뉴스 아이템 뒤에 네이티브 광고 삽입
+                if (i == 0 && AdService.isAdEnabled)
+                  Column(
+                    children: [
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[200],
+                        indent: 16.w,
+                        endIndent: 16.w,
+                      ),
+                      const NativeAdWidget(key: ValueKey('keyword_detail_native_ad')),
+                    ],
+                  ),
+                
                 if (i < baseCount - 1 || additionalNews.isNotEmpty)
                   Divider(
                     height: 1,

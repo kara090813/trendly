@@ -92,7 +92,7 @@ class _HistoryHomeComponentState extends State<HistoryHomeComponent>
             left: 0,
             right: 0,
             child: TabHeaderWidget(
-              tabLabels: ["타임머신", "키워드 히스토리", "랜덤 키워드"],
+              tabLabels: ["타임머신", "키워드 탐색", "랜덤 키워드"],
               selectedTabIndex: _selectedTabIndex,
               onTabSelected: (index) {
                 setState(() {

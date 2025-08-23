@@ -39,8 +39,8 @@ void main() async {
     print('✅ [MAIN] Hive initialized successfully');
   } catch (e) {
     print('❌ [MAIN] Failed to initialize Hive: $e');
-    // Hive 초기화 실패 시 앱 실행 중단
-    return;
+    print('⚠️ [MAIN] 앱을 계속 실행하지만 사용자 데이터가 초기화될 수 있습니다.');
+    // Hive 초기화 실패해도 앱은 계속 실행 (기본값으로 동작)
   }
   
   // FCM Background 메시지 핸들러 설정
@@ -75,14 +75,19 @@ class Trendly extends StatelessWidget {
           ],
           child: Builder(
             builder: (BuildContext context) {
-              Future.microtask(() async {
-                // 사용자 기본 정보 로드
-                await Provider.of<UserPreferenceProvider>(context, listen: false)
-                    .loadBasicInfo();
-                
-                // 약간의 지연 후 보류된 FCM 네비게이션 처리 (컨텍스트 완전 초기화 대기)
-                await Future.delayed(Duration(milliseconds: 1000));
-                await FirebaseMessagingService().handlePendingNavigation();
+              // 앱 완전 빌드 후 사용자 데이터 로드
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                try {
+                  // 사용자 기본 정보 로드 (Hive 이미 초기화됨)
+                  await Provider.of<UserPreferenceProvider>(context, listen: false)
+                      .loadBasicInfo();
+                  
+                  // FCM 네비게이션 처리 (컨텍스트 완전 준비 후)
+                  await Future.delayed(Duration(milliseconds: 500));
+                  await FirebaseMessagingService().handlePendingNavigation();
+                } catch (e) {
+                  print('❌ [MAIN] Post-frame initialization error: $e');
+                }
               });
 
               final router = Provider.of<AppRouter>(context, listen: false).router;

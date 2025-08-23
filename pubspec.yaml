@@ -64,6 +64,10 @@ dependencies:
   # AdMob
   google_mobile_ads: ^5.2.0
 
+  # App Icon & Splash Screen
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -134,3 +138,23 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Flutter Launcher Icons Configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/img/logo_img_fix.png"
+  min_sdk_android: 21 # Android 5.0
+  
+# Flutter Native Splash Configuration
+flutter_native_splash:
+  color: "#ffffff"
+  color_dark: "#18181A"
+  
+  # Android - 1152px 전용 이미지
+  image_android: assets/img/splash_android.png
+  image_dark_android: assets/img/splash_android.png
+  
+  # iOS - 기존 이미지 유지
+  image_ios: assets/img/splash.png
+  image_dark_ios: assets/img/splash.png

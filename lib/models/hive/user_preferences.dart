@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:flutter/material.dart';
 
 part 'user_preferences.g.dart';
 
@@ -58,11 +59,16 @@ class UserPreferences extends HiveObject {
         roomSentiments = roomSentiments ?? {},
         commentReactions = commentReactions ?? {};
 
-  // 팩토리 메서드 - 빈 preferences 생성
+  // 팩토리 메서드 - 빈 preferences 생성 (시스템 기본값 감지)
   factory UserPreferences.empty() {
     final now = DateTime.now();
+    
+    // 시스템 기본 테마 감지
+    final brightness = WidgetsBinding.instance?.platformDispatcher.platformBrightness ?? Brightness.light;
+    final systemIsDark = brightness == Brightness.dark;
+    
     return UserPreferences(
-      isDarkMode: null, // Follow system theme by default
+      isDarkMode: systemIsDark, // 시스템 기본값을 초기값으로 설정
       commentedRooms: [],
       commentIds: [],
       roomSentiments: {},

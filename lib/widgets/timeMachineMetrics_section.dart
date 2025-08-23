@@ -152,7 +152,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                     ),
                     SizedBox(width: 12.w),
                     Text(
-                      "이날의 키워드 Top3",
+                      "이날의 검색어 Top3",
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
@@ -166,7 +166,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                 Padding(
                   padding: EdgeInsets.only(left: 16.w),
                   child: Text(
-                    "가장 화제가 된 키워드 순위",
+                    "가장 화제가 된 검색어 순위",
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],

@@ -33,10 +33,14 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
   bool _isRefreshing = false;
   bool _showKeywordAnimation = false;
   bool _showShimmerEffect = false;
+  bool _hasPlayedInitialAnimation = false; // 초기 애니메이션 재생 여부 추적
 
   // 랜덤 애니메이션 선택을 위한 변수
   int _currentAnimationIndex = 0;
   final Random _random = Random();
+  
+  // 🎲 두 번째 광고 표시 여부 (30% 확률)
+  bool _shouldShowSecondAd = false;
 
   String? _error;
   Keyword? _selectedKeyword;
@@ -54,6 +58,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
   @override
   void initState() {
     super.initState();
+    
+    // 🎲 앱 시작 시 30% 확률로 두 번째 광고 표시 결정
+    _shouldShowSecondAd = _random.nextDouble() < 0.3;
 
     // 리프레시 애니메이션 컨트롤러 초기화
     _refreshAnimationController = AnimationController(
@@ -91,6 +98,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
 
   Future<void> _loadKeywords({bool isInitial = false}) async {
     try {
+      // 🎲 키워드 새로고침 시마다 30% 확률로 두 번째 광고 표시 결정
+      _shouldShowSecondAd = _random.nextDouble() < 0.3;
+      
       // isInitial이 true면 초기 로딩 상태, 그렇지 않으면 리프레싱 상태로 설정
       setState(() {
         if (isInitial) {
@@ -144,11 +154,31 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                   _showKeywordAnimation = true;
                   _showShimmerEffect = false; // Shimmer 효과 비활성화
                 });
+                
+                // 애니메이션 완료 후 플래그 설정 (애니메이션 지속 시간 후)
+                Future.delayed(Duration(milliseconds: 500), () {
+                  if (mounted) {
+                    setState(() {
+                      _hasPlayedInitialAnimation = true; // 초기 애니메이션 완료
+                    });
+                  }
+                });
               }
             });
           } else {
             _isRefreshing = false;
             _showKeywordAnimation = true;
+            
+            // 새로고침 시에는 바로 애니메이션 완료로 설정 (초기 로딩이 아니므로)
+            if (!_isInitialLoading) {
+              Future.delayed(Duration(milliseconds: 500), () {
+                if (mounted) {
+                  setState(() {
+                    _hasPlayedInitialAnimation = true;
+                  });
+                }
+              });
+            }
           }
         });
       }
@@ -434,13 +464,14 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                                   CircleButtonWidget(
                                     context: context,
                                     onTap: () {
-                                      themeProvider.toggleThemeMode();
+                                      themeProvider.toggleDarkMode();
                                     },
-                                    assetImagePath: 'assets/img/items/dark.png',
-                                    color: Colors.blue,
-                                    iconSize: 30.w,
+                                    icon: themeProvider.effectiveDarkMode 
+                                        ? Icons.light_mode  // 다크모드일 때 해 아이콘
+                                        : Icons.dark_mode,  // 라이트모드일 때 달 아이콘
+                                    color: AppTheme.primaryBlue,
+                                    iconSize: 24.w,
                                     containerSize: 42.w,
-                                    imagePadding: EdgeInsets.all(8.w),
                                   ),
                                 ],
                               ),
@@ -527,83 +558,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
           // 키워드 목록 리스트 영역 (Stack 구조로 로딩 애니메이션 오버레이)
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-            sliver: SliverToBoxAdapter(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // 기본 키워드 리스트 (이전 키워드 또는 현재 키워드)
-                  Opacity(
-                    opacity: _isRefreshing ? 0.3 : 1.0, // 로딩 중에는 흐리게 표시
-                    child: _showShimmerEffect
-                        ? _buildShimmerKeywordList(
-                        displayKeywords) // Shimmer 효과 적용된 리스트
-                        : _buildKeywordList(displayKeywords), // 일반 리스트
-                  ),
-
-                  // 로딩 애니메이션 (중앙에 표시)
-                  if (_isRefreshing)
-                    Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 랜덤 로딩 애니메이션
-                          Container(
-                            width: 160.w,
-                            height: 160.w,
-                            decoration: BoxDecoration(
-                              color: AppTheme.isDark(context)
-                                  ? Color(0xFF21202C).withOpacity(0.9)
-                                  : Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(20.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.isDark(context)
-                                      ? Colors.black.withOpacity(0.4)
-                                      : Colors.black.withOpacity(0.15),
-                                  blurRadius: 15,
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: _buildRandomLoadingAnimation(),
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-                          // 텍스트에 배경 추가
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                            decoration: BoxDecoration(
-                              color: AppTheme.isDark(context)
-                                  ? Color(0xFF21202C).withOpacity(0.9)
-                                  : Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(12.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.isDark(context)
-                                      ? Colors.black.withOpacity(0.4)
-                                      : Colors.black.withOpacity(0.15),
-                                  blurRadius: 4,
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              "최신 트렌드로 새로고침 중...",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF19B3F6), // 브랜드 색상 유지
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            sliver: _buildOptimizedKeywordSliver(),
           ),
 
           // 선택된 키워드 요약
@@ -658,15 +613,198 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     );
   }
 
+  // 🚀 성능 최적화: SliverList를 사용한 가상화 키워드 리스트
+  Widget _buildOptimizedKeywordSliver() {
+    // 표시할 키워드 결정: 새로고침 중이면 이전 키워드 유지
+    final displayKeywords = _isRefreshing && _previousKeywords.isNotEmpty
+        ? _previousKeywords
+        : _keywords;
+    
+    if (displayKeywords.isEmpty && _isInitialLoading) {
+      // 초기 로딩 중
+      return SliverToBoxAdapter(
+        child: Container(
+          height: 200.h,
+          child: Center(child: _buildRandomLoadingAnimation()),
+        ),
+      );
+    } else if (displayKeywords.isEmpty && _error != null) {
+      // 에러 상태
+      return SliverToBoxAdapter(child: _buildErrorWidget());
+    }
+
+    // 광고를 포함한 아이템 목록 생성
+    List<Widget> allItems = _buildOptimizedItemList(displayKeywords);
+    
+    // 🎯 Stack 구조로 로딩 애니메이션 오버레이
+    return SliverToBoxAdapter(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 기본 키워드 리스트
+          Opacity(
+            opacity: _isRefreshing ? 0.3 : 1.0, // 로딩 중에는 흐리게 표시
+            child: _showShimmerEffect
+                ? _buildShimmerKeywordList(displayKeywords) // Shimmer 효과
+                : AnimationLimiter(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: allItems,
+                    ),
+                  ),
+          ),
+          
+          // 로딩 애니메이션 (중앙에 표시)
+          if (_isRefreshing)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 랜덤 로딩 애니메이션
+                  Container(
+                    width: 160.w,
+                    height: 160.w,
+                    decoration: BoxDecoration(
+                      color: AppTheme.isDark(context)
+                          ? Color(0xFF21202C).withOpacity(0.9)
+                          : Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.isDark(context)
+                              ? Colors.black.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.15),
+                          blurRadius: 15,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: _buildRandomLoadingAnimation(),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  // 텍스트에 배경 추가
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: AppTheme.isDark(context)
+                          ? Color(0xFF21202C).withOpacity(0.9)
+                          : Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.isDark(context)
+                              ? Colors.black.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.15),
+                          blurRadius: 4,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      "최신 트렌드로 새로고침 중...",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF19B3F6), // 브랜드 색상 유지
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 최적화된 아이템 리스트 생성 (키워드 + 광고)
+  List<Widget> _buildOptimizedItemList(List<Keyword> keywords) {
+    // 🎯 애니메이션 최적화: 초기 로딩 시에만 애니메이션 실행
+    final bool useAnimation = AdService.enableAnimations && 
+                             _showKeywordAnimation && 
+                             !_isRefreshing && 
+                             !_isInitialLoading &&
+                             !_hasPlayedInitialAnimation; // 한 번만 실행
+    
+    // 📌 성능 최적화: 광고 위젯을 const로 미리 생성하여 재사용
+    const bannerAd1 = BannerAdWidget(key: ValueKey('banner_ad_1'));
+    const bannerAd2 = BannerAdWidget(key: ValueKey('banner_ad_2'));
+    
+    List<Widget> items = [];
+    
+    for (int i = 0; i < keywords.length; i++) {
+      // 일반 키워드 위젯 생성
+      final keywordWidget = KeywordBoxWidget(
+        keyword: keywords[i],
+        rank: i + 1,
+        isSelected: _selectedKeyword?.id == keywords[i].id,
+        onTap: () => _selectKeyword(keywords[i], isManualClick: true),
+      );
+
+      // 애니메이션 적용 여부에 따라 다른 위젯 추가
+      if (useAnimation) {
+        items.add(
+          AnimationConfiguration.staggeredList(
+            position: items.length,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(child: keywordWidget),
+            ),
+          ),
+        );
+      } else {
+        items.add(keywordWidget);
+      }
+      
+      // 🎯 3위 다음(3위와 4위 사이)에 첫 번째 광고 삽입
+      if (i == 2 && keywords.length > 3) { // i=2는 3위
+        final adWidget = useAnimation 
+          ? AnimationConfiguration.staggeredList(
+              position: items.length,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(child: bannerAd1),
+              ),
+            )
+          : bannerAd1;
+        items.add(adWidget);
+      }
+      
+      // 🎯 6위 다음(6위와 7위 사이)에 두 번째 광고 삽입 (30% 확률)
+      if (i == 5 && keywords.length > 6 && _shouldShowSecondAd) { // i=5는 6위
+        final adWidget = useAnimation 
+          ? AnimationConfiguration.staggeredList(
+              position: items.length,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(child: bannerAd2),
+              ),
+            )
+          : bannerAd2;
+        items.add(adWidget);
+      }
+    }
+    
+    return items;
+  }
+
   // 키워드 리스트 생성 함수 (별도로 분리) - 광고 포함
   Widget _buildKeywordList(List<Keyword> keywords) {
     if (keywords.isEmpty) return SizedBox();
 
     // 🎯 성능 최적화: 애니메이션 조건 강화
+    // 🎯 애니메이션 최적화: 초기 로딩 시에만 애니메이션 실행
     final bool useAnimation = AdService.enableAnimations && 
                              _showKeywordAnimation && 
                              !_isRefreshing && 
-                             !_isInitialLoading;
+                             !_isInitialLoading &&
+                             !_hasPlayedInitialAnimation; // 한 번만 실행
     
     // 📌 성능 최적화: 광고 위젯을 const로 미리 생성하여 재사용
     const bannerAd1 = BannerAdWidget(key: ValueKey('banner_ad_1'));
@@ -676,6 +814,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     List<Widget> widgetList = [];
 
     for (int i = 0; i < keywords.length; i++) {
+      // 일반 키워드 위젯 생성
       final Widget keywordWidget = RepaintBoundary(
         child: KeywordBoxWidget(
           keyword: keywords[i],
@@ -703,8 +842,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
         widgetList.add(keywordWidget);
       }
       
-      // 3-4위 사이에 첫 번째 광고 삽입 (인덱스 3 다음)
-      if (i == 3 && keywords.length > 4) {
+      // 🎯 3위 다음(3위와 4위 사이)에 첫 번째 광고 삽입
+      if (i == 2 && keywords.length > 3) { // i=2는 3위
         if (useAnimation) {
           widgetList.add(
             AnimationConfiguration.staggeredList(
@@ -712,19 +851,17 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
               duration: const Duration(milliseconds: 375),
               child: SlideAnimation(
                 verticalOffset: 50.0,
-                child: FadeInAnimation(
-                  child: bannerAd1, // ✅ 미리 생성한 const 위젯 재사용
-                ),
+                child: FadeInAnimation(child: bannerAd1),
               ),
             ),
           );
         } else {
-          widgetList.add(bannerAd1); // ✅ 미리 생성한 const 위젯 재사용
+          widgetList.add(bannerAd1);
         }
       }
       
-      // 7-8위 사이에 두 번째 광고 삽입 (인덱스 7 다음)
-      if (i == 7 && keywords.length > 8) {
+      // 🎯 6위 다음(6위와 7위 사이)에 두 번째 광고 삽입 (30% 확률)
+      if (i == 5 && keywords.length > 6 && _shouldShowSecondAd) { // i=5는 6위
         if (useAnimation) {
           widgetList.add(
             AnimationConfiguration.staggeredList(
@@ -732,14 +869,12 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
               duration: const Duration(milliseconds: 375),
               child: SlideAnimation(
                 verticalOffset: 50.0,
-                child: FadeInAnimation(
-                  child: bannerAd2, // ✅ 미리 생성한 const 위젯 재사용
-                ),
+                child: FadeInAnimation(child: bannerAd2),
               ),
             ),
           );
         } else {
-          widgetList.add(bannerAd2); // ✅ 미리 생성한 const 위젯 재사용
+          widgetList.add(bannerAd2);
         }
       }
     }

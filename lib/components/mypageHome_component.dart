@@ -283,69 +283,46 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           ),
           SizedBox(height: 12.h),
 
-          // 테마 모드 선택
+          // 다크모드 토글
           Row(
             children: [
               Icon(
-                Icons.dark_mode_outlined,
+                preferences.effectiveDarkMode ? Icons.dark_mode : Icons.light_mode,
                 size: 20.sp,
                 color: AppTheme.primaryBlue,
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: Text(
-                  '테마 설정',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.isDark(context)
-                        ? AppTheme.darkText
-                        : AppTheme.lightText,
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[800]
-                      : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: DropdownButton<ThemeMode>(
-                  value: preferences.themeMode,
-                  underline: SizedBox(),
-                  isDense: true,
-                  dropdownColor: AppTheme.isDark(context)
-                      ? Colors.grey[800]
-                      : Colors.grey[100],
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppTheme.isDark(context)
-                        ? AppTheme.darkText
-                        : AppTheme.lightText,
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: ThemeMode.system,
-                      child: Text('시스템'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '라이트/다크 모드',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.isDark(context)
+                            ? AppTheme.darkText
+                            : AppTheme.lightText,
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: ThemeMode.light,
-                      child: Text('라이트'),
-                    ),
-                    DropdownMenuItem(
-                      value: ThemeMode.dark,
-                      child: Text('다크'),
+                    Text(
+                      preferences.effectiveDarkMode ? '다크 모드' : '라이트 모드',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey[500],
+                      ),
                     ),
                   ],
-                  onChanged: (ThemeMode? mode) async {
-                    if (mode != null) {
-                      await preferences.setThemeMode(mode);
-                      HapticFeedback.lightImpact();
-                    }
-                  },
                 ),
+              ),
+              Switch(
+                value: preferences.effectiveDarkMode,
+                onChanged: (value) async {
+                  await preferences.toggleDarkMode();
+                  HapticFeedback.lightImpact();
+                },
+                activeColor: AppTheme.primaryBlue,
               ),
             ],
           ),
@@ -362,15 +339,29 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: Text(
-                  '푸시 알림',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.isDark(context)
-                        ? AppTheme.darkText
-                        : AppTheme.lightText,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '푸시 알림',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.isDark(context)
+                            ? AppTheme.darkText
+                            : AppTheme.lightText,
+                      ),
+                    ),
+                    Text(
+                      preferences.isPushNotificationEnabled
+                          ? '알림 받음'
+                          : '알림 받지 않음',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Switch(
@@ -380,19 +371,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                       await preferences.setPushNotificationEnabled(value);
                   HapticFeedback.lightImpact();
 
-                  if (success) {
-                    _showSnackBarImmediate(
-                        value ? '푸시 알림이 활성화되었습니다' : '푸시 알림이 비활성화되었습니다');
-                  } else {
-                    if (value) {
-                      // 켜려고 했지만 실패한 경우
-                      // 설정 앱으로 이동했을 수도 있으므로 안내만 표시
-                      _showSnackBarImmediate('알림 권한을 허용한 후 다시 시도해주세요');
-                    } else {
-                      // 끄려고 했지만 실패한 경우
-                      _showSnackBarImmediate('푸시 알림 설정 변경에 실패했습니다');
-                    }
-                  }
+                  // 더 이상 스낵바 메시지를 표시하지 않음 (직관적인 토글 느낌)
                 },
                 activeColor: AppTheme.primaryBlue,
               ),
