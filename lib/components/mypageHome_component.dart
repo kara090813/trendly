@@ -101,7 +101,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                         child: Text(
                           "마이페이지",
                           style: TextStyle(
-                            fontSize: 22.sp,
+                            fontSize: 24.sp,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.isDark(context)
                                 ? AppTheme.darkText
@@ -196,7 +196,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             child: Icon(
               Icons.person,
               color: Colors.white,
-              size: 28.sp,
+              size: 30.sp,
             ),
           ),
           SizedBox(width: 16.w),
@@ -211,7 +211,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                       ? '${preferences.nickname}님'
                       : '익명 사용자',
                   style: TextStyle(
-                    fontSize: 20.sp,
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.isDark(context)
                         ? AppTheme.darkText
@@ -224,14 +224,14 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                   children: [
                     Icon(
                       Icons.calendar_today,
-                      size: 14.sp,
+                      size: 16.sp,
                       color: Colors.grey[500],
                     ),
                     SizedBox(width: 4.w),
                     Text(
                       '설치일: ${_getInstallDateString(preferences.installDate)}',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 14.sp,
                         color: Colors.grey[500],
                       ),
                     ),
@@ -267,12 +267,12 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
         children: [
           Row(
             children: [
-              Icon(Icons.tune, size: 18.sp, color: AppTheme.primaryBlue),
+              Icon(Icons.tune, size: 20.sp, color: AppTheme.primaryBlue),
               SizedBox(width: 8.w),
               Text(
                 '빠른 설정',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.isDark(context)
                       ? AppTheme.darkText
@@ -288,7 +288,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             children: [
               Icon(
                 preferences.effectiveDarkMode ? Icons.dark_mode : Icons.light_mode,
-                size: 20.sp,
+                size: 22.sp,
                 color: AppTheme.primaryBlue,
               ),
               SizedBox(width: 12.w),
@@ -299,7 +299,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     Text(
                       '라이트/다크 모드',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.isDark(context)
                             ? AppTheme.darkText
@@ -309,7 +309,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     Text(
                       preferences.effectiveDarkMode ? '다크 모드' : '라이트 모드',
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 13.sp,
                         color: Colors.grey[500],
                       ),
                     ),
@@ -334,7 +334,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             children: [
               Icon(
                 Icons.notifications_outlined,
-                size: 20.sp,
+                size: 22.sp,
                 color: AppTheme.primaryBlue,
               ),
               SizedBox(width: 12.w),
@@ -345,7 +345,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     Text(
                       '푸시 알림',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.isDark(context)
                             ? AppTheme.darkText
@@ -357,7 +357,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                           ? '알림 받음'
                           : '알림 받지 않음',
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 13.sp,
                         color: Colors.grey[500],
                       ),
                     ),
@@ -409,12 +409,12 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           Row(
             children: [
               Icon(Icons.account_circle_outlined,
-                  color: AppTheme.primaryBlue, size: 20.sp),
+                  color: AppTheme.primaryBlue, size: 22.sp),
               SizedBox(width: 8.w),
               Text(
                 '프로필 관리',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.isDark(context)
                       ? AppTheme.darkText
@@ -427,7 +427,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           Text(
             '닉네임 및 비밀번호 설정',
             style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: 14.sp,
               color: Colors.grey[600],
             ),
           ),
@@ -522,12 +522,12 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           // 섹션 헤더
           Row(
             children: [
-              Icon(Icons.history, color: AppTheme.primaryBlue, size: 20.sp),
+              Icon(Icons.history, color: AppTheme.primaryBlue, size: 22.sp),
               SizedBox(width: 8.w),
               Text(
                 '내 활동',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.isDark(context)
                       ? AppTheme.darkText
@@ -540,7 +540,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
           Text(
             '토론방, 댓글, 좋아요 히스토리',
             style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: 14.sp,
               color: Colors.grey[600],
             ),
           ),
@@ -592,7 +592,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                 ),
                 child: Icon(
                   icon,
-                  size: 16.sp,
+                  size: 18.sp,
                   color: AppTheme.primaryBlue,
                 ),
               ),
@@ -603,7 +603,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.isDark(context)
                             ? AppTheme.darkText
@@ -614,7 +614,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     Text(
                       count,
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryBlue,
                       ),
@@ -624,7 +624,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                size: 14.sp,
+                size: 16.sp,
                 color: Colors.grey[500],
               ),
             ],
@@ -653,7 +653,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
             Text(
               label,
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[700],
               ),
@@ -671,7 +671,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                   child: Text(
                     '수정',
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: 14.sp,
                       color: AppTheme.primaryBlue,
                       fontWeight: FontWeight.w600,
                     ),
@@ -700,7 +700,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     controller: controller,
                     obscureText: obscureText,
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: 16.sp,
                       color: AppTheme.isDark(context)
                           ? AppTheme.darkText
                           : AppTheme.lightText,
@@ -709,7 +709,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                       border: InputBorder.none,
                       hintText: placeholder,
                       hintStyle: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         color: Colors.grey[500],
                       ),
                     ),
@@ -727,7 +727,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                   ),
                   child: Icon(
                     Icons.check,
-                    size: 16.sp,
+                    size: 18.sp,
                     color: Colors.white,
                   ),
                 ),
@@ -743,7 +743,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                   ),
                   child: Icon(
                     Icons.close,
-                    size: 16.sp,
+                    size: 18.sp,
                     color: Colors.white,
                   ),
                 ),
@@ -766,7 +766,7 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                       ? placeholder
                       : (obscureText ? '••••••••' : controller.text)),
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 16.sp,
                 color: (displayText != null && displayText == placeholder) ||
                         controller.text.isEmpty
                     ? Colors.grey[500]

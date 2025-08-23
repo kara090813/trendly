@@ -160,7 +160,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
+            Icon(Icons.error_outline, size: 50.sp, color: Colors.red),
             SizedBox(height: 16.h),
             Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red)),
             SizedBox(height: 16.h),
@@ -293,7 +293,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                 child: Icon(
                   Icons.local_fire_department,
                   color: Colors.white,
-                  size: 28.sp,
+                  size: 30.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -304,7 +304,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       "인기 토론방",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 30.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -314,7 +314,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       "가장 핫한 토론에 참여하세요",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -353,7 +353,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       'HOT 10',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -402,7 +402,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                 Text(
                   "TOP 3",
                   style: TextStyle(
-                    fontSize: 20.sp,
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.getTextColor(context),
                   ),
@@ -421,14 +421,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     children: [
                       Icon(
                         Icons.swipe,
-                        size: 14.sp,
+                        size: 16.sp,
                         color: isDark ? Colors.grey[500] : Colors.grey[600],
                       ),
                       SizedBox(width: 4.w),
                       Text(
                         "스와이프",
                         style: TextStyle(
-                          fontSize: 11.sp,
+                          fontSize: 13.sp,
                           color: isDark ? Colors.grey[500] : Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
@@ -547,7 +547,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                           '${index + 1}',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 16.sp,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -563,7 +563,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                             room.keyword,
                             style: TextStyle(
                               color: textColor,
-                              fontSize: 16.sp,
+                              fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
                               height: 1.2,
                             ),
@@ -582,7 +582,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                                 child: Text(
                                   category,
                                   style: TextStyle(
-                                    fontSize: 10.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                     color: categoryColor,
                                   ),
@@ -591,14 +591,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                               SizedBox(width: 6.w),
                               Icon(
                                 Icons.local_fire_department,
-                                size: 12.sp,
+                                size: 14.sp,
                                 color: Colors.orange,
                               ),
                               SizedBox(width: 2.w),
                               Text(
                                 'HOT',
                                 style: TextStyle(
-                                  fontSize: 10.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.orange,
                                 ),
@@ -681,14 +681,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
       children: [
         Icon(
           icon,
-          size: 14.sp,
+          size: 16.sp,
           color: color,
         ),
         SizedBox(width: 4.w),
         Text(
           value,
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -708,7 +708,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
         child: Text(
           '토론 참여를 기다리고 있습니다',
           style: TextStyle(
-            fontSize: 11.sp,
+            fontSize: 13.sp,
             color: isDark ? Colors.grey[500] : Colors.grey[600],
             fontStyle: FontStyle.italic,
           ),
@@ -755,14 +755,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   children: [
                     Icon(
                       Icons.star_rounded,
-                      size: 10.sp,
+                      size: 12.sp,
                       color: Colors.white,
                     ),
                     SizedBox(width: 2.w),
                     Text(
                       'BEST',
                       style: TextStyle(
-                        fontSize: 9.sp,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -782,14 +782,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   children: [
                     Icon(
                       Icons.thumb_up,
-                      size: 10.sp,
+                      size: 12.sp,
                       color: const Color(0xFF00AEEF),
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       bestComment['like_count'].toString(),
                       style: TextStyle(
-                        fontSize: 10.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF00AEEF),
                       ),
@@ -805,7 +805,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
             child: Text(
               bestComment['comment'] ?? '',
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 14.sp,
                 height: 1.3,
                 color: isDark ? Colors.grey[300] : Colors.grey[700],
                 fontWeight: FontWeight.w500,
@@ -938,14 +938,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                         children: [
                           Icon(
                             Icons.star_rounded,
-                            size: 10.sp,
+                            size: 12.sp,
                             color: Colors.white,
                           ),
                           SizedBox(width: 2.w),
                           Text(
                             'BEST',
                             style: TextStyle(
-                              fontSize: 9.sp,
+                              fontSize: 11.sp,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
@@ -958,7 +958,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                       child: Text(
                         bestComment['comment'] ?? '',
                         style: TextStyle(
-                          fontSize: 12.sp,
+                          fontSize: 14.sp,
                           height: 1.3,
                           color: isDark ? Colors.grey[300] : Colors.grey[700],
                           fontWeight: FontWeight.w500,
@@ -1027,7 +1027,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                 child: Text(
                   hasBestComment ? '' : '토론 참여를 기다리고 있습니다',
                   style: TextStyle(
-                    fontSize: 11.sp,
+                    fontSize: 13.sp,
                     color: isDark ? Colors.grey[500] : Colors.grey[600],
                     fontStyle: FontStyle.italic,
                   ),
@@ -1056,7 +1056,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
         Text(
           '$text $percentage',
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w700,
             color: AppTheme.isDark(context) 
               ? Colors.grey[300] 
@@ -1082,7 +1082,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           Text(
             "TOP 4~10",
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: 20.sp,
               fontWeight: FontWeight.w700,
               color: AppTheme.getTextColor(context),
             ),
@@ -1192,7 +1192,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     children: [
                       Icon(
                         dominantIcon,
-                        size: 26.sp,
+                        size: 28.sp,
                         color: dominantColor,
                       ),
                       Positioned(
@@ -1213,7 +1213,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                             child: Text(
                               '$rank',
                               style: TextStyle(
-                                fontSize: 10.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w900,
                                 color: dominantColor,
                               ),
@@ -1236,7 +1236,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                       Text(
                         room.keyword,
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.w700,
                           color: textColor,
                           height: 1.2,
@@ -1256,30 +1256,30 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                             child: Text(
                               category,
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: categoryColor,
                               ),
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          Icon(Icons.forum, size: 12.sp, color: textColor.withOpacity(0.4)),
+                          Icon(Icons.forum, size: 14.sp, color: textColor.withOpacity(0.4)),
                           SizedBox(width: 3.w),
                           Text(
                             '${room.comment_count ?? 0}',
                             style: TextStyle(
-                              fontSize: 12.sp,
+                              fontSize: 14.sp,
                               color: textColor.withOpacity(0.5),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          Icon(Icons.favorite, size: 12.sp, color: textColor.withOpacity(0.4)),
+                          Icon(Icons.favorite, size: 14.sp, color: textColor.withOpacity(0.4)),
                           SizedBox(width: 3.w),
                           Text(
                             '${_getTotalReactions(room)}',
                             style: TextStyle(
-                              fontSize: 12.sp,
+                              fontSize: 14.sp,
                               color: textColor.withOpacity(0.5),
                               fontWeight: FontWeight.w500,
                             ),
@@ -1298,7 +1298,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       _getCompactTime(room.updated_at ?? room.created_at),
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 14.sp,
                         color: textColor.withOpacity(0.4),
                         fontWeight: FontWeight.w500,
                       ),
@@ -1306,7 +1306,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     SizedBox(height: 4.h),
                     Icon(
                       Icons.arrow_forward_ios,
-                      size: 14.sp,
+                      size: 16.sp,
                       color: dominantColor.withOpacity(0.6),
                     ),
                   ],

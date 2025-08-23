@@ -402,7 +402,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 child: Icon(
                   Icons.radio_button_checked,
                   color: Colors.white,
-                  size: 28.sp,
+                  size: 30.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -413,7 +413,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                     Text(
                       "실시간 토론방",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 30.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -423,7 +423,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                     Text(
                       "실시간 진행 중인 토론에 참여하세요",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -460,7 +460,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                     Text(
                       'LIVE ${_getCategoryCount('전체')}',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -562,7 +562,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             Text(
                               category,
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 15.sp,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                 color: isSelected 
                                   ? Colors.white
@@ -573,7 +573,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             Text(
                               '${_getCategoryCount(category)}',
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected 
                                   ? Colors.white.withOpacity(0.8)
@@ -698,7 +698,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                               SizedBox(width: 2.w),
                               Icon(
                                 Icons.keyboard_arrow_down,
-                                size: 14.sp,
+                                size: 16.sp,
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
                             ],
@@ -788,7 +788,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   child: Text(
                     category,
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
                       color: categoryColor,
                     ),
@@ -802,7 +802,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   child: Text(
                     room.keyword,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 17.sp,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.getTextColor(context),
                       height: 1.2,
@@ -820,14 +820,14 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   children: [
                     Icon(
                       Icons.chat_bubble_outline,
-                      size: 12.sp,
+                      size: 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       '${room.comment_count ?? 0}',
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
@@ -843,14 +843,14 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   children: [
                     Icon(
                       Icons.people_outline,
-                      size: 12.sp,
+                      size: 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       '$totalReactions',
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
@@ -863,7 +863,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 // 화살표 아이콘
                 Icon(
                   Icons.arrow_forward_ios,
-                  size: 12.sp,
+                  size: 14.sp,
                   color: isDark ? Colors.grey[500] : Colors.grey[400],
                 ),
               ],
@@ -894,7 +894,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
             ),
             child: Icon(
               Icons.forum_outlined,
-              size: 48.sp,
+              size: 50.sp,
               color: Color(0xFF10B981),
             ),
           ),
@@ -902,7 +902,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
           Text(
             '진행 중인 토론방이 없습니다',
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: 18.sp,
               fontWeight: FontWeight.w600,
               color: AppTheme.getTextColor(context),
             ),
@@ -911,7 +911,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
           Text(
             '새로운 토론방이 시작되면 알려드릴게요',
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: 16.sp,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
               height: 1.4,
             ),
