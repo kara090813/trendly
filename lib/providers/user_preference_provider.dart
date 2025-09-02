@@ -58,6 +58,15 @@ class UserPreferenceProvider with ChangeNotifier {
   
   int get historyHomeLastTabIndex => _userPreferences?.historyHomeLastTabIndex ?? 0;
   
+  // 홈 위젯 설정 getters
+  bool get isHomeWidgetEnabled => _userPreferences?.isHomeWidgetEnabled ?? false;
+  
+  int get homeWidgetUpdateInterval => _userPreferences?.homeWidgetUpdateInterval ?? 30;
+  
+  int get homeWidgetKeywordCount => _userPreferences?.homeWidgetKeywordCount ?? 5;
+  
+  DateTime? get lastWidgetUpdate => _userPreferences?.lastWidgetUpdate;
+  
   bool get isLoadingProfile => _isLoadingProfile;
   
   bool get isLoadingComments => _isLoadingComments;
@@ -397,5 +406,67 @@ class UserPreferenceProvider with ChangeNotifier {
       _userPreferences = _hiveService.getUserPreferences();
       notifyListeners();
     }
+  }
+
+  // 홈 위젯 설정 methods
+  Future<void> setHomeWidgetEnabled(bool enabled) async {
+    try {
+      // UserPreferences 객체가 없으면 새로 생성
+      _userPreferences ??= await _ensureUserPreferences();
+      
+      _userPreferences!.setHomeWidgetEnabled(enabled);
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 홈 위젯 활성화 설정 오류: $e');
+    }
+  }
+
+  Future<void> setHomeWidgetUpdateInterval(int minutes) async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+      
+      _userPreferences!.setHomeWidgetUpdateInterval(minutes);
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 홈 위젯 업데이트 간격 설정 오류: $e');
+    }
+  }
+
+  Future<void> setHomeWidgetKeywordCount(int count) async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+      
+      _userPreferences!.setHomeWidgetKeywordCount(count);
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 홈 위젯 키워드 수 설정 오류: $e');
+    }
+  }
+
+  Future<void> setLastWidgetUpdate() async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+      
+      _userPreferences!.setLastWidgetUpdate();
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 마지막 위젯 업데이트 시간 설정 오류: $e');
+    }
+  }
+
+  // UserPreferences 객체가 없을 때 기본값으로 생성
+  Future<UserPreferences> _ensureUserPreferences() async {
+    if (_userPreferences != null) {
+      return _userPreferences!;
+    }
+    
+    // 새로운 UserPreferences 객체 생성
+    final newPrefs = UserPreferences.empty();
+    await _hiveService.saveUserPreferences(newPrefs);
+    return newPrefs;
   }
 }

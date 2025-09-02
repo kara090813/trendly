@@ -3,3 +3,4 @@ export 'keywordDetail_screen.dart';
 export 'discussionRoom_screen.dart';
 export 'commentRoom_screen.dart';
 export 'my_activity_screen.dart';
+export 'appInfo_screen.dart';

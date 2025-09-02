@@ -41,6 +41,18 @@ class UserPreferences extends HiveObject {
   @HiveField(11)
   int historyHomeLastTabIndex;
 
+  @HiveField(12)
+  bool isHomeWidgetEnabled;
+
+  @HiveField(13)
+  int homeWidgetUpdateInterval; // in minutes
+
+  @HiveField(14)
+  int homeWidgetKeywordCount; // 1-5
+
+  @HiveField(15)
+  DateTime? lastWidgetUpdate;
+
   UserPreferences({
     this.nickname,
     this.password,
@@ -54,6 +66,10 @@ class UserPreferences extends HiveObject {
     this.isPushNotificationEnabled = true,
     this.discussionHomeLastTabIndex = 0,
     this.historyHomeLastTabIndex = 0,
+    this.isHomeWidgetEnabled = false,
+    this.homeWidgetUpdateInterval = 30, // 30 minutes
+    this.homeWidgetKeywordCount = 5, // show top 5 keywords
+    this.lastWidgetUpdate,
   })  : commentedRooms = commentedRooms ?? [],
         commentIds = commentIds ?? [],
         roomSentiments = roomSentiments ?? {},
@@ -78,6 +94,10 @@ class UserPreferences extends HiveObject {
       isPushNotificationEnabled: true,
       discussionHomeLastTabIndex: 0,
       historyHomeLastTabIndex: 0,
+      isHomeWidgetEnabled: false,
+      homeWidgetUpdateInterval: 30,
+      homeWidgetKeywordCount: 5,
+      lastWidgetUpdate: null,
     );
   }
 
@@ -196,5 +216,42 @@ class UserPreferences extends HiveObject {
     historyHomeLastTabIndex = index;
     lastUpdated = DateTime.now();
     save();
+  }
+
+  // 홈 위젯 활성화/비활성화
+  void setHomeWidgetEnabled(bool enabled) {
+    isHomeWidgetEnabled = enabled;
+    lastUpdated = DateTime.now();
+    save();
+  }
+
+  // 홈 위젯 업데이트 간격 설정 (분 단위)
+  void setHomeWidgetUpdateInterval(int minutes) {
+    homeWidgetUpdateInterval = minutes;
+    lastUpdated = DateTime.now();
+    save();
+  }
+
+  // 홈 위젯 키워드 수 설정 (1-5)
+  void setHomeWidgetKeywordCount(int count) {
+    if (count >= 1 && count <= 5) {
+      homeWidgetKeywordCount = count;
+      lastUpdated = DateTime.now();
+      save();
+    }
+  }
+
+  // 마지막 위젯 업데이트 시간 설정
+  void setLastWidgetUpdate() {
+    lastWidgetUpdate = DateTime.now();
+    lastUpdated = DateTime.now();
+    save();
+  }
+
+  // 위젯 업데이트가 필요한지 확인
+  bool shouldUpdateWidget() {
+    if (lastWidgetUpdate == null) return true;
+    final minutesSinceUpdate = DateTime.now().difference(lastWidgetUpdate!).inMinutes;
+    return minutesSinceUpdate >= homeWidgetUpdateInterval;
   }
 }

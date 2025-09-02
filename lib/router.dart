@@ -50,6 +50,14 @@ class AppRouter {
           return MyActivityScreen(initialTab: type);
         },
       ),
+      // 앱 정보 페이지
+      GoRoute(
+        path: '/app-info',
+        name: 'appInfo',
+        builder: (context, state) {
+          return AppInfoScreen();
+        },
+      ),
     ],
     debugLogDiagnostics: true,
   );

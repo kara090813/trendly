@@ -154,7 +154,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                     Text(
                       "이날의 검색어 Top3",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -168,7 +168,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                   child: Text(
                     "가장 화제가 된 검색어 순위",
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -273,7 +273,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                     child: Text(
                       '${keyword['rank']}',
                       style: TextStyle(
-                        fontSize: 20.sp,
+                        fontSize: 21.sp,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                       ),
@@ -302,7 +302,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                         child: Text(
                           keyword['category'] ?? '기타',
                           style: TextStyle(
-                            fontSize: 11.sp,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
                             color: keyword['textColor'],
                           ),
@@ -315,7 +315,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                       Text(
                         keyword['keyword'] ?? '',
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: 19.sp,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.getTextColor(context),
                           height: 1.2,
@@ -331,7 +331,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                         children: [
                           Icon(
                             Icons.trending_up_rounded,
-                            size: 14.sp,
+                            size: 13.sp,
                             color: isDark ? Colors.grey[400] : Colors.grey[600],
                           ),
                           SizedBox(width: 4.w),
@@ -339,7 +339,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                             child: Text(
                               keyword['stats'] ?? '데이터 없음',
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
@@ -360,7 +360,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                   ),
                   child: Icon(
                     Icons.keyboard_arrow_right_rounded,
-                    size: 18.sp,
+                    size: 17.sp,
                     color: keyword['textColor'],
                   ),
                 ),

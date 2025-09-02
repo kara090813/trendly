@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'dart:io' show Platform;
+import 'package:universal_platform/universal_platform.dart';
 
 class AdService {
   static final AdService _instance = AdService._internal();
@@ -17,7 +17,7 @@ class AdService {
   // 1. 광고 버전: isAdEnabled = true
   // 2. 광고 제거 버전: isAdEnabled = false
   // ========================================
-  static const bool isAdEnabled = true;
+  static const bool isAdEnabled = false;
   
   // ========================================
   // 성능 최적화 설정
@@ -28,27 +28,27 @@ class AdService {
   // 🚀 스크롤 성능 최적화
   static const bool enableScrollOptimization = true;
 
-  // 배너 광고 테스트 ID
+  // 배너 광고 실제 ID
   static String get bannerAdUnitId {
     if (kIsWeb) {
       return ''; // 웹은 지원하지 않음
-    } else if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111'; // Android 배너 테스트 ID
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/2934735716'; // iOS 배너 테스트 ID
+    } else if (UniversalPlatform.isAndroid) {
+      return 'ca-app-pub-1961572115316398/5639741771'; // Android 배너 실제 ID
+    } else if (UniversalPlatform.isIOS) {
+      return 'ca-app-pub-1961572115316398/8321745432'; // iOS 배너 실제 ID
     } else {
       throw UnsupportedError('Unsupported platform');
     }
   }
 
-  // 네이티브 광고 테스트 ID
+  // 네이티브 광고 실제 ID
   static String get nativeAdUnitId {
     if (kIsWeb) {
       return ''; // 웹은 지원하지 않음
-    } else if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/2247696110'; // Android 네이티브 테스트 ID
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/3986624511'; // iOS 네이티브 테스트 ID
+    } else if (UniversalPlatform.isAndroid) {
+      return 'ca-app-pub-1961572115316398/9514573455'; // Android 네이티브 실제 ID
+    } else if (UniversalPlatform.isIOS) {
+      return 'ca-app-pub-1961572115316398/4828404748'; // iOS 네이티브 실제 ID
     } else {
       throw UnsupportedError('Unsupported platform');
     }
@@ -69,7 +69,7 @@ class AdService {
     
     try {
       print('🚀 Initializing AdMob...');
-      print('🚀 Platform: ${Platform.isAndroid ? "Android" : "iOS"}');
+      print('🚀 Platform: ${UniversalPlatform.isAndroid ? "Android" : UniversalPlatform.isIOS ? "iOS" : "Web"}');
       print('🚀 Banner Ad Unit ID: ${bannerAdUnitId}');
       
       final InitializationStatus initializationStatus = await MobileAds.instance.initialize();

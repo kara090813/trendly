@@ -45,7 +45,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                 child: Icon(
                   Icons.history_rounded,
                   color: Colors.white,
-                  size: 28.sp,
+                  size: 29.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -56,7 +56,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                     Text(
                       "실검 타임머신",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -66,7 +66,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                     Text(
                       "과거의 실시간 검색어를 조회해보세요",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 15.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -137,7 +137,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                         child: Icon(
                           Icons.calendar_today_rounded,
                           color: Colors.white,
-                          size: 24.sp,
+                          size: 23.sp,
                         ),
                       ),
                       SizedBox(width: 16.w),
@@ -148,7 +148,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                             Text(
                               _formatDate(selectedDate),
                               style: TextStyle(
-                                fontSize: 24.sp,
+                                fontSize: 25.sp,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.getTextColor(context),
                                 height: 1.2,
@@ -158,7 +158,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                             Text(
                               _getRelativeDateText(selectedDate),
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: 16.sp,
                                 color: Color(0xFF3B82F6),
                                 fontWeight: FontWeight.w600,
                               ),
@@ -175,7 +175,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                         child: Icon(
                           Icons.arrow_forward_ios_rounded,
                           color: Color(0xFF3B82F6),
-                          size: 16.sp,
+                          size: 15.sp,
                         ),
                       ),
                     ],

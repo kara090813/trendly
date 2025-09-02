@@ -29,13 +29,17 @@ class UserPreferencesAdapter extends TypeAdapter<UserPreferences> {
       isPushNotificationEnabled: fields[9] as bool,
       discussionHomeLastTabIndex: fields[10] as int,
       historyHomeLastTabIndex: fields[11] as int,
+      isHomeWidgetEnabled: fields[12] as bool,
+      homeWidgetUpdateInterval: fields[13] as int,
+      homeWidgetKeywordCount: fields[14] as int,
+      lastWidgetUpdate: fields[15] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserPreferences obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.nickname)
       ..writeByte(1)
@@ -59,7 +63,15 @@ class UserPreferencesAdapter extends TypeAdapter<UserPreferences> {
       ..writeByte(10)
       ..write(obj.discussionHomeLastTabIndex)
       ..writeByte(11)
-      ..write(obj.historyHomeLastTabIndex);
+      ..write(obj.historyHomeLastTabIndex)
+      ..writeByte(12)
+      ..write(obj.isHomeWidgetEnabled)
+      ..writeByte(13)
+      ..write(obj.homeWidgetUpdateInterval)
+      ..writeByte(14)
+      ..write(obj.homeWidgetKeywordCount)
+      ..writeByte(15)
+      ..write(obj.lastWidgetUpdate);
   }
 
   @override

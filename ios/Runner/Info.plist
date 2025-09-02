@@ -78,9 +78,9 @@
 				</array>
 			</dict>
 		</array>
-		<!-- Google AdMob App ID (테스트용) -->
+		<!-- Google AdMob App ID (실제) -->
 		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-3940256099942544~1458002511</string>
+		<string>ca-app-pub-1961572115316398~7838529709</string>
 		<!-- Skip Ad Network Attribution -->
 		<key>SKAdNetworkItems</key>
 		<array>

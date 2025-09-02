@@ -28,7 +28,8 @@ class EnhancedSummaryBoxWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<EnhancedSummaryBoxWidget> createState() => _EnhancedSummaryBoxWidgetState();
+  State<EnhancedSummaryBoxWidget> createState() =>
+      _EnhancedSummaryBoxWidgetState();
 }
 
 class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
@@ -114,15 +115,17 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
       // PageController 업데이트
       if (_pageController.hasClients && !_isAnimatingToPage) {
         _isAnimatingToPage = true;
-        _pageController.animateToPage(
+        _pageController
+            .animateToPage(
           widget.currentIndex,
           duration: Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
-        ).then((_) {
+        )
+            .then((_) {
           _isAnimatingToPage = false;
         });
       }
-      
+
       // 사용자가 스와이프하면 힌트 숨기기
       if (_showSwipeHint) {
         setState(() {
@@ -131,7 +134,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
         _swipeHintController.stop();
       }
     }
-    
+
     // 요약 타입 변경시 스크롤 위치 초기화
     if (oldWidget.keywords != widget.keywords) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -160,7 +163,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     setState(() {
       _selectedSummaryType = type;
     });
-    
+
     // 요약 타입 변경시 스크롤 위치 초기화 및 상태 업데이트
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final controller in _scrollControllers.values) {
@@ -198,7 +201,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     final String summaryText = _getSummaryContent(keyword);
     List<String> keywordTokens = [keyword.keyword];
     keywordTokens.addAll(keyword.keyword.split(' '));
-    keywordTokens = keywordTokens.where((token) => token.isNotEmpty).toSet().toList();
+    keywordTokens =
+        keywordTokens.where((token) => token.isNotEmpty).toSet().toList();
     keywordTokens.sort((a, b) => b.length.compareTo(a.length));
 
     final List<String> paragraphs = summaryText.split('\n\n');
@@ -222,7 +226,9 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
 
         for (String token in keywordTokens) {
           if (currentPos + token.length <= paragraphLength &&
-              paragraph.substring(currentPos, currentPos + token.length).toLowerCase() ==
+              paragraph
+                      .substring(currentPos, currentPos + token.length)
+                      .toLowerCase() ==
                   token.toLowerCase()) {
             paragraphSpans.add(TextSpan(
               text: paragraph.substring(currentPos, currentPos + token.length),
@@ -245,7 +251,9 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
           int nextMatchPos = paragraphLength;
 
           for (String token in keywordTokens) {
-            int pos = paragraph.toLowerCase().indexOf(token.toLowerCase(), currentPos);
+            int pos = paragraph
+                .toLowerCase()
+                .indexOf(token.toLowerCase(), currentPos);
             if (pos != -1 && pos < nextMatchPos) {
               nextMatchPos = pos;
             }
@@ -257,7 +265,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
               fontSize: 18.sp,
               height: 1.7,
               fontWeight: FontWeight.w400,
-              color: AppTheme.isDark(context) 
+              color: AppTheme.isDark(context)
                   ? Colors.white.withOpacity(0.9)
                   : Colors.black87,
             ),
@@ -339,15 +347,18 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
       if (keyword.type1 is List && (keyword.type1 as List).isNotEmpty) {
         String type1String = (keyword.type1 as List).first.toString();
 
-        if (type1String.trim().startsWith('[') && type1String.trim().endsWith(']')) {
+        if (type1String.trim().startsWith('[') &&
+            type1String.trim().endsWith(']')) {
           String cleaned = type1String.replaceAll(RegExp(r"[\[\]']"), "");
           summaryLines = cleaned.split(',').map((s) => s.trim()).toList();
         } else {
-          summaryLines = (keyword.type1 as List).map((e) => e.toString()).toList();
+          summaryLines =
+              (keyword.type1 as List).map((e) => e.toString()).toList();
         }
       } else if (keyword.type1 is Map) {
         // type1이 Map인 경우 처리 (API 사양 변경에 따라)
-        final Map<String, dynamic> type1Map = keyword.type1 as Map<String, dynamic>;
+        final Map<String, dynamic> type1Map =
+            keyword.type1 as Map<String, dynamic>;
         summaryLines = type1Map.values.map((e) => e.toString()).toList();
       }
 
@@ -376,7 +387,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
   // 안전한 글래스모피즘 스크롤바
   Widget _buildCustomScrollbar(int index) {
     final controller = _scrollControllers[index]!;
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return AnimatedBuilder(
@@ -399,16 +410,19 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
               final maxScrollExtent = scrollPosition.maxScrollExtent;
               final currentScroll = scrollPosition.pixels;
               final containerHeight = scrollPosition.viewportDimension;
-              
+
               // 스크롤할 내용이 없으면 스크롤바 숨김
               if (maxScrollExtent <= 0) {
                 return SizedBox.shrink();
               }
 
-              final scrollRatio = (currentScroll / maxScrollExtent).clamp(0.0, 1.0);
-              final thumbHeight = (containerHeight * 0.25).clamp(40.h, containerHeight * 0.7);
+              final scrollRatio =
+                  (currentScroll / maxScrollExtent).clamp(0.0, 1.0);
+              final thumbHeight =
+                  (containerHeight * 0.25).clamp(40.h, containerHeight * 0.7);
               final trackHeight = containerHeight - 16.h;
-              final thumbPosition = (trackHeight - thumbHeight) * scrollRatio + 8.h;
+              final thumbPosition =
+                  (trackHeight - thumbHeight) * scrollRatio + 8.h;
 
               return Container(
                 width: 12.w,
@@ -454,9 +468,12 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         onPanUpdate: (details) {
                           try {
                             final delta = details.delta.dy;
-                            final scrollSensitivity = maxScrollExtent / trackHeight;
-                            final newPosition = currentScroll + (delta * scrollSensitivity);
-                            controller.jumpTo(newPosition.clamp(0.0, maxScrollExtent));
+                            final scrollSensitivity =
+                                maxScrollExtent / trackHeight;
+                            final newPosition =
+                                currentScroll + (delta * scrollSensitivity);
+                            controller.jumpTo(
+                                newPosition.clamp(0.0, maxScrollExtent));
                           } catch (e) {
                             // 드래그 중 에러 무시
                           }
@@ -544,13 +561,13 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
           end: Alignment.bottomCenter,
           colors: AppTheme.isDark(context)
               ? [
-            Color(0xFF1A1A1A),
-            Color(0xFF0F0F0F),
-          ]
+                  Color(0xFF1A1A1A),
+                  Color(0xFF0F0F0F),
+                ]
               : [
-            Color(0xFFF8F9FA),
-            Color(0xFFE9ECEF),
-          ],
+                  Color(0xFFF8F9FA),
+                  Color(0xFFE9ECEF),
+                ],
         ),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(32.r),
@@ -566,7 +583,9 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
             width: 40.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[400],
+              color: AppTheme.isDark(context)
+                  ? Colors.grey[600]
+                  : Colors.grey[400],
               borderRadius: BorderRadius.circular(2.r),
             ),
           ),
@@ -581,14 +600,18 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                   Icon(
                     Icons.swipe,
                     size: 16.sp,
-                    color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
+                    color: AppTheme.isDark(context)
+                        ? Colors.grey[400]
+                        : Colors.grey[600],
                   ),
                   SizedBox(width: 6.w),
                   Text(
                     '좌우로 넘겨서 다른 키워드 보기',
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
+                      color: AppTheme.isDark(context)
+                          ? Colors.grey[400]
+                          : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -612,7 +635,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                       PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {
-                          if (!_isAnimatingToPage && widget.onPageChanged != null) {
+                          if (!_isAnimatingToPage &&
+                              widget.onPageChanged != null) {
                             widget.onPageChanged!(index);
                           }
                         },
@@ -620,13 +644,16 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: EdgeInsets.symmetric(horizontal: 4.w),
-                            child: _buildStreamlinedCard(widget.keywords[index], index),
+                            child: _buildStreamlinedCard(
+                                widget.keywords[index], index),
                           );
                         },
                       ),
 
                       // 스와이프 힌트 애니메이션
-                      if (_showSwipeHint && widget.keywords.length > 1 && _cardAnimationController.isCompleted)
+                      if (_showSwipeHint &&
+                          widget.keywords.length > 1 &&
+                          _cardAnimationController.isCompleted)
                         AnimatedBuilder(
                           animation: _swipeHintAnimation,
                           builder: (context, child) {
@@ -642,11 +669,13 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                                       child: Container(
                                         padding: EdgeInsets.all(8.w),
                                         decoration: BoxDecoration(
-                                          color: Color(0xFF19B3F6).withOpacity(0.9),
+                                          color: Color(0xFF19B3F6)
+                                              .withOpacity(0.9),
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Color(0xFF19B3F6).withOpacity(0.4),
+                                              color: Color(0xFF19B3F6)
+                                                  .withOpacity(0.4),
                                               blurRadius: 10,
                                               offset: Offset(0, 3),
                                             ),
@@ -663,7 +692,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                                 ),
                                 // 우측 화살표
                                 Positioned(
-                                  right: -5.w + (10 * _swipeHintAnimation.value),
+                                  right:
+                                      -5.w + (10 * _swipeHintAnimation.value),
                                   top: 0,
                                   bottom: 0,
                                   child: IgnorePointer(
@@ -671,11 +701,13 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                                       child: Container(
                                         padding: EdgeInsets.all(8.w),
                                         decoration: BoxDecoration(
-                                          color: Color(0xFF19B3F6).withOpacity(0.9),
+                                          color: Color(0xFF19B3F6)
+                                              .withOpacity(0.9),
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Color(0xFF19B3F6).withOpacity(0.4),
+                                              color: Color(0xFF19B3F6)
+                                                  .withOpacity(0.4),
                                               blurRadius: 10,
                                               offset: Offset(0, 3),
                                             ),
@@ -709,7 +741,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   widget.keywords.length,
-                      (index) => Container(
+                  (index) => Container(
                     margin: EdgeInsets.symmetric(horizontal: 4.w),
                     width: index == widget.currentIndex ? 16.w : 8.w,
                     height: 8.w,
@@ -717,8 +749,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                       color: index == widget.currentIndex
                           ? Color(0xFF19B3F6)
                           : AppTheme.isDark(context)
-                          ? Colors.grey[600]
-                          : Colors.grey[300],
+                              ? Colors.grey[600]
+                              : Colors.grey[300],
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
@@ -727,8 +759,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
             ),
 
           // 단일 키워드일 때 하단 여백
-          if (widget.keywords.length == 1)
-            SizedBox(height: 20.h),
+          if (widget.keywords.length == 1) SizedBox(height: 20.h),
         ],
       ),
     );
@@ -776,7 +807,6 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                     offset: Offset(0, 6),
                   ),
                 ],
-
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20.r),
@@ -787,13 +817,13 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                 end: Alignment.bottomRight,
                 colors: AppTheme.isDark(context)
                     ? [
-                  Color(0xFF2A2A36),
-                  Color(0xFF1E1E2A),
-                ]
+                        Color(0xFF2A2A36),
+                        Color(0xFF1E1E2A),
+                      ]
                     : [
-                  Colors.white,
-                  Colors.white,
-                ],
+                        Colors.white,
+                        Colors.white,
+                      ],
               ),
             ),
             child: Padding(
@@ -806,10 +836,13 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                   Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 4.h),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Color(0xFF19B3F6), Color(0xFF0EA5E9)],
+                            colors: AppTheme.isDark(context)
+                                ? [Color(0xFF0C82B6), Color(0xFF0369A1)]
+                                : [Color(0xFF19B3F6), Color(0xFF0EA5E9)],
                           ),
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
@@ -823,17 +856,16 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         child: Text(
                           '${index + 1}위',
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                       ),
-
                       Spacer(),
-
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 6.w, vertical: 2.h),
                         decoration: BoxDecoration(
                           color: Color(0xFF19B3F6).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8.r),
@@ -866,7 +898,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                     },
                     borderRadius: BorderRadius.circular(12.r),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 12.h),
                       decoration: BoxDecoration(
                         color: Color(0xFF19B3F6).withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12.r),
@@ -964,7 +997,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                               : Color(0xFF19B3F6).withOpacity(0.15),
                           width: 1.5,
                         ),
-                        boxShadow: AppTheme.isDark(context) 
+                        boxShadow: AppTheme.isDark(context)
                             ? [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.3),
@@ -1014,18 +1047,21 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                             // 콘텐츠
                             // 콘텐츠 - 독특한 스크롤바 디자인
                             Padding(
-                              padding: EdgeInsets.fromLTRB(16.w, 16.w, 4.w, 16.w), // 우측 패딩 최소화
+                              padding: EdgeInsets.fromLTRB(
+                                  16.w, 16.w, 4.w, 16.w), // 우측 패딩 최소화
                               child: Stack(
                                 children: [
                                   // 메인 콘텐츠 영역
                                   Padding(
-                                    padding: EdgeInsets.only(right: 16.w), // 스크롤바 공간 확보
+                                    padding: EdgeInsets.only(right: 16.w),
+                                    // 스크롤바 공간 확보
                                     child: SingleChildScrollView(
                                       controller: _scrollControllers[index],
                                       physics: BouncingScrollPhysics(),
                                       child: _selectedSummaryType == '3줄'
                                           ? Center(
-                                              child: _buildSummaryContent(keyword),
+                                              child:
+                                                  _buildSummaryContent(keyword),
                                             )
                                           : _buildSummaryContent(keyword),
                                     ),
@@ -1045,8 +1081,37 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: 12.h),
+                  
+                  // AI 생성 콘텐츠 안내 문구
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 12.sp,
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[500]
+                              : Colors.grey[400],
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'AI가 생성한 요약입니다',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppTheme.isDark(context)
+                                ? Colors.grey[500]
+                                : Colors.grey[400],
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

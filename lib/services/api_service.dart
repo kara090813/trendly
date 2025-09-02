@@ -1,9 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/_models.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+// Conditional imports for platform-specific HTTP client
+import 'api_service_stub.dart'
+    if (dart.library.io) 'api_service_io.dart'
+    if (dart.library.html) 'api_service_web.dart' as platform;
 
 /// ApiService 클래스
 /// API 통신과 관련된 모든 메서드를 포함하고 있습니다.
@@ -27,15 +31,9 @@ class ApiService {
   
   // HTTP 클라이언트 초기화
   void _initializeClient() {
-    if (_bypassSSL) {
-      // SSL 인증서 검증을 우회하는 HttpClient 생성
-      final httpClient = HttpClient()
-        ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-      _client = IOClient(httpClient);
+    _client = platform.createHttpClient(_bypassSSL);
+    if (_bypassSSL && !kIsWeb) {
       print('⚠️ WARNING: SSL certificate verification is bypassed. This should only be used in development!');
-    } else {
-      // 일반 HTTP 클라이언트 사용
-      _client = http.Client();
     }
   }
 

@@ -282,7 +282,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
                 Text(
                   '날짜 선택',
                   style: TextStyle(
-                    fontSize: 24.sp,
+                    fontSize: 25.sp,
                     fontWeight: FontWeight.w700,
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
@@ -415,7 +415,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
                   ? Colors.grey
                   : (isSelected ? Colors.white : (isDarkMode ? Colors.white70 : Colors.black87)),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                fontSize: 14.sp,
+                fontSize: 15.sp,
               ),
             ),
           ),
@@ -578,7 +578,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           Text(
             '데이터를 불러올 수 없습니다',
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: 19.sp,
               fontWeight: FontWeight.w600,
               color: Colors.red,
             ),
@@ -587,7 +587,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           Text(
             _errorMessage ?? '알 수 없는 오류가 발생했습니다',
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: 15.sp,
               color: Colors.red.withOpacity(0.8),
             ),
             textAlign: TextAlign.center,
@@ -613,7 +613,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
             Text(
               '데이터를 불러오는 중...',
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 15.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -687,7 +687,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
             Text(
               '데이터가 없습니다',
               style: TextStyle(
-                fontSize: 24.sp,
+                fontSize: 23.sp,
                 fontWeight: FontWeight.w700,
                 color: isDarkMode ? Colors.white : Colors.black,
               ),
@@ -699,7 +699,7 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
             Text(
               '해당 날짜의 키워드 데이터를\n찾을 수 없습니다',
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 15.sp,
                 color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                 height: 1.5,
               ),

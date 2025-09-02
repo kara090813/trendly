@@ -904,7 +904,20 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
   }
 
   String _getFormattedTime() {
-    final now = DateTime.now();
-    return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+    // 10위 키워드의 시간을 사용 (없으면 현재 시간 사용)
+    DateTime targetTime;
+    
+    if (_keywords.isNotEmpty) {
+      // 10위 키워드를 찾거나, 마지막 키워드 사용
+      final lastKeyword = _keywords.length >= 10 
+          ? _keywords[9]  // 10위 (index 9)
+          : _keywords.last;  // 10개 미만이면 마지막 키워드
+      targetTime = lastKeyword.created_at.toLocal();  // UTC to local time
+    } else {
+      // 키워드가 없으면 현재 시간 사용
+      targetTime = DateTime.now();
+    }
+    
+    return '${targetTime.hour.toString().padLeft(2, '0')}:${targetTime.minute.toString().padLeft(2, '0')}:${targetTime.second.toString().padLeft(2, '0')}';
   }
 }

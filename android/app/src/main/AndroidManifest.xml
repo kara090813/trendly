@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
         android:label="trendly"
@@ -77,16 +79,35 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/notification_color" />
             
-        <!-- Google AdMob App ID (테스트용) -->
+        <!-- Google AdMob App ID (실제) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-1961572115316398~1798932633"/>
             
         <!-- AD_SERVICES_CONFIG 충돌 해결 -->
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
             android:resource="@xml/gma_ad_services_config"
             tools:replace="android:resource" />
+            
+        <!-- Trendly Home Widget Provider -->
+        <receiver android:name="net.lamoss.trendly.TrendlyWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/trendly_widget_info" />
+        </receiver>
+        
+        <!-- Widget Auto-Update Service -->
+        <receiver android:name="net.lamoss.trendly.WidgetUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.trendly.UPDATE_WIDGET" />
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

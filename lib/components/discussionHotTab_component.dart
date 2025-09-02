@@ -1199,8 +1199,8 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                         top: 2,
                         right: 2,
                         child: Container(
-                          width: 16.w,
-                          height: 16.w,
+                          width: 20.w,
+                          height: 20.w,
                           decoration: BoxDecoration(
                             color: isDark ? Color(0xFF2D3748) : Colors.white,
                             shape: BoxShape.circle,
@@ -1208,14 +1208,22 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                               color: dominantColor,
                               width: 1.5,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
                           ),
                           child: Center(
                             child: Text(
                               '$rank',
                               style: TextStyle(
-                                fontSize: 12.sp,
+                                fontSize: 11.sp,
                                 fontWeight: FontWeight.w900,
                                 color: dominantColor,
+                                height: 1.0,
                               ),
                             ),
                           ),

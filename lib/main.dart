@@ -12,9 +12,11 @@ import 'services/user_preference_service.dart';
 import 'services/hive_service.dart';
 import 'services/firebase_messaging_service.dart';
 import 'services/ad_service.dart';
+import 'services/home_widget_service.dart';
 import 'dart:ui' as ui;
 import 'dart:async' show unawaited;
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -43,18 +45,31 @@ void main() async {
     // Hive 초기화 실패해도 앱은 계속 실행 (기본값으로 동작)
   }
   
-  // FCM Background 메시지 핸들러 설정
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // 모바일 플랫폼에서만 실행되는 서비스들
+  if (!kIsWeb) {
+    // FCM Background 메시지 핸들러 설정
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // FCM 서비스 초기화를 백그라운드에서 비동기로 실행
-  unawaited(
-    FirebaseMessagingService().initializeFirebaseMessaging().catchError((e) {
-      print('❌ [MAIN] Failed to initialize FCM: $e');
-    })
-  );
+    // FCM 서비스 초기화를 백그라운드에서 비동기로 실행
+    unawaited(
+      FirebaseMessagingService().initializeFirebaseMessaging().catchError((e) {
+        print('❌ [MAIN] Failed to initialize FCM: $e');
+      })
+    );
 
-  // AdMob 초기화
-  await AdService.initialize();
+    // AdMob 초기화
+    await AdService.initialize();
+
+    // 홈 위젯 초기화 (선택적 - 위젯은 독립적으로 동작)
+    try {
+      await HomeWidgetService.initialize();
+      print('✅ [MAIN] Home widget service initialized (optional)');
+    } catch (e) {
+      print('⚠️ [MAIN] Widget service init skipped: $e');
+    }
+  } else {
+    print('🌐 [MAIN] Running on Web - Mobile-specific services skipped');
+  }
 
   runApp(Trendly());
 }
@@ -82,9 +97,38 @@ class Trendly extends StatelessWidget {
                   await Provider.of<UserPreferenceProvider>(context, listen: false)
                       .loadBasicInfo();
                   
-                  // FCM 네비게이션 처리 (컨텍스트 완전 준비 후)
-                  await Future.delayed(Duration(milliseconds: 500));
-                  await FirebaseMessagingService().handlePendingNavigation();
+                  // 모바일 플랫폼에서만 실행
+                  if (!kIsWeb) {
+                    // FCM 네비게이션 처리 (컨텍스트 완전 준비 후)
+                    await Future.delayed(Duration(milliseconds: 500));
+                    await FirebaseMessagingService().handlePendingNavigation();
+                    
+                    // 홈 위젯 클릭 리스너 설정
+                    HomeWidgetService.setupWidgetClickListener((keywordId) {
+                      if (keywordId != null && keywordId.isNotEmpty) {
+                        try {
+                          final router = Provider.of<AppRouter>(context, listen: false).router;
+                          router.go('/keyword/$keywordId');
+                        } catch (e) {
+                          print('❌ [WIDGET_CLICK] Navigation failed: $e');
+                        }
+                      }
+                    });
+                  }
+                  
+                  // 모바일 플랫폼에서만 위젯 업데이트
+                  if (!kIsWeb) {
+                    // 앱 시작 시 위젯 선택적 업데이트 (위젯은 독립적으로 동작)
+                    Future.delayed(Duration(seconds: 2), () async {
+                      try {
+                        print('🔄 [MAIN] 선택적 위젯 업데이트 시작');
+                        await HomeWidgetService.refreshWidgetData();
+                        print('✅ [MAIN] 선택적 위젯 업데이트 완료');
+                      } catch (e) {
+                        print('⚠️ [MAIN] 선택적 위젯 업데이트 무시: $e');
+                      }
+                    });
+                  }
                 } catch (e) {
                   print('❌ [MAIN] Post-frame initialization error: $e');
                 }

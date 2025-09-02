@@ -128,7 +128,7 @@ class TabHeaderWidget extends StatelessWidget {
                         child: Text(
                           tabLabels[index],
                           style: TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: 15.sp,
                             fontWeight: index == selectedTabIndex ? FontWeight.w600 : FontWeight.w400,
                             fontFamily: 'asgm',
                             color: index == selectedTabIndex

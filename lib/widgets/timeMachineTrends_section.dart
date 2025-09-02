@@ -98,7 +98,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                       Text(
                         "시간별 검색어",
                         style: TextStyle(
-                          fontSize: 28.sp,
+                          fontSize: 29.sp,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.getTextColor(context),
                           letterSpacing: -0.5,
@@ -112,7 +112,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                     child: Text(
                       "시간대별 검색어 순위",
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
@@ -151,7 +151,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Text(
                     '시간대별 데이터 없음',
                     style: TextStyle(
-                      fontSize: 18.sp,
+                      fontSize: 19.sp,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.getTextColor(context),
                     ),
@@ -160,7 +160,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Text(
                     '해당 날짜의 실시간 검색어 데이터가 없습니다',
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: 17.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     textAlign: TextAlign.center,
@@ -202,7 +202,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                     Text(
                       "시간별 검색어",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -216,7 +216,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   child: Text(
                     "시간대별 검색어 순위",
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -347,7 +347,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Text(
                     _formatTime(time),
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: 17.sp,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                       color: isSelected 
                           ? Colors.white
@@ -448,7 +448,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                         Text(
                           _showAll ? "접기" : "더 보기 (${displayKeywords.length - 5}개)",
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 17.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF3B82F6),
                           ),
@@ -460,7 +460,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                           child: Icon(
                             Icons.keyboard_arrow_down_rounded,
                             color: Color(0xFF3B82F6),
-                            size: 18.sp,
+                            size: 17.sp,
                           ),
                         ),
                       ],
@@ -512,7 +512,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
               child: Text(
                 rank.toString(),
                 style: TextStyle(
-                  fontSize: 14.sp,
+                  fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
                   color: rank <= 3 ? Colors.white : (isDark ? Colors.white : Colors.black87),
                 ),
@@ -530,7 +530,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   child: Text(
                     keywordText,
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 17.sp,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : Colors.black87,
                     ),
@@ -549,7 +549,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   child: Text(
                     categoryText,
                     style: TextStyle(
-                      fontSize: 11.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: categoryColor,
                     ),

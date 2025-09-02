@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background_light"
+    android:padding="8dp">
+
+    <!-- 헤더 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+        
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🔥 실시간 트렌드"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#333333" />
+        
+        <ImageButton
+            android:id="@+id/refresh_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_refresh"
+            android:contentDescription="새로고침"
+            android:scaleType="centerInside" />
+    </LinearLayout>
+
+    <!-- 키워드 목록 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        
+        <!-- 키워드 1 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp">
+            
+            <TextView
+                android:id="@+id/rank_1"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FF6B6B"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드1"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 2 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp">
+            
+            <TextView
+                android:id="@+id/rank_2"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="2"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FF9F43"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드2"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 3 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_3"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp">
+            
+            <TextView
+                android:id="@+id/rank_3"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="3"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFA502"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드3"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 4 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_4"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp">
+            
+            <TextView
+                android:id="@+id/rank_4"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="4"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#70A1FF"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드4"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 5 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_5"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp">
+            
+            <TextView
+                android:id="@+id/rank_5"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="5"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#5F27CD"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드5"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 6 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_6"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp"
+            android:visibility="gone">
+            
+            <TextView
+                android:id="@+id/rank_6"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="6"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FF6B6B"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드6"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 7 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_7"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp"
+            android:visibility="gone">
+            
+            <TextView
+                android:id="@+id/rank_7"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="7"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FF9F43"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_7"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드7"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 8 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_8"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp"
+            android:visibility="gone">
+            
+            <TextView
+                android:id="@+id/rank_8"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="8"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFA502"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_8"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드8"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 9 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_9"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp"
+            android:visibility="gone">
+            
+            <TextView
+                android:id="@+id/rank_9"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="9"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#70A1FF"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드9"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        
+        <!-- 키워드 10 -->
+        <LinearLayout
+            android:id="@+id/keyword_item_10"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:paddingHorizontal="4dp"
+            android:visibility="gone">
+            
+            <TextView
+                android:id="@+id/rank_10"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:text="10"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#5F27CD"
+                android:gravity="center" />
+            
+            <TextView
+                android:id="@+id/keyword_10"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="키워드10"
+                android:textSize="12sp"
+                android:textColor="#333333"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 빈 상태 뷰 -->
+    <LinearLayout
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        
+        <TextView
+            android:id="@+id/empty_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="데이터를 불러오는 중..."
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- 오류 상태 뷰 -->
+    <LinearLayout
+        android:id="@+id/error_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        
+        <TextView
+            android:id="@+id/error_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="데이터를 불러올 수 없습니다"
+            android:textSize="12sp"
+            android:textColor="#FF6B6B"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- 푸터 -->
+    <TextView
+        android:id="@+id/last_update_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="업데이트: 방금"
+        android:textSize="10sp"
+        android:textColor="#999999"
+        android:gravity="center"
+        android:visibility="gone" />
+
+</LinearLayout>

@@ -341,64 +341,203 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     );
   }
 
-  // 요약 내용 생성
+  // 요약 내용 생성 - 키워드 하이라이팅 적용
   Widget _buildFormattedSummaryContent() {
-    final textColor = AppTheme.isDark(context) ? Colors.grey[300] : Colors.black87;
-
-    switch (_selectedSummaryType) {
-      case '3줄':
-        if (_keyword!.type1.isEmpty) {
-          return Text('요약 내용이 없습니다.', style: TextStyle(color: textColor));
+    final String summaryText = _getSummaryContent();
+    
+    // 키워드 토큰 생성 (전체 키워드 + 띄어쓰기로 나눈 단어들)
+    List<String> keywordTokens = [_keyword!.keyword];
+    keywordTokens.addAll(_keyword!.keyword.split(' '));
+    keywordTokens = keywordTokens.where((token) => token.isNotEmpty).toSet().toList();
+    keywordTokens.sort((a, b) => b.length.compareTo(a.length)); // 긴 토큰부터 매칭
+    
+    final List<String> paragraphs = summaryText.split('\n\n');
+    final List<Widget> paragraphWidgets = [];
+    
+    for (int i = 0; i < paragraphs.length; i++) {
+      if (i > 0) {
+        paragraphWidgets.add(SizedBox(height: 16.h));
+      }
+      
+      String paragraph = paragraphs[i];
+      List<TextSpan> paragraphSpans = [];
+      int currentPos = 0;
+      final int paragraphLength = paragraph.length;
+      
+      // 3줄 요약의 경우만 숫자와 함께 처리
+      bool is3LineType = _selectedSummaryType == '3줄' && i < 3;
+      
+      while (currentPos < paragraphLength) {
+        bool foundMatch = false;
+        
+        // 키워드 토큰 매칭
+        for (String token in keywordTokens) {
+          if (currentPos + token.length <= paragraphLength &&
+              paragraph.substring(currentPos, currentPos + token.length).toLowerCase() == 
+              token.toLowerCase()) {
+            // 하이라이팅된 키워드
+            paragraphSpans.add(TextSpan(
+              text: paragraph.substring(currentPos, currentPos + token.length),
+              style: TextStyle(
+                fontSize: 18.sp,
+                height: 1.7,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF19B3F6),
+                backgroundColor: Color(0xFF19B3F6).withOpacity(0.1),
+              ),
+            ));
+            
+            currentPos += token.length;
+            foundMatch = true;
+            break;
+          }
         }
-        // 반복문 대신 map과 spread 연산자 활용
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ...(_keyword!.type1 is List ? (_keyword!.type1 as List) : []).asMap().entries.map((entry) {
-              int index = entry.key;
-              String content = entry.value;
-              return Padding(
-                padding: EdgeInsets.only(bottom: index < (_keyword!.type1 is List ? (_keyword!.type1 as List).length : 0) - 1 ? 15.h : 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        content,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          height: 1.5,
-                          color: textColor,
-                        ),
-                      ),
+        
+        if (!foundMatch) {
+          // 다음 매칭 위치까지의 일반 텍스트
+          int nextMatchPos = paragraphLength;
+          
+          for (String token in keywordTokens) {
+            int pos = paragraph.toLowerCase().indexOf(token.toLowerCase(), currentPos);
+            if (pos != -1 && pos < nextMatchPos) {
+              nextMatchPos = pos;
+            }
+          }
+          
+          paragraphSpans.add(TextSpan(
+            text: paragraph.substring(currentPos, nextMatchPos),
+            style: TextStyle(
+              fontSize: 18.sp,
+              height: 1.7,
+              fontWeight: FontWeight.w400,
+              color: AppTheme.isDark(context) 
+                  ? Colors.white.withOpacity(0.9) 
+                  : Colors.black87,
+            ),
+          ));
+          
+          currentPos = nextMatchPos;
+        }
+      }
+      
+      // 위젯 추가
+      if (is3LineType) {
+        // 3줄 요약은 숫자와 함께 Row로 표시
+        paragraphWidgets.add(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 24.w,
+                height: 24.w,
+                margin: EdgeInsets.only(right: 8.w, top: 6.h),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF19B3F6), Color(0xFF0EA5E9)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF19B3F6).withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
-              );
-            }).toList(),
-          ],
-        );
-      case '짧은 글':
-        return Text(
-          _keyword!.type2,
-          style: TextStyle(
-            fontSize: 18.sp,
-            height: 1.5,
-            color: textColor,
+                child: Center(
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(children: paragraphSpans),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ],
           ),
         );
-      case '긴 글':
-        return Text(
-          _keyword!.type3,
-          style: TextStyle(
-            fontSize: 18.sp,
-            height: 1.5,
-            color: textColor,
+      } else {
+        // 일반 텍스트 표시
+        paragraphWidgets.add(
+          Container(
+            width: double.infinity,
+            child: RichText(
+              text: TextSpan(children: paragraphSpans),
+              textAlign: TextAlign.left,
+            ),
           ),
         );
-      default:
-        return Text('요약 내용이 없습니다.', style: TextStyle(color: textColor));
+      }
     }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: paragraphWidgets,
+    );
+  }
+  
+  // 요약 타입별 텍스트 가져오기
+  String _getSummaryContent() {
+    switch (_selectedSummaryType) {
+      case '3줄':
+        return _getShortSummary();
+      case '짧은 글':
+        return _getMediumSummary();
+      case '긴 글':
+        return _getLongSummary();
+      default:
+        return '요약 내용이 없습니다.';
+    }
+  }
+  
+  String _getShortSummary() {
+    try {
+      List<String> summaryLines = [];
+      
+      // type1을 안전하게 처리
+      if (_keyword!.type1 is List && (_keyword!.type1 as List).isNotEmpty) {
+        String type1String = (_keyword!.type1 as List).first.toString();
+        
+        if (type1String.trim().startsWith('[') && type1String.trim().endsWith(']')) {
+          String cleaned = type1String.replaceAll(RegExp(r"[\[\]']"), "");
+          summaryLines = cleaned.split(',').map((s) => s.trim()).toList();
+        } else {
+          summaryLines = (_keyword!.type1 as List).map((e) => e.toString()).toList();
+        }
+      } else if (_keyword!.type1 is Map) {
+        // type1이 Map인 경우 처리
+        final Map<String, dynamic> type1Map = _keyword!.type1 as Map<String, dynamic>;
+        summaryLines = type1Map.values.map((e) => e.toString()).toList();
+      }
+      
+      if (summaryLines.isNotEmpty) {
+        final StringBuffer formattedLines = StringBuffer();
+        for (int i = 0; i < summaryLines.length; i++) {
+          formattedLines.write('${summaryLines[i]}\n\n');
+        }
+        return formattedLines.toString().trim();
+      }
+    } catch (e) {
+      print('3줄 요약 파싱 오류: $e');
+    }
+    
+    return '오류가 발생했습니다.';
+  }
+  
+  String _getMediumSummary() {
+    return _keyword!.type2.isNotEmpty ? _keyword!.type2 : '오류가 발생했습니다.';
+  }
+  
+  String _getLongSummary() {
+    return _keyword!.type3.isNotEmpty ? _keyword!.type3 : '오류가 발생했습니다.';
   }
 
   // 토론방 반응 섹션 - discussionHome 컴포넌트 스타일로 변경

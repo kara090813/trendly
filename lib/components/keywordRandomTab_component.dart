@@ -131,14 +131,14 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
           children: [
             Icon(
               Icons.error_outline,
-              size: 48.sp,
+              size: 47.sp,
               color: Colors.grey,
             ),
             SizedBox(height: 16.h),
             Text(
               _errorMessage ?? '랜덤 키워드를 불러올 수 없습니다',
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 19.sp,
                 color: Colors.grey,
               ),
               textAlign: TextAlign.center,
@@ -280,7 +280,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                 child: Icon(
                   Icons.shuffle_rounded,
                   color: Colors.white,
-                  size: 28.sp,
+                  size: 27.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -291,7 +291,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "랜덤 키워드",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -301,7 +301,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "예상치 못한 트렌드를 발견하세요",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 15.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -353,8 +353,8 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                       height: 80.h, // 카드 내용의 적절한 높이 설정
                       child: Center(
                         child: SizedBox(
-                          width: 32.sp,
-                          height: 32.sp,
+                          width: 31.sp,
+                          height: 31.sp,
                           child: CircularProgressIndicator(
                             color: Color(0xFFEF4444),
                             strokeWidth: 3,
@@ -371,7 +371,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                               Text(
                                 keyword.keyword,
                                 style: TextStyle(
-                                  fontSize: 24.sp,
+                                  fontSize: 25.sp,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.getTextColor(context),
                                   height: 1.2,
@@ -381,7 +381,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                               Text(
                                 _formatDate(keyword.created_at),
                                 style: TextStyle(
-                                  fontSize: 15.sp,
+                                  fontSize: 16.sp,
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -402,7 +402,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                           child: Text(
                             keyword.category,
                             style: TextStyle(
-                              fontSize: 12.sp,
+                              fontSize: 13.sp,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFFEF4444),
                             ),
@@ -418,7 +418,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                           child: Icon(
                             Icons.refresh_rounded,
                             color: Color(0xFFEF4444),
-                            size: 16.sp,
+                            size: 15.sp,
                           ),
                         ),
                       ],
@@ -466,7 +466,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "키워드 요약",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -480,7 +480,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   child: Text(
                     "AI 분석 핵심 포인트",
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -553,7 +553,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             child: Text(
               number.toString(),
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 19.sp,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -567,7 +567,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 19.sp,
                 height: 1.4,
                 color: AppTheme.getTextColor(context),
                 fontWeight: FontWeight.w500,
@@ -612,7 +612,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "키워드 상세",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -626,7 +626,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   child: Text(
                     "상세 설명 및 관련 정보",
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -671,7 +671,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
 
   // 날짜 포맷팅 헬퍼 메서드
   String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
+    return '${date.year.toString().substring(2)}년 ${date.month}월 ${date.day}일';
   }
 
   // 키워드 요약 포인트 생성
@@ -716,7 +716,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               '상세 설명',
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 19.sp,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.getTextColor(context),
               ),
@@ -725,7 +725,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               currentKeyword.type2,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 16.sp,
                 height: 1.5,
                 color: AppTheme.getTextColor(context),
               ),
@@ -738,7 +738,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               '관련 링크',
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 19.sp,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.getTextColor(context),
               ),
@@ -754,14 +754,14 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                 children: [
                   Icon(
                     Icons.info_outline,
-                    size: 48.sp,
+                    size: 47.sp,
                     color: isDark ? Colors.grey[400] : Colors.grey[500],
                   ),
                   SizedBox(height: 16.h),
                   Text(
                     '추가 정보가 곧 업데이트됩니다.',
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontStyle: FontStyle.italic,
                     ),
@@ -911,7 +911,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   ? Icon(
                       _getIconForUrl(url),
                       color: isDark ? Colors.grey[600] : Colors.grey[500],
-                      size: 24.sp,
+                      size: 23.sp,
                     )
                   : null,
             ),
@@ -926,7 +926,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: 19.sp,
                       fontWeight: FontWeight.w500,
                       height: 1.3,
                       color: AppTheme.getTextColor(context),
@@ -939,7 +939,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     '${description}${date.isNotEmpty ? ' · ${date}' : ''}',
                     style: TextStyle(
                       color: isDark ? Colors.grey[500] : Colors.grey[600],
-                      fontSize: 12.sp,
+                      fontSize: 19.sp,
                     ),
                   ),
                 ],

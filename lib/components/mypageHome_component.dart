@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../app_theme.dart';
 import '../providers/_providers.dart';
 import '../widgets/_widgets.dart';
+import '../services/home_widget_service.dart';
 
 class MypageHomeComponent extends StatefulWidget {
   const MypageHomeComponent({super.key});
@@ -377,6 +378,98 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
               ),
             ],
           ),
+
+          SizedBox(height: 8.h),
+
+          // 앱 정보 메뉴
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              context.push('/app-info');
+            },
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 22.sp,
+                  color: AppTheme.primaryBlue,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '앱 정보',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.isDark(context)
+                              ? AppTheme.darkText
+                              : AppTheme.lightText,
+                        ),
+                      ),
+                      Text(
+                        '버전, 이용약관, 개발사 정보',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16.sp,
+                  color: Colors.grey[500],
+                ),
+              ],
+            ),
+          ),
+
+          // SizedBox(height: 8.h),
+
+          // 홈 위젯 설정 - 기능 완성 후 활성화 예정
+          /*
+          Row(
+            children: [
+              Icon(
+                Icons.widgets_outlined,
+                size: 22.sp,
+                color: AppTheme.primaryBlue,
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '홈 위젯 설정',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.isDark(context)
+                            ? AppTheme.darkText
+                            : AppTheme.lightText,
+                      ),
+                    ),
+                    Text(
+                      '홈 화면에서 위젯을 추가해 주세요',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          */
+          
+          // SizedBox(height: 16.h),
+          // _buildWidgetSettings(preferences),
         ],
       ),
     )
@@ -794,6 +887,126 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
       ),
     );
   }
+
+  // 홈 위젯 가이드 섹션 - 완성 후 활성화 예정
+  /*
+  Widget _buildWidgetSettings(UserPreferenceProvider preferences) {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: AppTheme.isDark(context)
+            ? Colors.grey[800]?.withOpacity(0.3)
+            : Colors.grey[100]?.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '홈 위젯 가이드',
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.isDark(context)
+                  ? AppTheme.darkText
+                  : AppTheme.lightText,
+            ),
+          ),
+          SizedBox(height: 12.h),
+
+          // 위젯 추가 방법
+          _buildGuideItem(
+            icon: Icons.add_box_outlined,
+            title: '위젯 추가하기',
+            description: '홈 화면을 길게 눌러 위젯 메뉴에서 Trendly를 추가하세요.',
+          ),
+
+          SizedBox(height: 10.h),
+
+          // 새로고침 버튼
+          _buildGuideItem(
+            icon: Icons.refresh_outlined,
+            title: '수동 새로고침',
+            description: '위젯 내 새로고침 버튼을 눌러 언제나 최신 데이터로 업데이트할 수 있습니다.',
+          ),
+
+          SizedBox(height: 10.h),
+
+          // 자동 업데이트
+          _buildGuideItem(
+            icon: Icons.schedule_outlined,
+            title: '자동 업데이트',
+            description: '30분마다 자동으로 새로운 실시간 트렌드 데이터로 업데이트됩니다.',
+          ),
+
+          SizedBox(height: 10.h),
+
+          // 다양한 크기
+          _buildGuideItem(
+            icon: Icons.view_agenda_outlined,
+            title: '다양한 크기',
+            description: '작은 크기(3개), 중간 크기(5개), 큰 크기(10개) 키워드를 지원합니다.',
+          ),
+
+          SizedBox(height: 10.h),
+
+          // 키워드 클릭
+          _buildGuideItem(
+            icon: Icons.touch_app_outlined,
+            title: '키워드 클릭',
+            description: '위젯의 키워드를 클릭하면 앱이 열리며 해당 키워드 상세 페이지로 이동합니다.',
+          ),
+        ],
+      ),
+    );
+  }
+  */
+
+  // 가이드 아이템 빌드 헬퍼 메소드 - 위젯 가이드와 함께 주석처리
+  /*
+  Widget _buildGuideItem({required IconData icon, required String title, required String description}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          color: AppTheme.primaryBlue,
+          size: 16.w,
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.isDark(context)
+                      ? AppTheme.darkText
+                      : AppTheme.lightText,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.grey[600],
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  */
 
   void _showSnackBarImmediate(String message) {
     // 현재 표시되고 있는 스낵바 즉시 제거
