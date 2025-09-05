@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../app_theme.dart';
 import 'package:go_router/go_router.dart';
+import '../utils/device_utils.dart';
 
 class TimeMachineMetricsSection extends StatefulWidget {
   final Map<String, dynamic> summaryData;
@@ -154,7 +155,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                     Text(
                       "이날의 검색어 Top3",
                       style: TextStyle(
-                        fontSize: 29.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -168,7 +169,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                   child: Text(
                     "가장 화제가 된 검색어 순위",
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -273,7 +274,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                     child: Text(
                       '${keyword['rank']}',
                       style: TextStyle(
-                        fontSize: 21.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                       ),
@@ -302,7 +303,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                         child: Text(
                           keyword['category'] ?? '기타',
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 9.sp : 12.sp,
                             fontWeight: FontWeight.w600,
                             color: keyword['textColor'],
                           ),
@@ -315,7 +316,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                       Text(
                         keyword['keyword'] ?? '',
                         style: TextStyle(
-                          fontSize: 19.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.getTextColor(context),
                           height: 1.2,
@@ -339,7 +340,7 @@ class _TimeMachineMetricsSectionState extends State<TimeMachineMetricsSection>
                             child: Text(
                               keyword['stats'] ?? '데이터 없음',
                               style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                                 fontWeight: FontWeight.w500,
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),

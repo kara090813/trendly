@@ -10,6 +10,7 @@ import '../services/api_service.dart';
 import '../models/_models.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/device_utils.dart';
 
 class KeywordHistoryTabComponent extends StatefulWidget {
   const KeywordHistoryTabComponent({Key? key}) : super(key: key);
@@ -282,7 +283,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                           '${keyword.rank}위',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -292,7 +293,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         child: Text(
                           keyword.keyword,
                           style: TextStyle(
-                            fontSize: 21.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.getTextColor(context),
                           ),
@@ -306,7 +307,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   Text(
                     '${keyword.created_at.year.toString().substring(2)}년 ${keyword.created_at.month}월 ${keyword.created_at.day}일',
                     style: TextStyle(
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
@@ -328,7 +329,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                       Text(
                         '3줄 요약',
                         style: TextStyle(
-                          fontSize: 21.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF3B82F6),
                         ),
@@ -408,7 +409,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         Text(
           '요약 정보가 없습니다.',
           style: TextStyle(
-            fontSize: 21.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
             color: isDark ? Colors.grey[400] : Colors.grey[600],
             fontStyle: FontStyle.italic,
           ),
@@ -438,7 +439,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
               child: Text(
                 line.trim(),
                 style: TextStyle(
-                  fontSize: 21.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                   height: 1.5,
                   color: AppTheme.getTextColor(context),
                 ),
@@ -762,7 +763,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         Text(
                           '필터 설정',
                           style: TextStyle(
-                            fontSize: 21.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.getTextColor(context),
                           ),
@@ -917,7 +918,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                         child: Text(
                                           '날짜 범위 초기화',
                                           style: TextStyle(
-                                            fontSize: 21.sp,
+                                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                             fontWeight: FontWeight.w600,
                                             color: Colors.orange,
                                           ),
@@ -940,7 +941,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                 Text(
                                   '${_maxRank}위 이상만 표시',
                                   style: TextStyle(
-                                    fontSize: 21.sp,
+                                    fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF3B82F6),
                                   ),
@@ -999,7 +1000,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                             child: Text(
                               '초기화',
                               style: TextStyle(
-                                fontSize: 21.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1025,7 +1026,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                             child: Text(
                               '적용',
                               style: TextStyle(
-                                fontSize: 21.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1051,7 +1052,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         Text(
           title,
           style: TextStyle(
-            fontSize: 21.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
             fontWeight: FontWeight.w700,
             color: AppTheme.getTextColor(context),
           ),
@@ -1082,7 +1083,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 21.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                 fontWeight: FontWeight.w600,
                 color: isSelected
                     ? Colors.white
@@ -1116,7 +1117,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             Text(
               label,
               style: TextStyle(
-                fontSize: 21.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
@@ -1124,7 +1125,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             Text(
               value,
               style: TextStyle(
-                fontSize: 21.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.getTextColor(context),
               ),
@@ -1169,7 +1170,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
               title: Text(
                 '날짜 범위 선택',
                 style: TextStyle(
-                  fontSize: 21.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.getTextColor(context),
                 ),
@@ -1182,7 +1183,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   Text(
                     '시작 날짜',
                     style: TextStyle(
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.grey[300] : Colors.grey[700],
                     ),
@@ -1224,7 +1225,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                 ? '${tempStartDate!.year.toString().substring(2)}년 ${tempStartDate!.month}월 ${tempStartDate!.day}일'
                                 : '시작 날짜를 선택하세요',
                             style: TextStyle(
-                              fontSize: 21.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                               color: tempStartDate != null
                                   ? AppTheme.getTextColor(context)
                                   : (isDark ? Colors.grey[500] : Colors.grey[400]),
@@ -1241,7 +1242,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   Text(
                     '종료 날짜',
                     style: TextStyle(
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.grey[300] : Colors.grey[700],
                     ),
@@ -1283,7 +1284,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                 ? '${tempEndDate!.year.toString().substring(2)}년 ${tempEndDate!.month}월 ${tempEndDate!.day}일'
                                 : '종료 날짜를 선택하세요',
                             style: TextStyle(
-                              fontSize: 21.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                               color: tempEndDate != null
                                   ? AppTheme.getTextColor(context)
                                   : (isDark ? Colors.grey[500] : Colors.grey[400]),
@@ -1304,7 +1305,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     '취소',
                     style: TextStyle(
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                     ),
                   ),
                 ),
@@ -1321,7 +1322,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     '초기화',
                     style: TextStyle(
                       color: Colors.orange,
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                     ),
                   ),
                 ),
@@ -1344,7 +1345,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   child: Text(
                     '적용',
                     style: TextStyle(
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1492,7 +1493,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     Text(
                       "키워드 탐색",
                       style: TextStyle(
-                        fontSize: 29.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -1502,7 +1503,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     Text(
                       "검색어의 과거 순위 변화를 확인하세요",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -1587,7 +1588,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                               ? _selectedKeyword 
                               : '키워드를 검색해보세요...',
                           style: TextStyle(
-                            fontSize: 21.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                             fontWeight: _selectedKeyword.isNotEmpty 
                                 ? FontWeight.w600 
                                 : FontWeight.w500,
@@ -1664,7 +1665,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           child: Text(
             _errorMessage!,
             style: TextStyle(
-              fontSize: 21.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
               color: Colors.grey,
             ),
             textAlign: TextAlign.center,
@@ -1724,7 +1725,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             Text(
               '아직 추적 중인 키워드에요',
               style: TextStyle(
-                fontSize: 21.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.getTextColor(context),
                 letterSpacing: -0.5,
@@ -1738,7 +1739,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             Text(
               '"${_selectedKeyword}"의 히스토리 데이터를\n수집하고 있어요',
               style: TextStyle(
-                fontSize: 21.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                 fontWeight: FontWeight.w400,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                 height: 1.4,
@@ -1761,7 +1762,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
               child: Text(
                 '💡 다른 트렌드 키워드를 검색해보세요',
                 style: TextStyle(
-                  fontSize: 21.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF10B981),
                 ),
@@ -1798,7 +1799,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
               Text(
                 "키워드 통계",
                 style: TextStyle(
-                  fontSize: 25.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 18.sp : 25.sp,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.getTextColor(context),
                   letterSpacing: -0.5,
@@ -1915,7 +1916,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                       Text(
                         "분류: ",
                         style: TextStyle(
-                          fontSize: 21.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.grey[300] : Colors.grey[700],
                         ),
@@ -1928,7 +1929,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                               label: Text(
                                 category,
                                 style: TextStyle(
-                                  fontSize: 21.sp,
+                                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                   color: isDark ? Colors.white : Colors.black,
                                 ),
                               ),
@@ -1982,7 +1983,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           Text(
             label,
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
@@ -1991,7 +1992,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
           Text(
             value,
             style: TextStyle(
-              fontSize: 21.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
               fontWeight: FontWeight.w700,
               color: AppTheme.getTextColor(context),
             ),
@@ -2104,7 +2105,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   Text(
                     '필터',
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                       fontWeight: FontWeight.w600,
                       color: _hasActiveFilters()
                           ? Colors.white
@@ -2156,7 +2157,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     Text(
                       '초기화',
                       style: TextStyle(
-                        fontSize: 21.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.orange,
                       ),
@@ -2201,7 +2202,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                 fontWeight: FontWeight.w600,
                 color: isSelected
                     ? Colors.white
@@ -2246,7 +2247,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
               Text(
                 "키워드 맵",
                 style: TextStyle(
-                  fontSize: 25.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 18.sp : 25.sp,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.getTextColor(context),
                   letterSpacing: -0.5,
@@ -2259,7 +2260,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                   Text(
                     "${_currentPage + 1} / $_totalPages",
                     style: TextStyle(
-                      fontSize: 21.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -2268,7 +2269,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     Text(
                       "필터 적용됨",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                         color: Color(0xFF3B82F6),
                         fontWeight: FontWeight.w600,
                       ),
@@ -2344,7 +2345,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         child: Text(
                           "${_currentPage + 1} / $_totalPages",
                           style: TextStyle(
-                            fontSize: 21.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF3B82F6),
                           ),
@@ -2438,7 +2439,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                       child: Text(
                         '${keyword.rank}위',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
@@ -2452,7 +2453,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                       child: Text(
                         keyword.keyword,
                         style: TextStyle(
-                          fontSize: 21.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.getTextColor(context),
                         ),
@@ -2487,7 +2488,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                           color: isDark ? Colors.grey[300] : Colors.grey[700],
                           fontWeight: FontWeight.w500,
                         ),
@@ -2522,7 +2523,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                         child: Text(
                           keyword.category ?? '',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF10B981),
                           ),
@@ -2565,7 +2566,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                             Text(
                               '3줄 요약',
                               style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF3B82F6),
                               ),
@@ -2585,7 +2586,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                   Text(
                                     '•',
                                     style: TextStyle(
-                                      fontSize: 21.sp,
+                                      fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                       color: isDark ? Colors.grey[300] : Colors.grey[700],
                                       height: 1.4,
                                     ),
@@ -2595,7 +2596,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                                     child: Text(
                                       (keyword.type1 as List)[index].toString(),
                                       style: TextStyle(
-                                        fontSize: 21.sp,
+                                        fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                         color: isDark ? Colors.grey[300] : Colors.grey[700],
                                         height: 1.4,
                                       ),
@@ -2609,7 +2610,7 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
                           Text(
                             keyword.type1.toString(),
                             style: TextStyle(
-                              fontSize: 21.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                               color: isDark ? Colors.grey[300] : Colors.grey[700],
                               height: 1.4,
                             ),
@@ -2821,7 +2822,7 @@ class _SearchPageState extends State<_SearchPage> {
                       Text(
                         '키워드 검색',
                         style: TextStyle(
-                          fontSize: 21.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.getTextColor(context),
                         ),
@@ -2874,7 +2875,7 @@ class _SearchPageState extends State<_SearchPage> {
                             controller: _controller,
                             focusNode: _focusNode,
                             style: TextStyle(
-                              fontSize: 21.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                               fontWeight: FontWeight.w500,
                               color: AppTheme.getTextColor(context),
                               height: 1.4,
@@ -2883,7 +2884,7 @@ class _SearchPageState extends State<_SearchPage> {
                               hintText: '키워드를 검색해보세요...',
                               hintStyle: TextStyle(
                                 color: isDark ? Colors.grey[500] : Colors.grey[400],
-                                fontSize: 21.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                 fontWeight: FontWeight.w400,
                               ),
                               border: InputBorder.none,
@@ -2952,7 +2953,7 @@ class _SearchPageState extends State<_SearchPage> {
             Text(
               '검색 중...',
               style: TextStyle(
-                fontSize: 21.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
@@ -2994,7 +2995,7 @@ class _SearchPageState extends State<_SearchPage> {
               Text(
                 '검색 결과를 찾을 수 없어요',
                 style: TextStyle(
-                  fontSize: 21.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.getTextColor(context),
                   letterSpacing: -0.5,
@@ -3008,7 +3009,7 @@ class _SearchPageState extends State<_SearchPage> {
               Text(
                 '다른 키워드로 검색하거나\n철자를 확인해 보세요',
                 style: TextStyle(
-                  fontSize: 21.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                   fontWeight: FontWeight.w400,
                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                   height: 1.4,
@@ -3038,7 +3039,7 @@ class _SearchPageState extends State<_SearchPage> {
                       Text(
                         '💡 인기 검색어를 확인해보세요',
                         style: TextStyle(
-                          fontSize: 21.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
@@ -3063,7 +3064,7 @@ class _SearchPageState extends State<_SearchPage> {
                               child: Text(
                                 keywordText,
                                 style: TextStyle(
-                                  fontSize: 21.sp,
+                                  fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                                   fontWeight: FontWeight.w500,
                                   color: Color(0xFF3B82F6),
                                 ),
@@ -3119,7 +3120,7 @@ class _SearchPageState extends State<_SearchPage> {
                     child: Text(
                       keyword,
                       style: TextStyle(
-                        fontSize: 21.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                         fontWeight: FontWeight.w500,
                         color: AppTheme.getTextColor(context),
                       ),
@@ -3161,7 +3162,7 @@ class _SearchPageState extends State<_SearchPage> {
                 child: Text(
                   "최근 검색어",
                   style: TextStyle(
-                    fontSize: 25.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 18.sp : 25.sp,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.getTextColor(context),
                     letterSpacing: -0.5,
@@ -3182,7 +3183,7 @@ class _SearchPageState extends State<_SearchPage> {
                         title: Text(
                           '최근 검색어 전체 삭제',
                           style: TextStyle(
-                            fontSize: 21.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.getTextColor(context),
                           ),
@@ -3190,7 +3191,7 @@ class _SearchPageState extends State<_SearchPage> {
                         content: Text(
                           '모든 최근 검색어를 삭제하시겠습니까?',
                           style: TextStyle(
-                            fontSize: 21.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                             color: isDark ? Colors.grey[300] : Colors.grey[700],
                           ),
                         ),
@@ -3233,7 +3234,7 @@ class _SearchPageState extends State<_SearchPage> {
                 child: Text(
                   '전체삭제',
                   style: TextStyle(
-                    fontSize: 21.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
@@ -3297,7 +3298,7 @@ class _SearchPageState extends State<_SearchPage> {
                           child: Text(
                             keyword,
                             style: TextStyle(
-                              fontSize: 21.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.getTextColor(context),
                             ),
@@ -3351,7 +3352,7 @@ class _SearchPageState extends State<_SearchPage> {
               Text(
                 "인기 검색어",
                 style: TextStyle(
-                  fontSize: 25.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 18.sp : 25.sp,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.getTextColor(context),
                   letterSpacing: -0.5,
@@ -3418,7 +3419,7 @@ class _SearchPageState extends State<_SearchPage> {
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              fontSize: 21.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -3435,7 +3436,7 @@ class _SearchPageState extends State<_SearchPage> {
                       Text(
                         keyword,
                         style: TextStyle(
-                          fontSize: 21.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 21.sp,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.getTextColor(context),
                         ),
@@ -3451,7 +3452,7 @@ class _SearchPageState extends State<_SearchPage> {
                           child: Text(
                             '${searchCount}',
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF3B82F6),
                             ),

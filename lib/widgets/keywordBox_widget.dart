@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/_models.dart';
+import '../utils/device_utils.dart';
 
 class KeywordBoxWidget extends StatelessWidget {
   final Keyword keyword;
@@ -65,7 +66,7 @@ class KeywordBoxWidget extends StatelessWidget {
                 rank.toString(),
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 20.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 16.sp : 20.sp,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
@@ -78,7 +79,7 @@ class KeywordBoxWidget extends StatelessWidget {
                 child: Text(
                   keyword.keyword,
                   style: TextStyle(
-                    fontSize: 19.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 15.sp : 19.sp,
                     fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -90,24 +91,25 @@ class KeywordBoxWidget extends StatelessWidget {
             Column(
               children: [
                 Container(
-                  width: 60,
+                  width: DeviceUtils.isTablet(context) ? 80.w : 60.w,
                   alignment: Alignment.centerRight,
                   child: Text(
                     changeText,
                     style: TextStyle(
                       color: changeColor,
                       fontWeight: FontWeight.w500,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 14.sp,
                     ),
                   ),
                 ),
 
                 // 카테고리
                 SizedBox(
-                  width: 60,
+                  width: DeviceUtils.isTablet(context) ? 80.w : 60.w,
                   child: Text(
                     keyword.category,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,
                       color: Colors.grey[600],
                     ),
                     textAlign: TextAlign.right,

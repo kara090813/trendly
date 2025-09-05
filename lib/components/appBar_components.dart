@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../app_theme.dart';
 import '../widgets/appBarIcon_widget.dart';
+import '../utils/device_utils.dart';
 
 class AppBarComponent extends StatelessWidget {
   final int currentIndex;
@@ -17,7 +18,7 @@ class AppBarComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 80.h,
-      padding: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.only(bottom: 2.h),
       decoration: BoxDecoration(
         color: AppTheme.getBottomBarColor(context),
         boxShadow: AppTheme.isDark(context)

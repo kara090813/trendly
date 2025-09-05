@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'dart:math' as math;
 import '../app_theme.dart';
 import 'package:go_router/go_router.dart';
+import '../utils/device_utils.dart';
 
 class TimeMachineTrendsSection extends StatefulWidget {
   final Map<String, Color> categoryColors;
@@ -98,7 +99,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                       Text(
                         "시간별 검색어",
                         style: TextStyle(
-                          fontSize: 29.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.getTextColor(context),
                           letterSpacing: -0.5,
@@ -112,7 +113,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                     child: Text(
                       "시간대별 검색어 순위",
                       style: TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
@@ -151,7 +152,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Text(
                     '시간대별 데이터 없음',
                     style: TextStyle(
-                      fontSize: 19.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.getTextColor(context),
                     ),
@@ -160,7 +161,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Text(
                     '해당 날짜의 실시간 검색어 데이터가 없습니다',
                     style: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     textAlign: TextAlign.center,
@@ -347,7 +348,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   Text(
                     _formatTime(time),
                     style: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                       color: isSelected 
                           ? Colors.white
@@ -448,7 +449,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                         Text(
                           _showAll ? "접기" : "더 보기 (${displayKeywords.length - 5}개)",
                           style: TextStyle(
-                            fontSize: 17.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF3B82F6),
                           ),
@@ -512,7 +513,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
               child: Text(
                 rank.toString(),
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 11.sp : 15.sp,
                   fontWeight: FontWeight.w700,
                   color: rank <= 3 ? Colors.white : (isDark ? Colors.white : Colors.black87),
                 ),
@@ -530,7 +531,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   child: Text(
                     keywordText,
                     style: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : Colors.black87,
                     ),
@@ -549,7 +550,7 @@ class _TimeMachineTrendsSectionState extends State<TimeMachineTrendsSection> wit
                   child: Text(
                     categoryText,
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 9.sp : 12.sp,
                       fontWeight: FontWeight.w600,
                       color: categoryColor,
                     ),

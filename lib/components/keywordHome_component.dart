@@ -7,6 +7,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:math'; // 랜덤 함수 사용을 위해 추가
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 import '../providers/_providers.dart';
 import '../services/api_service.dart';
 import '../services/ad_service.dart';
@@ -470,8 +471,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                                         ? Icons.light_mode  // 다크모드일 때 해 아이콘
                                         : Icons.dark_mode,  // 라이트모드일 때 달 아이콘
                                     color: AppTheme.primaryBlue,
-                                    iconSize: 24.w,
-                                    containerSize: 42.w,
+                                    iconSize: DeviceUtils.isTablet(context) ? 16.w : 24.w,
+                                    containerSize: DeviceUtils.isTablet(context) ? 30.w : 42.w,
                                   ),
                                 ],
                               ),
@@ -489,7 +490,8 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                         Text(
                           '실시간 인기 검색어',
                           style: TextStyle(
-                              fontSize: 20.sp, fontWeight: FontWeight.bold),
+                              fontSize: DeviceUtils.isTablet(context) ? 16.sp : 20.sp, 
+                              fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
                         InkWell(
@@ -525,11 +527,11 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                                     ? RotationTransition(
                                   turns: _refreshAnimation,
                                   child: Icon(Icons.refresh,
-                                      size: 18.sp,
+                                      size: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
                                       color: Color(0xFF19B3F6)),
                                 )
                                     : Icon(Icons.refresh,
-                                    size: 18.sp,
+                                    size: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
                                     color: AppTheme.isDark(context)
                                         ? Colors.white
                                         : Color(0xFF4A4A4A)),
@@ -537,7 +539,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                                 Text(
                                   _getFormattedTime(),
                                   style: TextStyle(
-                                      fontSize: 14.sp,
+                                      fontSize: DeviceUtils.isTablet(context) ? 11.sp : 14.sp,
                                       color: AppTheme.isDark(context)
                                           ? Colors.white
                                           : Color(0xFF4A4A4A)),
@@ -591,6 +593,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
   Widget _buildShimmerKeywordList(List<Keyword> keywords) {
     if (keywords.isEmpty) return SizedBox();
 
+    // 태블릿도 1열로 표시
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(
@@ -705,7 +708,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
                     child: Text(
                       "최신 트렌드로 새로고침 중...",
                       style: TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 14.sp : 16.sp,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF19B3F6), // 브랜드 색상 유지
                         letterSpacing: 0.5,
@@ -733,6 +736,7 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     const bannerAd1 = BannerAdWidget(key: ValueKey('banner_ad_1'));
     const bannerAd2 = BannerAdWidget(key: ValueKey('banner_ad_2'));
     
+    // 태블릿도 1열로 표시 (글자 크기만 조정)
     List<Widget> items = [];
     
     for (int i = 0; i < keywords.length; i++) {

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../app_theme.dart';
 import '../models/_models.dart';
+import '../utils/device_utils.dart';
 import 'summaryToggle_widget.dart';
 
 class EnhancedSummaryBoxWidget extends StatefulWidget {
@@ -233,7 +234,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
             paragraphSpans.add(TextSpan(
               text: paragraph.substring(currentPos, currentPos + token.length),
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                 height: 1.7,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF19B3F6),
@@ -262,7 +263,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
           paragraphSpans.add(TextSpan(
             text: paragraph.substring(currentPos, nextMatchPos),
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
               height: 1.7,
               fontWeight: FontWeight.w400,
               color: AppTheme.isDark(context)
@@ -303,7 +304,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                   child: Text(
                     '${i + 1}',
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -608,7 +609,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                   Text(
                     '좌우로 넘겨서 다른 키워드 보기',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 11.sp : 13.sp,
                       color: AppTheme.isDark(context)
                           ? Colors.grey[400]
                           : Colors.grey[600],
@@ -767,15 +768,16 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
 
   // 요약 타입별 동적 높이
   double _getCardHeightBySummaryType() {
+    final isTablet = DeviceUtils.isTablet(context);
     switch (_selectedSummaryType) {
       case '3줄':
-        return 520.h; // 3줄 요약용 기본 높이
+        return isTablet ? 680.h : 520.h; // 태블릿에서 더 높게
       case '짧은 글':
-        return 600.h; // 짧은 글용 증가된 높이
+        return isTablet ? 760.h : 600.h; // 태블릿에서 더 높게
       case '긴 글':
-        return 720.h; // 긴 글용 최대 높이
+        return isTablet ? 880.h : 720.h; // 태블릿에서 더 높게
       default:
-        return 520.h;
+        return isTablet ? 680.h : 520.h;
     }
   }
 
@@ -856,7 +858,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         child: Text(
                           '${index + 1}위',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -877,7 +879,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         child: Text(
                           keyword.category,
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF19B3F6),
                           ),
@@ -921,12 +923,12 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                             child: AutoSizeText(
                               keyword.keyword,
                               style: TextStyle(
-                                fontSize: 22.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 18.sp : 22.sp,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.getTextColor(context),
                                 letterSpacing: -0.3,
                               ),
-                              minFontSize: 18,
+                              minFontSize: DeviceUtils.isTablet(context) ? 14 : 18,
                               maxLines: 2,
                             ),
                           ),
@@ -956,7 +958,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                       Text(
                         '요약',
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 14.sp : 16.sp,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.getTextColor(context),
                         ),
@@ -1101,7 +1103,7 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         Text(
                           'AI가 생성한 요약입니다',
                           style: TextStyle(
-                            fontSize: 11.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 11.sp,
                             color: AppTheme.isDark(context)
                                 ? Colors.grey[500]
                                 : Colors.grey[400],

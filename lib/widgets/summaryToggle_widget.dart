@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 
 class SummaryToggleWidget extends StatefulWidget {
   final String currentType;
@@ -30,9 +31,10 @@ class _SummaryToggleWidgetState extends State<SummaryToggleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final double totalWidth = 230.w;
+    final isTablet = DeviceUtils.isTablet(context);
+    final double totalWidth = isTablet ? 180.w : 230.w;
     final double buttonWidth = totalWidth / 3;
-    final double buttonHeight = 36.h;
+    final double buttonHeight = isTablet ? 32.h : 36.h;
 
     return SizedBox(
       width: totalWidth,
@@ -113,11 +115,11 @@ class _SummaryToggleWidgetState extends State<SummaryToggleWidget> {
                         child: Text(
                           options[index],
                           style: AppTheme.isDark(context) ? TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                             fontWeight: FontWeight.w600,
                             color: index == selectedIndex ? Colors.white : Colors.black ,
                           ) :  TextStyle(
-                            fontSize: 16.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                             fontWeight: FontWeight.w600,
                             color: index == selectedIndex ? Colors.black : Colors.white,
                           ),

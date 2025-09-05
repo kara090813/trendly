@@ -13,6 +13,7 @@ import '../services/firebase_messaging_service.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/_widgets.dart';
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 
 class DiscussionRoomScreen extends StatefulWidget {
   final int discussionRoomId;
@@ -466,7 +467,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         Text(
                           "새로고침 중...",
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                             fontWeight: FontWeight.w500,
                             color: Color(0xFF19B3F6),
                           ),
@@ -502,7 +503,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 Text(
                   "실검 요약",
                   style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.getTextColor(context),
                   ),
@@ -543,7 +544,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         Text(
                           _isSummaryExpanded ? "ON" : "OFF",
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 11.sp : 13.sp,
                             fontWeight: FontWeight.bold,
                             color: _isSummaryExpanded ? Colors.white : AppTheme.getTextColor(context),
                           ),
@@ -690,7 +691,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       Text(
                         "토론이 종료되었습니다",
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.getTextColor(context),
                         ),
@@ -700,7 +701,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       Text(
                         "이 토론은 종료되어 더 이상 참여할 수 없습니다.",
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                           color: AppTheme.isDark(context)
                               ? Colors.grey[400]
                               : Colors.grey[600],
@@ -722,7 +723,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             child: Text(
                               "종료: $closedTimeStr",
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 11.sp : 13.sp,
                                 color: AppTheme.isDark(context)
                                     ? Colors.grey[400]
                                     : Colors.grey[600],
@@ -748,7 +749,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                           Text(
                             "$timeAgoStr에 종료됨",
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 11.sp : 13.sp,
                               fontWeight: FontWeight.w500,
                               color: mainColor,
                             ),
@@ -787,7 +788,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           Text(
             "타인에 대한 비방글은 삭제될 수 있습니다",
             style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,
               color: AppTheme.isDark(context)
                   ? Colors.grey[400]
                   : Colors.grey[600],
@@ -813,7 +814,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           Text(
             "토론 결과",
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
               fontWeight: FontWeight.w600,
               color: AppTheme.getTextColor(context),
             ),
@@ -845,7 +846,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
           Text(
             _selectedSentiment == null ? "당신의 의견을 알려주세요" : "당신의 의견",
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
               fontWeight: FontWeight.w600,
               color: AppTheme.getTextColor(context),
             ),
@@ -965,7 +966,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         Expanded(
           flex: 9,
           child: Container(
-            padding: EdgeInsets.all(12.w),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.w),  // 세로 패딩 줄임
             decoration: BoxDecoration(
               color: emotionData.color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12.r),
@@ -1019,7 +1020,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       Text(
                         emotionData.label,
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 11.sp : 14.sp,  // 텍스트 크기 적절히 조정
                           fontWeight: FontWeight.bold,
                           color: emotionData.color,
                         ),
@@ -1032,11 +1033,12 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                               delay: 200.ms,
                               curve: Curves.easeOutCubic)
                           .fadeIn(duration: 300.ms, delay: 200.ms),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 1.h),  // 간격 추가 축소
                       Text(
                         emotionData.description,
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,  // 텍스트 크기 적절히 조정
+                          height: 1.1,  // 줄간격 더 축소
                           color: AppTheme.isDark(context)
                               ? Colors.grey[300]
                               : Colors.grey[700],
@@ -1185,7 +1187,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 16.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 13.sp : 16.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -1383,7 +1385,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 Text(
                   _keyword?.keyword ?? "키워드 로딩 중...",
                   style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.getTextColor(context),
                   ),
@@ -1394,7 +1396,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 Text(
                   _keyword?.category ?? "",
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 11.sp : 13.sp,
                     color: AppTheme.isDark(context)
                         ? Colors.grey[400]
                         : Colors.grey[600],
@@ -1470,7 +1472,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     Text(
                       "토론방 OPEN",
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                         color: Color(0xFF19B3F6),
                         fontWeight: FontWeight.w600,
                       ),
@@ -1492,7 +1494,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             Text(
                               dateStr,
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 12.sp : 15.sp,
                                 color: AppTheme.isDark(context)
                                     ? Colors.grey[400]
                                     : Colors.grey[600],
@@ -1502,7 +1504,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             Text(
                               timeStr,
                               style: TextStyle(
-                                fontSize: 18.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppTheme.getTextColor(context),
                               ),
@@ -1535,7 +1537,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     Text(
                       isExpired ? "종료됨" : "남은시간",
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 15.sp,
                         color: isExpired
                             ? (AppTheme.isDark(context)
                                 ? Colors.grey[500]
@@ -1554,7 +1556,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                           child: Text(
                             ":",
                             style: TextStyle(
-                              fontSize: 22.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 18.sp : 22.sp,
                               fontWeight: FontWeight.bold,
                               color: isExpired
                                   ? (AppTheme.isDark(context)
@@ -1570,7 +1572,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                           child: Text(
                             ":",
                             style: TextStyle(
-                              fontSize: 22.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 18.sp : 22.sp,
                               fontWeight: FontWeight.bold,
                               color: isExpired
                                   ? (AppTheme.isDark(context)
@@ -1625,7 +1627,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
       child: Text(
         time,
         style: TextStyle(
-          fontSize: 24.sp,
+          fontSize: DeviceUtils.isTablet(context) ? 20.sp : 24.sp,
           fontWeight: FontWeight.bold,
           color: AppTheme.isDark(context)
               ? (isDisabled ? Colors.grey[600] : Colors.grey[300])
@@ -1702,7 +1704,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                 child: Text(
                   ['3줄', '짧은 글', '긴 글'][selectedIndex],
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -1736,7 +1738,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         child: Text(
                           ['3줄', '짧은 글', '긴 글'][index],
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                             fontWeight: FontWeight.w500,
                             color: AppTheme.isDark(context)
                                 ? Colors.grey[400]
@@ -1796,7 +1798,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       child: Text(
                         "${index + 1}",
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF19B3F6),
                         ),
@@ -1807,7 +1809,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                     child: Text(
                       line,
                       style: TextStyle(
-                        fontSize: 18.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                         height: 1.5,
                         color: AppTheme.isDark(context)
                             ? Colors.grey[300]
@@ -1825,7 +1827,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         return Text(
           _keyword!.type2.isNotEmpty ? _keyword!.type2 : "짧은 글 요약 정보가 없습니다.",
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
             height: 1.5,
             color:
                 AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
@@ -1836,7 +1838,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         return Text(
           _keyword!.type3.isNotEmpty ? _keyword!.type3 : "긴 글 요약 정보가 없습니다.",
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
             height: 1.5,
             color:
                 AppTheme.isDark(context) ? Colors.grey[300] : Colors.grey[800],
@@ -2012,7 +2014,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
         Text(
           '$text $percentage',
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,  // 태블릿 대응 텍스트 크기 축소
             color: AppTheme.isDark(context)
                 ? Colors.grey[400]
                 : Colors.grey.shade700,
@@ -2217,7 +2219,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                           decoration: InputDecoration(
                             hintText: "닉네임",
                             hintStyle: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                               color: AppTheme.isDark(context)
                                   ? Colors.grey[500]
                                   : Colors.grey[600],
@@ -2229,7 +2231,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             fillColor: Colors.transparent,
                           ),
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                             color: isDisabled
                                 ? Colors.grey
                                 : AppTheme.getTextColor(context),
@@ -2280,7 +2282,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                           decoration: InputDecoration(
                             hintText: "비밀번호",
                             hintStyle: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                               color: AppTheme.isDark(context)
                                   ? Colors.grey[500]
                                   : Colors.grey[600],
@@ -2292,7 +2294,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                             contentPadding: EdgeInsets.zero,
                           ),
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                             color: isDisabled
                                 ? Colors.grey
                                 : AppTheme.getTextColor(context),
@@ -2359,7 +2361,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                       decoration: InputDecoration(
                         hintText: isDisabled ? "종료된 토론방입니다" : "생각을 공유해주세요 :)",
                         hintStyle: TextStyle(
-                          fontSize: 15.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 12.sp : 15.sp,
                           color: AppTheme.isDark(context)
                               ? Colors.grey[500]
                               : Colors.grey[400],
@@ -2369,7 +2371,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
                         isDense: true,
                       ),
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 15.sp,
                         color: AppTheme.isDark(context)
                             ? Colors.grey[300]
                             : Colors.black87,

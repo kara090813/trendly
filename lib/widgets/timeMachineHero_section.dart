@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 
 class TimeMachineHeroSection extends StatelessWidget {
   final DateTime selectedDate;
@@ -56,7 +57,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                     Text(
                       "실검 타임머신",
                       style: TextStyle(
-                        fontSize: 29.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -66,7 +67,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                     Text(
                       "과거의 실시간 검색어를 조회해보세요",
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 11.sp : 15.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -148,7 +149,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                             Text(
                               _formatDate(selectedDate),
                               style: TextStyle(
-                                fontSize: 25.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 18.sp : 25.sp,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.getTextColor(context),
                                 height: 1.2,
@@ -158,7 +159,7 @@ class TimeMachineHeroSection extends StatelessWidget {
                             Text(
                               _getRelativeDateText(selectedDate),
                               style: TextStyle(
-                                fontSize: 16.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                                 color: Color(0xFF3B82F6),
                                 fontWeight: FontWeight.w600,
                               ),

@@ -9,6 +9,7 @@ import '../services/firebase_messaging_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/_widgets.dart';
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -179,7 +180,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           backgroundColor: AppTheme.getContainerColor(context),
           elevation: 8,
           expandedHeight: 0,
-          toolbarHeight: 54.h,
+          toolbarHeight: DeviceUtils.isTablet(context) ? 70.h : 54.h,
           centerTitle: true,
           automaticallyImplyLeading: false, // 기본 백버튼 비활성화
           // 헤더 부분을 title 대신 flexibleSpace로 구현 (더 유연한 레이아웃)
@@ -217,7 +218,10 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
   Widget _buildSimplifiedHeader() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical:10.h, horizontal: 16.w),
+      padding: EdgeInsets.symmetric(
+        vertical: DeviceUtils.isTablet(context) ? 14.h : 10.h, 
+        horizontal: 16.w
+      ),
       child: Row(
         children: [
           // 1. 백버튼 (좌측)
@@ -230,7 +234,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                 padding: EdgeInsets.all(4.w),
                 child: Icon(
                   Icons.arrow_back_ios_new,
-                  size: 22.sp,
+                  size: DeviceUtils.isTablet(context) ? 18.sp : 22.sp,
                   color: Color(0xFF19B3F6),
                 ),
               ),
@@ -249,11 +253,11 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       child: AutoSizeText(
                         _keyword!.keyword,
                         style: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 16.sp : 20.sp,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.getTextColor(context),
                         ),
-                        minFontSize: 10,
+                        minFontSize: DeviceUtils.isTablet(context) ? 8 : 10,
                         stepGranularity: 1,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -266,10 +270,10 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                       child: AutoSizeText(
                         '('+_keyword!.category+')',
                         style: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 16.sp : 20.sp,
                           color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
                         ),
-                        minFontSize: 8,
+                        minFontSize: DeviceUtils.isTablet(context) ? 6 : 8,
                         stepGranularity: 1,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -307,7 +311,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                     Text(
                       '실검 요약',
                       style: TextStyle(
-                        fontSize: 22.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 18.sp : 22.sp,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.getTextColor(context),
                       ),
@@ -379,7 +383,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             paragraphSpans.add(TextSpan(
               text: paragraph.substring(currentPos, currentPos + token.length),
               style: TextStyle(
-                fontSize: 18.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
                 height: 1.7,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF19B3F6),
@@ -407,7 +411,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
           paragraphSpans.add(TextSpan(
             text: paragraph.substring(currentPos, nextMatchPos),
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 18.sp,
               height: 1.7,
               fontWeight: FontWeight.w400,
               color: AppTheme.isDark(context) 
@@ -448,7 +452,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   child: Text(
                     '${i + 1}',
                     style: TextStyle(
-                      fontSize: 14.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -589,7 +593,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             child: Text(
               '관련 뉴스',
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 18.sp : 22.sp,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.getTextColor(context),
               ),
@@ -700,7 +704,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   ? Icon(
                 Icons.article,
                 color: AppTheme.isDark(context) ? Colors.grey[600] : Colors.grey[500],
-                size: 30.sp,
+                size: DeviceUtils.isTablet(context) ? 24.sp : 30.sp,
               )
                   : null,
             ),
@@ -714,7 +718,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                   Text(
                     _htmlUnescape.convert(refData['title']?.toString() ?? ''),
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 15.sp,
                       fontWeight: FontWeight.w500,
                       height: 1.3,
                       color: AppTheme.getTextColor(context),
@@ -727,7 +731,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
                     '${refData['type']?.toString() ?? ''} · ${refData['date']?.toString() ?? ''}',
                     style: TextStyle(
                       color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[600],
-                      fontSize: 13.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 11.sp : 13.sp,
                     ),
                   ),
                 ],
@@ -767,14 +771,14 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
               _isNewsExpanded ? '접기' : '펼쳐보기',
               style: TextStyle(
                 color: Color(0xFF19B3F6),
-                fontSize: 14.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
             SizedBox(width: 4.w),
             Icon(
               _isNewsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              size: 18.sp,
+              size: DeviceUtils.isTablet(context) ? 16.sp : 18.sp,
               color: Color(0xFF19B3F6),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../utils/device_utils.dart';
 
 class AppBarIconWidget extends StatelessWidget {
   final String? imageUrl;
@@ -7,7 +8,7 @@ class AppBarIconWidget extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  final double iconSize;
+  final double? iconSize;
 
   const AppBarIconWidget({
     Key? key,
@@ -16,7 +17,7 @@ class AppBarIconWidget extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
-    this.iconSize = 30,
+    this.iconSize,
   }) : assert(imageUrl != null || icon != null, 'Either imageUrl or icon must be provided'),
        super(key: key);
 
@@ -31,19 +32,19 @@ class AppBarIconWidget extends StatelessWidget {
           imageUrl != null
               ? Image.asset(
                   imageUrl!,
-                  width: iconSize,
-                  height: iconSize,
+                  width: iconSize ?? (DeviceUtils.isTablet(context) ? 18.w : 30.w),
+                  height: iconSize ?? (DeviceUtils.isTablet(context) ? 18.w : 30.w),
                   color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
                 )
               : Icon(
                   icon!,
-                  size: iconSize,
+                  size: iconSize ?? (DeviceUtils.isTablet(context) ? 18.sp : 30.sp),
                   color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
                 ),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
               color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
             ),
           ),

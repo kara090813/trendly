@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 
 class TimeMachineWordCloudSection extends StatelessWidget {
   final Map<String, Color> categoryColors;
@@ -232,7 +233,7 @@ class TimeMachineWordCloudSection extends StatelessWidget {
                     Text(
                       "키워드 클라우드",
                       style: TextStyle(
-                        fontSize: 28.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 20.sp : 28.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -246,7 +247,7 @@ class TimeMachineWordCloudSection extends StatelessWidget {
                   child: Text(
                     "AI가 분석한 키워드 연관성을 시각화",
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 11.sp : 15.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -387,7 +388,7 @@ class TimeMachineWordCloudSection extends StatelessWidget {
                     Text(
                       "카테고리 색상 가이드",
                       style: TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.getTextColor(context),
                       ),
@@ -434,7 +435,7 @@ class TimeMachineWordCloudSection extends StatelessWidget {
                           Text(
                             entry.key,
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                               fontWeight: FontWeight.w600,
                               color: entry.value,
                             ),
@@ -506,7 +507,7 @@ class TimeMachineWordCloudSection extends StatelessWidget {
           Text(
             "AI 분석 중...",
             style: TextStyle(
-              fontSize: 20.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 15.sp : 20.sp,
               fontWeight: FontWeight.w700,
               color: AppTheme.getTextColor(context),
             ),

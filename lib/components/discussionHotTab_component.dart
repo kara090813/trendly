@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../models/_models.dart';
 import '../funcs/category_colors.dart';
 import '../widgets/discussionReaction_widget.dart';
+import '../utils/device_utils.dart';
 
 class DiscussionHotTabComponent extends StatefulWidget {
   const DiscussionHotTabComponent({super.key});
@@ -293,7 +294,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                 child: Icon(
                   Icons.local_fire_department,
                   color: Colors.white,
-                  size: 30.sp,
+                  size: DeviceUtils.isTablet(context) ? 20.sp : 30.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -304,7 +305,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       "인기 토론방",
                       style: TextStyle(
-                        fontSize: 30.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 22.sp : 30.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -314,7 +315,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       "가장 핫한 토론에 참여하세요",
                       style: TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 14.sp : 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -353,7 +354,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       'HOT 10',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -402,7 +403,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                 Text(
                   "TOP 3",
                   style: TextStyle(
-                    fontSize: 22.sp,
+                    fontSize: DeviceUtils.isTablet(context) ? 16.sp : 22.sp,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.getTextColor(context),
                   ),
@@ -421,14 +422,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     children: [
                       Icon(
                         Icons.swipe,
-                        size: 16.sp,
+                        size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                         color: isDark ? Colors.grey[500] : Colors.grey[600],
                       ),
                       SizedBox(width: 4.w),
                       Text(
                         "스와이프",
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                           color: isDark ? Colors.grey[500] : Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
@@ -445,7 +446,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           SizedBox(height: 20.h),
           
           SizedBox(
-            height: 300.h, // 높이 증가 (3분할 구조에 맞게 조정)
+            height: DeviceUtils.isTablet(context) ? 400.h : 330.h, // 태블릿에서는 더 높게 설정
             child: PageView.builder(
               controller: PageController(viewportFraction: 0.9),
               itemCount: topThree.length,
@@ -547,7 +548,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                           '${index + 1}',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -563,7 +564,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                             room.keyword,
                             style: TextStyle(
                               color: textColor,
-                              fontSize: 18.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
                               fontWeight: FontWeight.w700,
                               height: 1.2,
                             ),
@@ -582,7 +583,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                                 child: Text(
                                   category,
                                   style: TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
                                     fontWeight: FontWeight.w600,
                                     color: categoryColor,
                                   ),
@@ -591,14 +592,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                               SizedBox(width: 6.w),
                               Icon(
                                 Icons.local_fire_department,
-                                size: 14.sp,
+                                size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                                 color: Colors.orange,
                               ),
                               SizedBox(width: 2.w),
                               Text(
                                 'HOT',
                                 style: TextStyle(
-                                  fontSize: 12.sp,
+                                  fontSize: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.orange,
                                 ),
@@ -681,14 +682,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
       children: [
         Icon(
           icon,
-          size: 16.sp,
+          size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
           color: color,
         ),
         SizedBox(width: 4.w),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -708,7 +709,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
         child: Text(
           '토론 참여를 기다리고 있습니다',
           style: TextStyle(
-            fontSize: 13.sp,
+            fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
             color: isDark ? Colors.grey[500] : Colors.grey[600],
             fontStyle: FontStyle.italic,
           ),
@@ -755,14 +756,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   children: [
                     Icon(
                       Icons.star_rounded,
-                      size: 12.sp,
+                      size: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
                       color: Colors.white,
                     ),
                     SizedBox(width: 2.w),
                     Text(
                       'BEST',
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 7.sp : 11.sp,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -782,14 +783,14 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                   children: [
                     Icon(
                       Icons.thumb_up,
-                      size: 12.sp,
+                      size: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
                       color: const Color(0xFF00AEEF),
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       bestComment['like_count'].toString(),
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF00AEEF),
                       ),
@@ -805,7 +806,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
             child: Text(
               bestComment['comment'] ?? '',
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                 height: 1.3,
                 color: isDark ? Colors.grey[300] : Colors.grey[700],
                 fontWeight: FontWeight.w500,
@@ -1041,22 +1042,23 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
 
   Widget _buildCompactReactionLabel(
       BuildContext context, String text, String percentage, Color dotColor) {
+    final isTablet = DeviceUtils.isTablet(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8.w,
-          height: 8.w,
+          width: isTablet ? 6.w : 8.w,  // 태블릿에서 더 작게
+          height: isTablet ? 6.w : 8.w,
           decoration: BoxDecoration(
             color: dotColor,
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 6.w),
+        SizedBox(width: isTablet ? 4.w : 6.w),
         Text(
           '$text $percentage',
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: isTablet ? 9.sp : 14.sp,  // 태블릿에서 훨씬 작은 폰트
             fontWeight: FontWeight.w700,
             color: AppTheme.isDark(context) 
               ? Colors.grey[300] 
@@ -1082,7 +1084,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
           Text(
             "TOP 4~10",
             style: TextStyle(
-              fontSize: 20.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 17.sp : 20.sp,
               fontWeight: FontWeight.w700,
               color: AppTheme.getTextColor(context),
             ),
@@ -1192,7 +1194,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     children: [
                       Icon(
                         dominantIcon,
-                        size: 28.sp,
+                        size: DeviceUtils.isTablet(context) ? 20.sp : 28.sp,
                         color: dominantColor,
                       ),
                       Positioned(
@@ -1220,7 +1222,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                             child: Text(
                               '$rank',
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 7.sp : 11.sp,
                                 fontWeight: FontWeight.w900,
                                 color: dominantColor,
                                 height: 1.0,
@@ -1244,7 +1246,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                       Text(
                         room.keyword,
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
                           fontWeight: FontWeight.w700,
                           color: textColor,
                           height: 1.2,
@@ -1264,30 +1266,30 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                             child: Text(
                               category,
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: categoryColor,
                               ),
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          Icon(Icons.forum, size: 14.sp, color: textColor.withOpacity(0.4)),
+                          Icon(Icons.forum, size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp, color: textColor.withOpacity(0.4)),
                           SizedBox(width: 3.w),
                           Text(
                             '${room.comment_count ?? 0}',
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                               color: textColor.withOpacity(0.5),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          Icon(Icons.favorite, size: 14.sp, color: textColor.withOpacity(0.4)),
+                          Icon(Icons.favorite, size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp, color: textColor.withOpacity(0.4)),
                           SizedBox(width: 3.w),
                           Text(
                             '${_getTotalReactions(room)}',
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                               color: textColor.withOpacity(0.5),
                               fontWeight: FontWeight.w500,
                             ),
@@ -1306,7 +1308,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     Text(
                       _getCompactTime(room.updated_at ?? room.created_at),
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                         color: textColor.withOpacity(0.4),
                         fontWeight: FontWeight.w500,
                       ),
@@ -1314,7 +1316,7 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
                     SizedBox(height: 4.h),
                     Icon(
                       Icons.arrow_forward_ios,
-                      size: 16.sp,
+                      size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                       color: dominantColor.withOpacity(0.6),
                     ),
                   ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import '../app_theme.dart';
+import '../utils/device_utils.dart';
 
 class TabHeaderWidget extends StatelessWidget {
   final List<String> tabLabels;
@@ -48,8 +49,8 @@ class TabHeaderWidget extends StatelessWidget {
         padding: EdgeInsets.only(
           top: topPadding,
           bottom: 16.h,
-          left: 24.w,
-          right: 24.w,
+          left: DeviceUtils.isTablet(context) ? 70.w : 24.w,  // 태블릿에서 양옆 패딩 증가
+          right: DeviceUtils.isTablet(context) ? 70.w : 24.w,
         ),
         child: _buildNeumorphicTabBar(context),
       ),
@@ -58,7 +59,9 @@ class TabHeaderWidget extends StatelessWidget {
 
   Widget _buildNeumorphicTabBar(BuildContext context) {
     final isDark = AppTheme.isDark(context);
-    final double totalWidth = MediaQuery.of(context).size.width - 48.w;
+    final isTablet = DeviceUtils.isTablet(context);
+    final double horizontalPadding = isTablet ? 140.w : 48.w;  // 태블릿일 때 양옆 패딩 총합
+    final double totalWidth = MediaQuery.of(context).size.width - horizontalPadding;
     final double tabWidth = totalWidth / tabLabels.length;
 
     return Container(
@@ -128,7 +131,7 @@ class TabHeaderWidget extends StatelessWidget {
                         child: Text(
                           tabLabels[index],
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: isTablet ? 11.sp : 15.sp,  // 태블릿에서 텍스트 크기 축소
                             fontWeight: index == selectedTabIndex ? FontWeight.w600 : FontWeight.w400,
                             fontFamily: 'asgm',
                             color: index == selectedTabIndex

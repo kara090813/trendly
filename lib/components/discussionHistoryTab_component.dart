@@ -14,6 +14,7 @@ import '../services/api_cache_service.dart';
 import '../widgets/discussion_filter_widget.dart';
 import '../models/filter_state_model.dart';
 import '../funcs/category_colors.dart';
+import '../utils/device_utils.dart';
 
 class DiscussionHistoryTabComponent extends StatefulWidget{
   const DiscussionHistoryTabComponent({super.key});
@@ -564,7 +565,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
+            Icon(Icons.error_outline, size: DeviceUtils.isTablet(context) ? 36.sp : 48.sp, color: Colors.red),
             SizedBox(height: 16.h),
             Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red)),
             SizedBox(height: 16.h),
@@ -709,7 +710,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                 child: Icon(
                   Icons.archive_rounded,
                   color: Colors.white,
-                  size: 30.sp,
+                  size: DeviceUtils.isTablet(context) ? 20.sp : 30.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -720,7 +721,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                     Text(
                       "토론방 히스토리",
                       style: TextStyle(
-                        fontSize: 30.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 22.sp : 30.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -730,7 +731,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                     Text(
                       "종료된 토론 아카이브",
                       style: TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -758,13 +759,13 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                     Icon(
                       Icons.insights,
                       color: Colors.white,
-                      size: 18.sp,
+                      size: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
                     ),
                     SizedBox(width: 6.w),
                     Text(
                       '총 ${_totalHistoryCount}건',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -856,7 +857,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                             Text(
                               category,
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 11.sp : 15.sp,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                 color: isSelected 
                                   ? Colors.white
@@ -867,7 +868,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                             Text(
                               '${_categoryCounts[category] ?? 0}',
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected 
                                   ? Colors.white.withOpacity(0.8)
@@ -948,7 +949,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                           color: hasFocus 
                             ? Color(0xFF6366F1)
                             : (isDark ? Colors.grey[400] : Colors.grey[600]),
-                          size: hasFocus ? 26.sp : 24.sp,
+                          size: hasFocus ? (DeviceUtils.isTablet(context) ? 19.sp : 26.sp) : (DeviceUtils.isTablet(context) ? 17.sp : 24.sp),
                         ),
                       ),
                     ),
@@ -963,14 +964,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                       autofillHints: const [AutofillHints.name],
                       style: TextStyle(
                         color: AppTheme.getTextColor(context),
-                        fontSize: 17.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
                         hintText: '토론 제목으로 검색',
                         hintStyle: TextStyle(
                           color: isDark ? Colors.grey[500] : Colors.grey[400],
-                          fontSize: 17.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                           fontWeight: FontWeight.w400,
                         ),
                         border: InputBorder.none,
@@ -1034,7 +1035,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                                             child: Icon(
                                               Icons.clear_rounded,
                                               key: ValueKey('clear'),
-                                              size: 20.sp,
+                                              size: DeviceUtils.isTablet(context) ? 14.sp : 20.sp,
                                               color: isDark ? Colors.grey[400] : Colors.grey[600],
                                             ),
                                           ),
@@ -1066,7 +1067,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                                     children: [
                                       Icon(
                                         Icons.tune_rounded,
-                                        size: 22.sp,
+                                        size: DeviceUtils.isTablet(context) ? 16.sp : 22.sp,
                                         color: _hasActiveFilters() 
                                           ? Color(0xFF10B981)
                                           : (isDark ? Colors.grey[400] : Colors.grey[600]),
@@ -1155,7 +1156,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                         Text(
                           '히스토리 목록',
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                             fontWeight: FontWeight.w600,
                             color: isDark ? Colors.grey[300] : Colors.grey[700],
                           ),
@@ -1179,7 +1180,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                               value: 'newest',
                               child: Row(
                                 children: [
-                                  Icon(Icons.schedule, size: 16.sp, color: Color(0xFF6366F1)),
+                                  Icon(Icons.schedule, size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp, color: Color(0xFF6366F1)),
                                   SizedBox(width: 8.w),
                                   Text('최신순'),
                                 ],
@@ -1189,7 +1190,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                               value: 'oldest',
                               child: Row(
                                 children: [
-                                  Icon(Icons.history, size: 16.sp, color: Color(0xFF6366F1)),
+                                  Icon(Icons.history, size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp, color: Color(0xFF6366F1)),
                                   SizedBox(width: 8.w),
                                   Text('오래된순'),
                                 ],
@@ -1199,7 +1200,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                               value: 'popular',
                               child: Row(
                                 children: [
-                                  Icon(Icons.trending_up, size: 16.sp, color: Color(0xFF6366F1)),
+                                  Icon(Icons.trending_up, size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp, color: Color(0xFF6366F1)),
                                   SizedBox(width: 8.w),
                                   Text('인기순'),
                                 ],
@@ -1217,14 +1218,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                               children: [
                                 Icon(
                                   Icons.sort,
-                                  size: 16.sp,
+                                  size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
                                   _getSortDisplayName(_filterState.sortOption),
                                   style: TextStyle(
-                                    fontSize: 14.sp,
+                                    fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                                     fontWeight: FontWeight.w500,
                                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                                   ),
@@ -1232,7 +1233,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                                 SizedBox(width: 2.w),
                                 Icon(
                                   Icons.keyboard_arrow_down,
-                                  size: 16.sp,
+                                  size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                                 ),
                               ],
@@ -1285,13 +1286,16 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         child: InkWell(
           onTap: () => context.push('/discussion/${room.id}'),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.w, 
+              vertical: DeviceUtils.isTablet(context) ? 16.h : 12.h // 태블릿에서 패딩 증가
+            ),
             child: Row(
               children: [
                 // 카테고리 컬러 인디케이터
                 Container(
-                  width: 3.w,
-                  height: 24.h,
+                  width: DeviceUtils.isTablet(context) ? 4.w : 3.w,  // 태블릿에서 더 두껍게
+                  height: DeviceUtils.isTablet(context) ? 28.h : 24.h,  // 태블릿에서 더 높게
                   decoration: BoxDecoration(
                     color: categoryColor,
                     borderRadius: BorderRadius.circular(2.r),
@@ -1302,7 +1306,10 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                 
                 // 카테고리 태그
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: DeviceUtils.isTablet(context) ? 10.w : 6.w,
+                    vertical: DeviceUtils.isTablet(context) ?4.h : 2.h  // 태블릿에서 패딩 증가
+                  ),
                   decoration: BoxDecoration(
                     color: categoryColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8.r),
@@ -1314,7 +1321,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   child: Text(
                     category,
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,  // 태블릿에서도 적절한 크기
                       fontWeight: FontWeight.w700,
                       color: categoryColor,
                     ),
@@ -1328,7 +1335,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   child: Text(
                     room.keyword,
                     style: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.getTextColor(context),
                       height: 1.2,
@@ -1346,14 +1353,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   children: [
                     Icon(
                       Icons.chat_bubble_outline,
-                      size: 14.sp,
+                      size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       '${room.comment_count ?? 0}',
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
@@ -1369,14 +1376,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   children: [
                     Icon(
                       Icons.people_outline,
-                      size: 14.sp,
+                      size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       '$totalReactions',
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
@@ -1389,7 +1396,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                 // 화살표 아이콘
                 Icon(
                   Icons.arrow_forward_ios,
-                  size: 14.sp,
+                  size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                   color: isDark ? Colors.grey[500] : Colors.grey[400],
                 ),
               ],
@@ -1450,7 +1457,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                   child: Center(
                     child: Icon(
                       Icons.search_off_rounded,
-                      size: 48.sp,
+                      size: DeviceUtils.isTablet(context) ? 36.sp : 48.sp,
                       color: Color(0xFF6366F1).withOpacity(0.6 + (0.4 * value)),
                     ),
                   ),
@@ -1462,7 +1469,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
           Text(
             '검색 결과가 없습니다',
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
               fontWeight: FontWeight.w700,
               color: AppTheme.getTextColor(context),
             ),
@@ -1475,7 +1482,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
               ? '"${_filterState.searchQuery}"에 대한 결과를 찾을 수 없습니다'
               : '다른 키워드나 카테고리로 검색해보세요',
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
               color: AppTheme.getTextColor(context).withOpacity(0.6),
               height: 1.5,
             ),
@@ -1545,14 +1552,14 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
             children: [
               Icon(
                 icon,
-                size: 16.sp,
+                size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                 color: Color(0xFF6366F1),
               ),
               SizedBox(width: 6.w),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                   fontWeight: FontWeight.w500,
                   color: AppTheme.getTextColor(context),
                 ),
@@ -1656,7 +1663,7 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
                     child: Icon(
                       Icons.keyboard_arrow_up_rounded,
                       color: Colors.white,
-                      size: 28.sp,
+                      size: DeviceUtils.isTablet(context) ? 20.sp : 28.sp,
                     ),
                   ),
                 ),

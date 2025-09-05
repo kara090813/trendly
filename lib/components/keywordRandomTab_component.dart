@@ -6,6 +6,7 @@ import 'package:html_unescape/html_unescape.dart';
 import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
+import '../utils/device_utils.dart';
 
 class RandomKeywordTabComponent extends StatefulWidget {
   const RandomKeywordTabComponent({Key? key}) : super(key: key);
@@ -138,7 +139,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               _errorMessage ?? '랜덤 키워드를 불러올 수 없습니다',
               style: TextStyle(
-                fontSize: 19.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                 color: Colors.grey,
               ),
               textAlign: TextAlign.center,
@@ -291,7 +292,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "랜덤 키워드",
                       style: TextStyle(
-                        fontSize: 29.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -301,7 +302,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "예상치 못한 트렌드를 발견하세요",
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 11.sp : 15.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -371,7 +372,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                               Text(
                                 keyword.keyword,
                                 style: TextStyle(
-                                  fontSize: 25.sp,
+                                  fontSize: DeviceUtils.isTablet(context) ? 18.sp : 25.sp,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.getTextColor(context),
                                   height: 1.2,
@@ -381,7 +382,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                               Text(
                                 _formatDate(keyword.created_at),
                                 style: TextStyle(
-                                  fontSize: 16.sp,
+                                  fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -402,7 +403,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                           child: Text(
                             keyword.category,
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFFEF4444),
                             ),
@@ -466,7 +467,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "키워드 요약",
                       style: TextStyle(
-                        fontSize: 29.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -480,7 +481,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   child: Text(
                     "AI 분석 핵심 포인트",
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -553,7 +554,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             child: Text(
               number.toString(),
               style: TextStyle(
-                fontSize: 19.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -567,7 +568,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 19.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                 height: 1.4,
                 color: AppTheme.getTextColor(context),
                 fontWeight: FontWeight.w500,
@@ -612,7 +613,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     Text(
                       "키워드 상세",
                       style: TextStyle(
-                        fontSize: 29.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 21.sp : 29.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         letterSpacing: -0.5,
@@ -626,7 +627,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   child: Text(
                     "상세 설명 및 관련 정보",
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -716,7 +717,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               '상세 설명',
               style: TextStyle(
-                fontSize: 19.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.getTextColor(context),
               ),
@@ -725,7 +726,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               currentKeyword.type2,
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                 height: 1.5,
                 color: AppTheme.getTextColor(context),
               ),
@@ -738,7 +739,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
             Text(
               '관련 링크',
               style: TextStyle(
-                fontSize: 19.sp,
+                fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.getTextColor(context),
               ),
@@ -761,7 +762,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   Text(
                     '추가 정보가 곧 업데이트됩니다.',
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontStyle: FontStyle.italic,
                     ),
@@ -926,7 +927,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 19.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                       fontWeight: FontWeight.w500,
                       height: 1.3,
                       color: AppTheme.getTextColor(context),
@@ -939,7 +940,7 @@ class _RandomKeywordTabComponentState extends State<RandomKeywordTabComponent>
                     '${description}${date.isNotEmpty ? ' · ${date}' : ''}',
                     style: TextStyle(
                       color: isDark ? Colors.grey[500] : Colors.grey[600],
-                      fontSize: 19.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 14.sp : 19.sp,
                     ),
                   ),
                 ],

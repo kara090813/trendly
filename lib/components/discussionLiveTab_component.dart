@@ -7,6 +7,7 @@ import '../app_theme.dart';
 import '../services/api_service.dart';
 import '../models/_models.dart';
 import '../funcs/category_colors.dart';
+import '../utils/device_utils.dart';
 
 class DiscussionLiveTabComponent extends StatefulWidget {
   const DiscussionLiveTabComponent({super.key});
@@ -268,7 +269,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48.sp, color: Colors.red),
+            Icon(Icons.error_outline, size: DeviceUtils.isTablet(context) ? 36.sp : 48.sp, color: Colors.red),
             SizedBox(height: 16.h),
             Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red)),
             SizedBox(height: 16.h),
@@ -402,7 +403,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 child: Icon(
                   Icons.radio_button_checked,
                   color: Colors.white,
-                  size: 30.sp,
+                  size: DeviceUtils.isTablet(context) ? 20.sp : 30.sp,
                 ),
               ),
               SizedBox(width: 16.w),
@@ -413,7 +414,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                     Text(
                       "실시간 토론방",
                       style: TextStyle(
-                        fontSize: 30.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 22.sp : 30.sp,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.getTextColor(context),
                         height: 1.1,
@@ -423,7 +424,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                     Text(
                       "실시간 진행 중인 토론에 참여하세요",
                       style: TextStyle(
-                        fontSize: 16.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         height: 1.4,
                       ),
@@ -460,7 +461,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                     Text(
                       'LIVE ${_getCategoryCount('전체')}',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -562,7 +563,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             Text(
                               category,
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 11.sp : 15.sp,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                 color: isSelected 
                                   ? Colors.white
@@ -573,7 +574,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             Text(
                               '${_getCategoryCount(category)}',
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected 
                                   ? Colors.white.withOpacity(0.8)
@@ -642,7 +643,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                       Text(
                         '토론방 목록',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.grey[300] : Colors.grey[700],
                         ),
@@ -655,7 +656,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             value: 'new',
                             child: Row(
                               children: [
-                                Icon(Icons.schedule, size: 16.sp, color: Color(0xFF10B981)),
+                                Icon(Icons.schedule, size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp, color: Color(0xFF10B981)),
                                 SizedBox(width: 8.w),
                                 Text('최신순'),
                               ],
@@ -665,7 +666,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             value: 'pop',
                             child: Row(
                               children: [
-                                Icon(Icons.trending_up, size: 16.sp, color: Color(0xFF10B981)),
+                                Icon(Icons.trending_up, size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp, color: Color(0xFF10B981)),
                                 SizedBox(width: 8.w),
                                 Text('인기순'),
                               ],
@@ -683,14 +684,14 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                             children: [
                               Icon(
                                 Icons.sort,
-                                size: 14.sp,
+                                size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
                               SizedBox(width: 4.w),
                               Text(
                                 _sortOption == 'new' ? '최신순' : '인기순',
                                 style: TextStyle(
-                                  fontSize: 12.sp,
+                                  fontSize: DeviceUtils.isTablet(context) ? 8.sp : 12.sp,
                                   fontWeight: FontWeight.w500,
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                                 ),
@@ -698,7 +699,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                               SizedBox(width: 2.w),
                               Icon(
                                 Icons.keyboard_arrow_down,
-                                size: 16.sp,
+                                size: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
                                 color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
                             ],
@@ -759,13 +760,16 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
         child: InkWell(
           onTap: () => context.push('/discussion/${room.id}'),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16.w, 
+              vertical: DeviceUtils.isTablet(context) ? 16.h : 12.h // 태블릿에서 패딩 증가 (히스토리 탭과 동일)
+            ),
             child: Row(
               children: [
                 // 카테고리 컬러 인디케이터
                 Container(
-                  width: 3.w,
-                  height: 24.h,
+                  width: DeviceUtils.isTablet(context) ? 4.w : 3.w,  // 태블릿에서 더 두껍게
+                  height: DeviceUtils.isTablet(context) ? 28.h : 24.h,  // 태블릿에서 더 높게 (히스토리 탭과 동일)
                   decoration: BoxDecoration(
                     color: categoryColor,
                     borderRadius: BorderRadius.circular(2.r),
@@ -776,7 +780,10 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 
                 // 카테고리 태그
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: DeviceUtils.isTablet(context) ? 10.w : 6.w,
+                    vertical: DeviceUtils.isTablet(context) ? 4.h : 2.h  // 태블릿에서 패딩 증가 (히스토리 탭과 동일)
+                  ),
                   decoration: BoxDecoration(
                     color: categoryColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8.r),
@@ -788,7 +795,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   child: Text(
                     category,
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 10.sp : 12.sp,  // 태블릿에서도 적절한 크기
                       fontWeight: FontWeight.w700,
                       color: categoryColor,
                     ),
@@ -802,7 +809,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   child: Text(
                     room.keyword,
                     style: TextStyle(
-                      fontSize: 17.sp,
+                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 17.sp,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.getTextColor(context),
                       height: 1.2,
@@ -820,14 +827,14 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   children: [
                     Icon(
                       Icons.chat_bubble_outline,
-                      size: 14.sp,
+                      size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       '${room.comment_count ?? 0}',
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
@@ -843,14 +850,14 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                   children: [
                     Icon(
                       Icons.people_outline,
-                      size: 14.sp,
+                      size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                     SizedBox(width: 3.w),
                     Text(
                       '$totalReactions',
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: DeviceUtils.isTablet(context) ? 9.sp : 13.sp,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
@@ -863,7 +870,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
                 // 화살표 아이콘
                 Icon(
                   Icons.arrow_forward_ios,
-                  size: 14.sp,
+                  size: DeviceUtils.isTablet(context) ? 10.sp : 14.sp,
                   color: isDark ? Colors.grey[500] : Colors.grey[400],
                 ),
               ],
@@ -894,7 +901,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
             ),
             child: Icon(
               Icons.forum_outlined,
-              size: 50.sp,
+              size: DeviceUtils.isTablet(context) ? 38.sp : 50.sp,
               color: Color(0xFF10B981),
             ),
           ),
@@ -902,7 +909,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
           Text(
             '진행 중인 토론방이 없습니다',
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 14.sp : 18.sp,
               fontWeight: FontWeight.w600,
               color: AppTheme.getTextColor(context),
             ),
@@ -911,7 +918,7 @@ class _DiscussionLiveTabComponentState extends State<DiscussionLiveTabComponent>
           Text(
             '새로운 토론방이 시작되면 알려드릴게요',
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: DeviceUtils.isTablet(context) ? 12.sp : 16.sp,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
               height: 1.4,
             ),
