@@ -19,28 +19,37 @@ class KeywordBoxWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 변화 수치 표시 (양수이면 +, 음수이면 - 붙이기)
+    // 변화 수치 표시 (실제 API 데이터 사용)
     String changeText = '';
     Color changeColor = Colors.grey;
+    IconData? changeIcon;
 
-    // 임의로 변화 수치 계산 (실제로는 API에서 제공되어야 함)
-    int change = 0;
-    if (keyword.id % 3 == 0) {
-      change = keyword.id % 50;
-    } else if (keyword.id % 3 == 1) {
-      change = -(keyword.id % 30);
+    if (keyword.rank_change != null) {
+      if (keyword.rank_change == 'NEW') {
+        changeText = 'NEW';
+        changeColor = Colors.orange;
+      } else if (keyword.rank_change == '0') {
+        changeText = '-';
+        changeColor = Colors.grey;
+      } else {
+        // 숫자 파싱 시도
+        final rankChange = keyword.rank_change!;
+        if (rankChange.startsWith('+')) {
+          changeText = rankChange;
+          changeColor = Colors.red;
+          changeIcon = Icons.arrow_upward;
+        } else if (rankChange.startsWith('-')) {
+          changeText = rankChange.substring(1); // 마이너스 기호 제거
+          changeColor = Colors.blue;
+          changeIcon = Icons.arrow_downward;
+        } else {
+          changeText = '-';
+          changeColor = Colors.grey;
+        }
+      }
     } else {
-      change = keyword.id % 100;
-    }
-
-    if (change > 0) {
-      changeText = '+ $change';
-      changeColor = Colors.red;
-    } else if (change < 0) {
-      changeText = '$change';
-      changeColor = Colors.blue;
-    } else {
-      changeText = '0';
+      changeText = '-';
+      changeColor = Colors.grey;
     }
 
     return InkWell(
@@ -93,13 +102,26 @@ class KeywordBoxWidget extends StatelessWidget {
                 Container(
                   width: DeviceUtils.isTablet(context) ? 80.w : 60.w,
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    changeText,
-                    style: TextStyle(
-                      color: changeColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: DeviceUtils.isTablet(context) ? 13.sp : 14.sp,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (changeIcon != null) ...[
+                        Icon(
+                          changeIcon,
+                          size: DeviceUtils.isTablet(context) ? 12.sp : 14.sp,
+                          color: changeColor,
+                        ),
+                        SizedBox(width: 2.w),
+                      ],
+                      Text(
+                        changeText,
+                        style: TextStyle(
+                          color: changeColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: DeviceUtils.isTablet(context) ? 13.sp : 14.sp,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 

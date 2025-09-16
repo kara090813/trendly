@@ -219,14 +219,17 @@ class ApiService {
         .toString();
     
     try {
+      print(url);
       final response = await _client.get(
         Uri.parse(url),
         headers: _headers,
       );
       
       if (response.statusCode == 200) {
+        print('test');
         final String decodedBody = utf8.decode(response.bodyBytes);
         final List<dynamic> data = json.decode(decodedBody);
+        print(data);
         return data.map((json) => DiscussionRoom.fromJson(json)).toList();
       } else {
         throw Exception('Failed to load active discussion rooms: ${response.statusCode}');
@@ -282,7 +285,28 @@ class ApiService {
       
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
-        return json.decode(decodedBody) as int;
+        final dynamic decodedData = json.decode(decodedBody);
+        
+        // API 응답 디버깅
+        print('🔍 [DISCUSSION COUNT] Response for category $category: $decodedData');
+        
+        // 응답이 직접 숫자인 경우
+        if (decodedData is num) {
+          return decodedData.toInt();
+        }
+        // 응답이 객체이고 count 필드가 있는 경우
+        else if (decodedData is Map && decodedData['count'] != null) {
+          return (decodedData['count'] as num).toInt();
+        }
+        // 응답이 객체이고 total 필드가 있는 경우
+        else if (decodedData is Map && decodedData['total'] != null) {
+          return (decodedData['total'] as num).toInt();
+        }
+        // null이거나 예상치 못한 형식인 경우 0 반환
+        else {
+          print('⚠️ [DISCUSSION COUNT] Unexpected response format: $decodedData');
+          return 0;
+        }
       } else {
         throw Exception('Failed to load discussion count: ${response.statusCode}');
       }

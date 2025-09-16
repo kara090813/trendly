@@ -30,6 +30,7 @@ mixin _$Keyword {
   String get category => throw _privateConstructorUsedError;
   dynamic get references => throw _privateConstructorUsedError;
   int? get current_discussion_room => throw _privateConstructorUsedError;
+  String? get rank_change => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -51,7 +52,8 @@ abstract class $KeywordCopyWith<$Res> {
       String type3,
       String category,
       dynamic references,
-      int? current_discussion_room});
+      int? current_discussion_room,
+      String? rank_change});
 }
 
 /// @nodoc
@@ -77,6 +79,7 @@ class _$KeywordCopyWithImpl<$Res, $Val extends Keyword>
     Object? category = null,
     Object? references = freezed,
     Object? current_discussion_room = freezed,
+    Object? rank_change = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -119,6 +122,10 @@ class _$KeywordCopyWithImpl<$Res, $Val extends Keyword>
           ? _value.current_discussion_room
           : current_discussion_room // ignore: cast_nullable_to_non_nullable
               as int?,
+      rank_change: freezed == rank_change
+          ? _value.rank_change
+          : rank_change // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -140,7 +147,8 @@ abstract class _$$KeywordImplCopyWith<$Res> implements $KeywordCopyWith<$Res> {
       String type3,
       String category,
       dynamic references,
-      int? current_discussion_room});
+      int? current_discussion_room,
+      String? rank_change});
 }
 
 /// @nodoc
@@ -164,6 +172,7 @@ class __$$KeywordImplCopyWithImpl<$Res>
     Object? category = null,
     Object? references = freezed,
     Object? current_discussion_room = freezed,
+    Object? rank_change = freezed,
   }) {
     return _then(_$KeywordImpl(
       id: null == id
@@ -206,6 +215,10 @@ class __$$KeywordImplCopyWithImpl<$Res>
           ? _value.current_discussion_room
           : current_discussion_room // ignore: cast_nullable_to_non_nullable
               as int?,
+      rank_change: freezed == rank_change
+          ? _value.rank_change
+          : rank_change // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -223,7 +236,8 @@ class _$KeywordImpl implements _Keyword {
       required this.type3,
       required this.category,
       this.references,
-      this.current_discussion_room});
+      this.current_discussion_room,
+      this.rank_change});
 
   factory _$KeywordImpl.fromJson(Map<String, dynamic> json) =>
       _$$KeywordImplFromJson(json);
@@ -249,10 +263,12 @@ class _$KeywordImpl implements _Keyword {
   final dynamic references;
   @override
   final int? current_discussion_room;
+  @override
+  final String? rank_change;
 
   @override
   String toString() {
-    return 'Keyword(id: $id, keyword: $keyword, rank: $rank, created_at: $created_at, type1: $type1, type2: $type2, type3: $type3, category: $category, references: $references, current_discussion_room: $current_discussion_room)';
+    return 'Keyword(id: $id, keyword: $keyword, rank: $rank, created_at: $created_at, type1: $type1, type2: $type2, type3: $type3, category: $category, references: $references, current_discussion_room: $current_discussion_room, rank_change: $rank_change)';
   }
 
   @override
@@ -274,7 +290,9 @@ class _$KeywordImpl implements _Keyword {
                 .equals(other.references, references) &&
             (identical(
                     other.current_discussion_room, current_discussion_room) ||
-                other.current_discussion_room == current_discussion_room));
+                other.current_discussion_room == current_discussion_room) &&
+            (identical(other.rank_change, rank_change) ||
+                other.rank_change == rank_change));
   }
 
   @JsonKey(ignore: true)
@@ -290,7 +308,8 @@ class _$KeywordImpl implements _Keyword {
       type3,
       category,
       const DeepCollectionEquality().hash(references),
-      current_discussion_room);
+      current_discussion_room,
+      rank_change);
 
   @JsonKey(ignore: true)
   @override
@@ -317,7 +336,8 @@ abstract class _Keyword implements Keyword {
       required final String type3,
       required final String category,
       final dynamic references,
-      final int? current_discussion_room}) = _$KeywordImpl;
+      final int? current_discussion_room,
+      final String? rank_change}) = _$KeywordImpl;
 
   factory _Keyword.fromJson(Map<String, dynamic> json) = _$KeywordImpl.fromJson;
 
@@ -341,6 +361,8 @@ abstract class _Keyword implements Keyword {
   dynamic get references;
   @override
   int? get current_discussion_room;
+  @override
+  String? get rank_change;
   @override
   @JsonKey(ignore: true)
   _$$KeywordImplCopyWith<_$KeywordImpl> get copyWith =>

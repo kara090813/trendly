@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 import '../router.dart';
 
@@ -26,6 +27,7 @@ class FirebaseMessagingService {
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final ApiService _apiService = ApiService();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   /// 플랫폼 및 환경 확인
   bool _isSimulator() {
@@ -81,6 +83,9 @@ class FirebaseMessagingService {
       // FCM 인스턴스 상태 확인
       print('🔥 [FCM] Checking FCM instance...');
       print('🔥 [FCM] FCM instance: ${_firebaseMessaging.toString()}');
+
+      // Notification Channel 설정 (Android heads-up 알림용)
+      await _setupNotificationChannel();
 
       // 1. 푸시 알림 권한 요청
       final NotificationSettings settings = await _requestPermissions();
@@ -338,6 +343,8 @@ class FirebaseMessagingService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('🔥 [FCM] Message received (foreground): ${message.notification?.title}');
       _handleForegroundMessage(message);
+      // Heads-up 알림 표시
+      _showHeadsUpNotification(message);
     });
 
     // 알림을 탭해서 앱을 열었을 때
@@ -347,6 +354,139 @@ class FirebaseMessagingService {
     });
   }
   
+  /// Notification Channel 설정 (Android heads-up 알림용)
+  Future<void> _setupNotificationChannel() async {
+    try {
+      print('🔔 [FCM] Setting up notification channel for heads-up...');
+      
+      // Android 플랫폼에서만 실행
+      if (!kIsWeb && Platform.isAndroid) {
+        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+          'trendly_channel', // 채널 ID (서버에서 보내는 channel_id와 일치해야 함)
+          'Trendly 실시간 알림', // 채널 이름
+          description: '실시간 트렌드 및 토론 알림', // 채널 설명
+          importance: Importance.high, // HIGH 이상이어야 heads-up 알림 표시
+          playSound: true, // 소리 재생
+          enableVibration: true, // 진동
+          showBadge: true, // 배지 표시
+        );
+
+        // 채널 생성
+        await _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(channel);
+        
+        print('✅ [FCM] Notification channel created: ${channel.id}');
+      }
+
+      // 로컬 알림 초기화
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+        requestAlertPermission: false, // FCM에서 이미 권한 요청
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
+
+      const InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
+
+      await _flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          // 알림 탭 시 처리
+          print('🔔 [FCM] Local notification tapped: ${response.payload}');
+          if (response.payload != null && response.payload!.isNotEmpty) {
+            // payload에 keyword_id나 discussion_room_id가 있으면 해당 페이지로 이동
+            final parts = response.payload!.split(':');
+            if (parts.length == 2) {
+              final type = parts[0];
+              final id = parts[1];
+              if (type == 'keyword') {
+                _navigateToKeywordDetail(id);
+              } else if (type == 'discussion') {
+                _navigateToDiscussionRoom(id);
+              }
+            }
+          }
+        },
+      );
+
+      print('✅ [FCM] Local notifications initialized');
+    } catch (e) {
+      print('❌ [FCM] Error setting up notification channel: $e');
+    }
+  }
+
+  /// Heads-up 알림 표시 (포그라운드에서 FCM 메시지 수신 시)
+  Future<void> _showHeadsUpNotification(RemoteMessage message) async {
+    try {
+      if (message.notification == null) {
+        print('⚠️ [FCM] No notification content to show');
+        return;
+      }
+
+      print('🔔 [FCM] Showing heads-up notification...');
+
+      // 알림 payload 구성 (탭 시 네비게이션용)
+      String? payload;
+      if (message.data.containsKey('keyword_id')) {
+        payload = 'keyword:${message.data['keyword_id']}';
+      } else if (message.data.containsKey('discussion_room_id')) {
+        payload = 'discussion:${message.data['discussion_room_id']}';
+      }
+
+      // Android 알림 설정
+      final AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+        'trendly_channel', // 위에서 생성한 채널 ID와 동일
+        'Trendly 실시간 알림',
+        channelDescription: '실시간 트렌드 및 토론 알림',
+        importance: Importance.high, // heads-up 표시를 위해 HIGH
+        priority: Priority.high, // 우선순위 높음
+        showWhen: true, // 시간 표시
+        enableVibration: true, // 진동
+        playSound: true, // 소리
+        styleInformation: BigTextStyleInformation(
+          message.notification!.body ?? '',
+          contentTitle: message.notification!.title,
+          summaryText: '트렌들리',
+        ),
+      );
+
+      // iOS 알림 설정
+      const DarwinNotificationDetails iOSPlatformChannelSpecifics =
+          DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      // 플랫폼별 알림 설정 통합
+      final NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics,
+      );
+
+      // 알림 표시
+      await _flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000, // 고유 ID
+        message.notification!.title ?? '트렌들리 알림',
+        message.notification!.body ?? '',
+        platformChannelSpecifics,
+        payload: payload,
+      );
+
+      print('✅ [FCM] Heads-up notification displayed');
+    } catch (e) {
+      print('❌ [FCM] Error showing heads-up notification: $e');
+    }
+  }
+
   /// 앱 시작 시 초기 메시지 확인
   Future<void> _checkInitialMessage() async {
     try {

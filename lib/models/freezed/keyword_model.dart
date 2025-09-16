@@ -17,6 +17,7 @@ class Keyword with _$Keyword {
     required String category,
     dynamic references,
     int? current_discussion_room,
+    String? rank_change,
   }) = _Keyword;
 
   factory Keyword.fromJson(Map<String, dynamic> json) => _$KeywordFromJson(json);

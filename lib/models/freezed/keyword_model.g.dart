@@ -19,6 +19,7 @@ _$KeywordImpl _$$KeywordImplFromJson(Map<String, dynamic> json) =>
       references: json['references'],
       current_discussion_room:
           (json['current_discussion_room'] as num?)?.toInt(),
+      rank_change: json['rank_change'] as String?,
     );
 
 Map<String, dynamic> _$$KeywordImplToJson(_$KeywordImpl instance) =>
@@ -33,6 +34,7 @@ Map<String, dynamic> _$$KeywordImplToJson(_$KeywordImpl instance) =>
       'category': instance.category,
       'references': instance.references,
       'current_discussion_room': instance.current_discussion_room,
+      'rank_change': instance.rank_change,
     };
 
 _$ReferenceImpl _$$ReferenceImplFromJson(Map<String, dynamic> json) =>

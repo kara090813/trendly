@@ -23,7 +23,21 @@ class DiscussionRoom with _$DiscussionRoom {
     @Default([]) List<SentimentSnapshot> sentiment_snapshot,
   }) = _DiscussionRoom;
 
-  factory DiscussionRoom.fromJson(Map<String, dynamic> json) => _$DiscussionRoomFromJson(json);
+  factory DiscussionRoom.fromJson(Map<String, dynamic> json) {
+    // keyword_id_list에서 null이나 비정상 값 필터링
+    if (json['keyword_id_list'] != null && json['keyword_id_list'] is List) {
+      final List<int> filteredList = [];
+      for (var item in json['keyword_id_list']) {
+        if (item != null && item is num) {
+          filteredList.add(item.toInt());
+        }
+      }
+      json = Map<String, dynamic>.from(json);
+      json['keyword_id_list'] = filteredList;
+    }
+    
+    return _$DiscussionRoomFromJson(json);
+  }
 }
 
 // 감정 스냅샷 모델 추가
