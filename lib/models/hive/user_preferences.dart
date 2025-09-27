@@ -53,6 +53,18 @@ class UserPreferences extends HiveObject {
   @HiveField(15)
   DateTime? lastWidgetUpdate;
 
+  @HiveField(16)
+  bool hasAcceptedEula;
+
+  @HiveField(17)
+  bool isProfanityFilterEnabled;
+
+  @HiveField(18)
+  List<String>? customProfanityWords;
+
+  @HiveField(19)
+  List<int> blockedCommentIds;
+
   UserPreferences({
     this.nickname,
     this.password,
@@ -70,19 +82,24 @@ class UserPreferences extends HiveObject {
     this.homeWidgetUpdateInterval = 30, // 30 minutes
     this.homeWidgetKeywordCount = 5, // show top 5 keywords
     this.lastWidgetUpdate,
+    this.hasAcceptedEula = false,
+    this.isProfanityFilterEnabled = false,
+    this.customProfanityWords,
+    List<int>? blockedCommentIds,
   })  : commentedRooms = commentedRooms ?? [],
         commentIds = commentIds ?? [],
         roomSentiments = roomSentiments ?? {},
-        commentReactions = commentReactions ?? {};
+        commentReactions = commentReactions ?? {},
+        blockedCommentIds = blockedCommentIds ?? [];
 
   // 팩토리 메서드 - 빈 preferences 생성 (시스템 기본값 감지)
   factory UserPreferences.empty() {
     final now = DateTime.now();
-    
+
     // 시스템 기본 테마 감지
     final brightness = WidgetsBinding.instance?.platformDispatcher.platformBrightness ?? Brightness.light;
     final systemIsDark = brightness == Brightness.dark;
-    
+
     return UserPreferences(
       isDarkMode: systemIsDark, // 시스템 기본값을 초기값으로 설정
       commentedRooms: [],
@@ -98,6 +115,10 @@ class UserPreferences extends HiveObject {
       homeWidgetUpdateInterval: 30,
       homeWidgetKeywordCount: 5,
       lastWidgetUpdate: null,
+      hasAcceptedEula: false,
+      isProfanityFilterEnabled: false,
+      customProfanityWords: [],
+      blockedCommentIds: [],
     );
   }
 
@@ -189,6 +210,7 @@ class UserPreferences extends HiveObject {
     commentIds.clear();
     roomSentiments.clear();
     commentReactions.clear();
+    blockedCommentIds.clear();
     lastUpdated = DateTime.now();
     save();
   }
@@ -253,5 +275,49 @@ class UserPreferences extends HiveObject {
     if (lastWidgetUpdate == null) return true;
     final minutesSinceUpdate = DateTime.now().difference(lastWidgetUpdate!).inMinutes;
     return minutesSinceUpdate >= homeWidgetUpdateInterval;
+  }
+
+  // EULA 동의 설정
+  void acceptEula() {
+    hasAcceptedEula = true;
+    lastUpdated = DateTime.now();
+    save();
+  }
+
+  // 욕설 필터링 설정
+  void setProfanityFilterEnabled(bool enabled) {
+    isProfanityFilterEnabled = enabled;
+    lastUpdated = DateTime.now();
+    save();
+  }
+
+  // 댓글 차단 추가
+  void blockComment(int commentId) {
+    if (!blockedCommentIds.contains(commentId)) {
+      blockedCommentIds.add(commentId);
+      lastUpdated = DateTime.now();
+      save();
+    }
+  }
+
+  // 댓글 차단 해제
+  void unblockComment(int commentId) {
+    if (blockedCommentIds.contains(commentId)) {
+      blockedCommentIds.remove(commentId);
+      lastUpdated = DateTime.now();
+      save();
+    }
+  }
+
+  // 댓글이 차단되었는지 확인
+  bool isCommentBlocked(int commentId) {
+    return blockedCommentIds.contains(commentId);
+  }
+
+  // 모든 차단된 댓글 해제
+  void clearBlockedComments() {
+    blockedCommentIds.clear();
+    lastUpdated = DateTime.now();
+    save();
   }
 }

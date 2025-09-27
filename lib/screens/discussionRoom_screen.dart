@@ -12,6 +12,7 @@ import '../services/api_service.dart';
 import '../services/firebase_messaging_service.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/_widgets.dart';
+import '../widgets/profanity_filter_button.dart';
 import '../app_theme.dart';
 import '../utils/device_utils.dart';
 
@@ -212,7 +213,7 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
 
     try {
       final comments = await _apiService
-          .getDiscussionComments(widget.discussionRoomId, isPopular: isPopular);
+          .getDiscussionCommentsLegacy(widget.discussionRoomId, isPopular: isPopular) ?? [];
 
       if (mounted) {
         setState(() {
@@ -1405,6 +1406,11 @@ class _DiscussionRoomScreenState extends State<DiscussionRoomScreen>
               ],
             ),
           ),
+
+          // 필터링 버튼
+          ProfanityFilterButton(),
+
+          SizedBox(width: 8.w),
 
           // 새로고침 버튼
           CircleButtonWidget(

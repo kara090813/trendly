@@ -17,7 +17,7 @@ class AdService {
   // 1. 광고 버전: isAdEnabled = true
   // 2. 광고 제거 버전: isAdEnabled = false
   // ========================================
-  static const bool isAdEnabled = false;
+  static const bool isAdEnabled = true;
   
   // ========================================
   // 성능 최적화 설정

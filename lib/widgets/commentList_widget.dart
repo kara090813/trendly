@@ -5,8 +5,10 @@ import 'package:provider/provider.dart';
 import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../providers/user_preference_provider.dart';
+import '../utils/profanity_filter_utils.dart';
 import '_widgets.dart';
 import '../app_theme.dart';
+import 'comment_options_widget.dart';
 
 class CommentListWidget extends StatefulWidget {
   final List<Comment> comments;
@@ -147,26 +149,46 @@ class _CommentListWidgetState extends State<CommentListWidget> {
   }
 
   Widget _buildCommentList() {
+    // 차단된 댓글 필터링
+    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final filteredComments = widget.comments.where((comment) {
+      return !provider.isCommentBlocked(comment.id);
+    }).toList();
+
+    if (filteredComments.isEmpty) {
+      return _buildEmptyCommentMessage();
+    }
+
     return ListView.separated(
       physics: NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       padding: EdgeInsets.zero,
-      itemCount: widget.comments.length,
+      itemCount: filteredComments.length,
       separatorBuilder: (context, index) => Divider(
         color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[300],
         height: 1,
         thickness: 1,
       ),
       itemBuilder: (context, index) {
-        return _buildCommentItem(widget.comments[index]);
+        return _buildCommentItem(filteredComments[index]);
       },
     );
   }
 
   Widget _buildCommentItem(Comment comment) {
-    // 내 댓글인지 확인
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
-    final isMyComment = provider.isMyComment(comment.id);
+    return Consumer<UserPreferenceProvider>(
+      builder: (context, provider, child) {
+        // 내 댓글인지 확인
+        final isMyComment = provider.isMyComment(comment.id);
+
+        // 욕설 필터링 적용
+        String displayNickname = comment.nick;
+        String displayComment = comment.comment;
+
+        if (provider.isProfanityFilterEnabled) {
+          displayNickname = ProfanityFilterUtils.filterText(comment.nick);
+          displayComment = ProfanityFilterUtils.filterText(comment.comment);
+        }
 
     // 이 댓글에 좋아요/싫어요 했는지 확인 (로컬 상태 우선)
     CommentReaction? localReaction = _localCommentReactions[comment.id];
@@ -206,7 +228,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                     Row(
                       children: [
                         Text(
-                          comment.nick,
+                          displayNickname,
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
@@ -233,7 +255,7 @@ class _CommentListWidgetState extends State<CommentListWidget> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        comment.comment,
+                        displayComment,
                         style: TextStyle(
                           fontSize: 15.sp,
                           height: 1.4,
@@ -340,16 +362,21 @@ class _CommentListWidgetState extends State<CommentListWidget> {
           ),
         ),
 
-        // 삭제 버튼 (오른쪽 상단에 배치)
+        // 옵션 메뉴 버튼 (오른쪽 상단에 배치)
         Positioned(
-          top: 20.h,
-          right: 20.w,
-          child: DeleteButtonWidget(
-            onTap: () => _showDeletePasswordDialog(comment.id),
-            size: 24,
+          top: 12.h,
+          right: 12.w,
+          child: CommentOptionsWidget(
+            comment: comment,
+            discussionRoomId: widget.discussionRoomId,
+            isMyComment: isMyComment,
+            onDeleted: widget.onRefresh,
+            onBlocked: widget.onRefresh,
           ),
         ),
       ],
+    );
+      },
     );
   }
 
@@ -421,40 +448,6 @@ class _CommentListWidgetState extends State<CommentListWidget> {
     );
   }
 
-  // 비밀번호 입력 팝업을 표시하고 삭제 처리
-  Future<void> _showDeletePasswordDialog(int commentId) async {
-    final password = await PasswordPopupWidget.show(
-      context,
-      title: "댓글 삭제",
-      message: "이 댓글을 삭제하려면 암호를 입력하세요",
-      confirmButtonText: "삭제",
-      cancelButtonText: "취소",
-    );
-
-    // 암호가 입력된 경우 삭제 처리
-    if (password != null && password.isNotEmpty) {
-      _deleteCommentWithPassword(commentId, password);
-    }
-  }
-
-  // 암호를 사용한 댓글 삭제 처리
-  Future<void> _deleteCommentWithPassword(int commentId, String password) async {
-    try {
-      final result = await _apiService.deleteComment(
-          widget.discussionRoomId, commentId, password);
-
-      if (result) {
-        // 댓글 목록 새로고침
-        widget.onRefresh();
-        StylishToast.success(context, '댓글이 삭제되었습니다.');
-      } else {
-        StylishToast.error(context, '댓글 삭제에 실패했습니다. 암호가 올바른지 확인하세요.');
-      }
-    } catch (e) {
-      print('댓글 삭제 오류: $e');
-      StylishToast.error(context, '댓글 삭제 중 오류가 발생했습니다.');
-    }
-  }
 
   // 좋아요 처리
   Future<void> _handleLikeComment(int commentId, bool hasLiked, bool hasDisliked) async {

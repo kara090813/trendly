@@ -321,35 +321,9 @@ class DiscussionReactionWidget extends StatelessWidget {
       // 베스트 댓글 있음 - topComments 사용
       final bool hasTopComments = topComments != null && topComments!.isNotEmpty;
       
+      // topComments가 없어도 댓글 섹션은 별도로 표시되므로 여기서는 빈 위젯 반환
       if (!hasTopComments) {
-        return Column(
-          children: [
-            Text(
-              '아직 의견이 없어요! 첫 의견을 남겨주세요!',
-              style: TextStyle(
-                fontSize: 15.sp,
-                color: AppTheme.isDark(context)
-                    ? Colors.grey[400]
-                    : Colors.grey[700],
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (showEnterButtons)
-              Column(
-                children: [
-                  SizedBox(height: 15.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildLargeEnterButton(context),
-                    ],
-                  ),
-                  SizedBox(height: 6.h),
-                ],
-              ),
-          ],
-        );
+        return SizedBox.shrink(); // 아무것도 표시하지 않음
       }
       
       return Column(

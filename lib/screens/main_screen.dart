@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../components/_components.dart';
+import '../providers/user_preference_provider.dart';
+import '../widgets/eula_dialog.dart';
 import '_screens.dart';
 
 class MainScreen extends StatefulWidget {
@@ -15,6 +18,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  bool _hasCheckedEula = false;
 
   final List<Widget> _widgetOptions = <Widget>[
     KeywordHomeComponent(),
@@ -32,38 +36,84 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면이 완전히 빌드된 후 가이드 표시
+    // EULA 체크는 첫 번째 화면 빌드 후에 실행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkEulaAgreement();
+    });
+  }
+
+  void _checkEulaAgreement() {
+    // iOS에서만 EULA 확인
+    if (!Platform.isIOS) return;
+
+    final userPrefs = Provider.of<UserPreferenceProvider>(context, listen: false);
+
+    // 이미 체크했거나 동의했으면 더 이상 체크하지 않음
+    if (_hasCheckedEula || userPrefs.hasAcceptedEula) {
+      setState(() {
+        _hasCheckedEula = true;
+      });
+      return;
+    }
+
+    // EULA 미동의 상태이면 팝업 표시
+    _showEulaDialog();
+  }
+
+  void _showEulaDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 다이얼로그 외부 탭으로 닫을 수 없음
+      builder: (context) => const EulaDialog(),
+    ).then((_) {
+      // 다이얼로그가 닫힌 후 상태 업데이트
+      setState(() {
+        _hasCheckedEula = true;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final userPrefs = Provider.of<UserPreferenceProvider>(context);
+
+    // iOS에서 EULA 미동의 상태면 컨텐츠 숨김
+    final shouldShowContent = !Platform.isIOS || userPrefs.hasAcceptedEula;
+
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(context),
-      body: Column(
-        children: [
-          // 메인 컨텐츠 영역
-          Expanded(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: _widgetOptions,
-            ),
-          ),
+      body: shouldShowContent
+        ? Column(
+            children: [
+              // 메인 컨텐츠 영역
+              Expanded(
+                child: IndexedStack(
+                  index: _selectedIndex,
+                  children: _widgetOptions,
+                ),
+              ),
 
-          // 하단 앱바
-          Container(
-            color: AppTheme.getBottomBarColor(context),
-            child: SafeArea(
-              top: false,
-              child: AppBarComponent(
-                currentIndex: _selectedIndex,
-                onTap: _onItemTapped,
+              // 하단 앱바
+              Container(
+                color: AppTheme.getBottomBarColor(context),
+                child: SafeArea(
+                  top: false,
+                  child: AppBarComponent(
+                    currentIndex: _selectedIndex,
+                    onTap: _onItemTapped,
+                  ),
+                ),
+              )
+            ],
+          )
+        : Container(
+            color: AppTheme.getBackgroundColor(context),
+            child: Center(
+              child: CircularProgressIndicator(
+                color: const Color(0xFF2196F3),
               ),
             ),
-          )
-
-
-        ],
-      ),
+          ),
     );
   }
 }

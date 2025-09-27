@@ -9,6 +9,38 @@ import 'api_service_stub.dart'
     if (dart.library.io) 'api_service_io.dart'
     if (dart.library.html) 'api_service_web.dart' as platform;
 
+// 페이징 지원을 위한 모델 클래스
+class PaginatedComments {
+  final List<Comment> results;
+  final int count;
+  final int totalPages;
+  final int currentPage;
+  final bool hasNext;
+  final bool hasPrevious;
+
+  PaginatedComments({
+    required this.results,
+    required this.count,
+    required this.totalPages,
+    required this.currentPage,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  factory PaginatedComments.fromJson(Map<String, dynamic> json) {
+    return PaginatedComments(
+      results: (json['results'] as List<dynamic>)
+          .map((commentJson) => Comment.fromJson(commentJson))
+          .toList(),
+      count: json['count'] ?? 0,
+      totalPages: json['total_pages'] ?? 0,
+      currentPage: json['current_page'] ?? 1,
+      hasNext: json['has_next'] ?? false,
+      hasPrevious: json['has_previous'] ?? false,
+    );
+  }
+}
+
 /// ApiService 클래스
 /// API 통신과 관련된 모든 메서드를 포함하고 있습니다.
 class ApiService {
@@ -647,23 +679,37 @@ class ApiService {
 
 
 
-  /// 해당 토론방 댓글 가져오기 (최신순 또는 인기순)
-  /// GET /discussion/<room_id>/get_comment/[new/pop]
-  Future<List<Comment>> getDiscussionComments(int roomId, {bool isPopular = false}) async {
-    final String url = isPopular 
+  /// 해당 토론방 댓글 가져오기 (페이징 지원)
+  /// GET /api/discussion/<room_id>/get_comment/[new/pop]?page=N&limit=N
+  Future<PaginatedComments> getDiscussionComments(
+    int roomId, {
+    bool isPopular = false,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final Map<String, String> queryParams = {
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+
+    // API 명세서에 맞춰 URL 수정: 생략하면 최신순, pop을 붙이면 추천순
+    final String url = isPopular
         ? '$_baseUrl/discussion/$roomId/get_comment/pop'
         : '$_baseUrl/discussion/$roomId/get_comment/';
-    
+
+    final Uri uri = Uri.parse(url).replace(queryParameters: queryParams);
+
     try {
       final response = await _client.get(
-        Uri.parse(url),
+        uri,
         headers: _headers,
       );
-      
+
       if (response.statusCode == 200) {
+        print(url);
         final String decodedBody = utf8.decode(response.bodyBytes);
-        final List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => Comment.fromJson(json)).toList();
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return PaginatedComments.fromJson(data);
       } else {
         throw Exception('Failed to load comments: ${response.statusCode}');
       }
@@ -672,28 +718,72 @@ class ApiService {
     }
   }
 
-  /// 특정 댓글의 서브댓글 가져오기
-  /// GET /discussion/subcomment/<int:parent_comment_id>/[new/pop]/
-  Future<List<Comment>> getSubComments(int parentCommentId, {bool isPopular = false}) async {
-    final String url = isPopular 
-        ? '$_baseUrl/discussion/subcomment/$parentCommentId/pop'
-        : '$_baseUrl/discussion/subcomment/$parentCommentId/new';
-    
+  /// 해당 토론방 댓글 가져오기 (백워드 호환성을 위한 legacy method)
+  /// 기존 코드와의 호환성을 위해 유지
+  Future<List<Comment>?> getDiscussionCommentsLegacy(int roomId, {bool isPopular = false}) async {
+    try {
+      final paginatedResult = await getDiscussionComments(
+        roomId,
+        isPopular: isPopular,
+        page: 1,
+        limit: 100, // legacy는 전체 데이터를 가져오는 것을 기대
+      );
+      return paginatedResult.results;
+    } catch (e) {
+      print('Legacy comment loading failed: $e');
+      return null;
+    }
+  }
+
+  /// 특정 댓글의 서브댓글 가져오기 (페이징 지원)
+  /// GET /api/discussion/subcomment/<int:parent_comment_id>/[new/pop]?page=N&limit=N
+  Future<PaginatedComments> getSubComments(
+    int parentCommentId, {
+    bool isPopular = false,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final Map<String, String> queryParams = {
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+
+    // API 명세서에 맞춰 URL 수정: new/pop 엔드포인트 사용
+    final String endpoint = isPopular ? 'pop' : 'new';
+    final String url = '$_baseUrl/discussion/subcomment/$parentCommentId/$endpoint';
+    final Uri uri = Uri.parse(url).replace(queryParameters: queryParams);
+
     try {
       final response = await _client.get(
-        Uri.parse(url),
+        uri,
         headers: _headers,
       );
-      
+
       if (response.statusCode == 200) {
         final String decodedBody = utf8.decode(response.bodyBytes);
-        final List<dynamic> data = json.decode(decodedBody);
-        return data.map((json) => Comment.fromJson(json)).toList();
+        final Map<String, dynamic> data = json.decode(decodedBody);
+        return PaginatedComments.fromJson(data);
       } else {
         throw Exception('Failed to load sub comments: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network error: $e');
+    }
+  }
+
+  /// 특정 댓글의 서브댓글 가져오기 (백워드 호환성을 위한 legacy method)
+  Future<List<Comment>?> getSubCommentsLegacy(int parentCommentId, {bool isPopular = false}) async {
+    try {
+      final paginatedResult = await getSubComments(
+        parentCommentId,
+        isPopular: isPopular,
+        page: 1,
+        limit: 100, // legacy는 전체 데이터를 가져오는 것을 기대
+      );
+      return paginatedResult.results;
+    } catch (e) {
+      print('Legacy subcomment loading failed: $e');
+      return null;
     }
   }
 
@@ -737,7 +827,7 @@ class ApiService {
   /// POST /discussion/<room_id>/del_comment/
   Future<bool> deleteComment(int roomId, int commentId, String password) async {
     final String url = '$_baseUrl/discussion/$roomId/del_comment/';
-    
+
     try {
       final response = await _client.post(
         Uri.parse(url),
@@ -747,7 +837,7 @@ class ApiService {
           'password': password,
         }),
       );
-      
+
       if (response.statusCode == 204) {
         return true;
       } else {
@@ -755,6 +845,45 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Network error: $e');
+    }
+  }
+
+  /// 댓글 신고하기
+  /// POST /api/comment/report/
+  Future<Map<String, dynamic>?> reportComment({
+    required int commentId,
+    required String reportType,
+    String? reportReason,
+  }) async {
+    final String url = '$_baseUrl/comment/report/';
+
+    try {
+      final Map<String, dynamic> requestBody = {
+        'comment_id': commentId,
+        'report_type': reportType,
+      };
+
+      if (reportReason != null && reportReason.isNotEmpty) {
+        requestBody['report_reason'] = reportReason;
+      }
+
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(utf8.decode(response.bodyBytes));
+      } else if (response.statusCode == 400) {
+        throw Exception('잘못된 요청입니다. 필수 정보를 확인해주세요.');
+      } else if (response.statusCode == 404) {
+        throw Exception('댓글을 찾을 수 없습니다.');
+      } else {
+        throw Exception('신고 접수에 실패했습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('네트워크 오류: $e');
     }
   }
 

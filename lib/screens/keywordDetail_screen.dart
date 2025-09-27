@@ -32,7 +32,6 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
   final FirebaseMessagingService _fcmService = FirebaseMessagingService();
   Keyword? _keyword;
   DiscussionRoom? _discussionRoom;
-  List<Comment>? _comments;
   List<Comment>? _topComments;
   bool _isLoading = true;
   String? _error;
@@ -44,6 +43,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     super.initState();
     _loadKeywordDetails();
   }
+
 
   Future<void> _loadKeywordDetails() async {
     try {
@@ -60,14 +60,10 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
       // 현재 활성화된 토론방 정보 로드
       DiscussionRoom? discussionRoom;
-      List<Comment>? comments;
       List<Comment>? topComments;
 
       try {
         if (keyword.current_discussion_room != null && keyword.current_discussion_room! > 0) {
-          // 토론방 정보가 있는 경우 댓글 목록 가져오기 (인기순으로 변경)
-          comments = await _apiService.getDiscussionComments(keyword.current_discussion_room!, isPopular: true);
-
           // 새로운 API를 사용하여 인기 댓글 3개 가져오기
           try {
             final topCommentsResult = await _apiService.getTopComments(keyword.current_discussion_room!, 3);
@@ -92,7 +88,6 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
         setState(() {
           _keyword = keyword;
           _discussionRoom = discussionRoom;
-          _comments = comments;
           _topComments = topComments;
           _isLoading = false;
         });
@@ -106,7 +101,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       }
     }
   }
-  
+
   // 키워드 조회 로그 기록 메서드
   Future<void> _logKeywordView(Keyword keyword) async {
     try {
@@ -173,6 +168,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       // 키 추가하여 스크롤 포지션 유지
       key: PageStorageKey('keywordDetail_${widget.keywordId}'),
       physics: const BouncingScrollPhysics(),
+      cacheExtent: 500,  // 캐시 범위 증가로 성능 개선
       slivers: [
         // SliverAppBar 수정 - 내부 구조 간소화
         SliverAppBar(
@@ -559,6 +555,7 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
     );
   }
 
+
   Widget _buildRelatedNewsSection() {
     if (_keyword!.references.isEmpty) {
       return SizedBox.shrink();
@@ -806,27 +803,6 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('링크를 여는 중 오류가 발생했습니다')),
       );
-    }
-  }
-
-  // 시간 포맷팅 함수
-  String _formatTimeAgo(String dateTimeStr) {
-    try {
-      final dateTime = DateTime.parse(dateTimeStr);
-      final now = DateTime.now();
-      final difference = now.difference(dateTime);
-
-      if (difference.inDays > 0) {
-        return '${difference.inDays}일 전';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours}시간 전';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes}분 전';
-      } else {
-        return '방금 전';
-      }
-    } catch (e) {
-      return '알 수 없음'; // 기본값
     }
   }
 }

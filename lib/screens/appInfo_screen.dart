@@ -434,12 +434,17 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           SizedBox(height: 16.h),
           
           // 회사명
-          _buildInfoRow('개발사', 'Lacuna Moss Tech'),
-          
+          _buildInfoRow('개발사', 'Lamoss Tech'),
+
           SizedBox(height: 12.h),
-          
+
+          // 신고 및 문의
+          _buildInfoRow('신고/문의', 'kara090813@gmail.com'),
+
+          SizedBox(height: 12.h),
+
           // Copyright
-          _buildInfoRow('저작권', 'Copyright © 2024 Lacuna Moss Tech'),
+          _buildInfoRow('저작권', 'Copyright © 2024 Lamoss Tech'),
           
           SizedBox(height: 16.h),
           
@@ -451,7 +456,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Text(
-              'All rights reserved. 본 소프트웨어 및 관련 문서에 대한 모든 권리는 Lacuna Moss Tech에 있습니다.',
+              'All rights reserved. 본 소프트웨어 및 관련 문서에 대한 모든 권리는 Lamoss Tech에 있습니다.',
               style: TextStyle(
                 fontSize: 13.sp,
                 color: Colors.green[700],

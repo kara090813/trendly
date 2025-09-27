@@ -10,7 +10,10 @@ import '../models/_models.dart';
 import '../services/api_service.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/_widgets.dart';
+import '../widgets/profanity_filter_button.dart';
+import '../widgets/comment_options_widget.dart';
 import '../app_theme.dart';
+import '../utils/profanity_filter_utils.dart';
 
 class CommentRoomScreen extends StatefulWidget {
   final int commentRoomId;
@@ -50,6 +53,12 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
   Comment? _parentComment;
   List<Comment> _subComments = [];
   int _discussionRoomId = 0;
+
+  // 페이징 관련 변수 추가
+  int _currentPage = 1;
+  final int _pageSize = 20;
+  bool _hasMoreSubComments = true;
+  bool _isLoadingMoreSubComments = false;
 
   DiscussionRoom? _discussionRoom;
   Keyword? _keyword;
@@ -199,14 +208,23 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     });
 
     try {
-      // 실제 API 호출을 통해 대댓글 목록 가져오기
-      final subComments = await _apiService.getSubComments(
-          widget.commentRoomId, isPopular: isPopular);
+      // 첫 페이지 대댓글 로드 (페이징 지원)
+      _currentPage = 1;
+      final paginatedResult = await _apiService.getSubComments(
+        widget.commentRoomId,
+        isPopular: isPopular,
+        page: _currentPage,
+        limit: _pageSize,
+      );
+
+      final subComments = paginatedResult.results;
+      _hasMoreSubComments = paginatedResult.hasNext;
 
       if (mounted) {
         setState(() {
           _subComments = subComments;
           _isCommentLoading = false;
+          // _hasMoreSubComments는 위에서 이미 설정됨
 
           // 댓글 반응 상태 초기화
           _updateLocalCommentReactions();
@@ -242,6 +260,307 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           dislikeCount: comment.dislike_count ?? 0,
         );
       }
+    }
+  }
+
+  // 스크롤 이벤트 처리 (대댓글 페이징)
+  void _onSubCommentScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMoreSubComments && _hasMoreSubComments) {
+        _loadMoreSubComments();
+      }
+    }
+  }
+
+  // 추가 대댓글 로드
+  Future<void> _loadMoreSubComments() async {
+    if (!_hasMoreSubComments || _isLoadingMoreSubComments) return;
+
+    setState(() {
+      _isLoadingMoreSubComments = true;
+    });
+
+    try {
+      _currentPage++;
+      final paginatedResult = await _apiService.getSubComments(
+        widget.commentRoomId,
+        isPopular: _isPopularSort,
+        page: _currentPage,
+        limit: _pageSize,
+      );
+
+      if (mounted) {
+        setState(() {
+          _subComments.addAll(paginatedResult.results);
+          _hasMoreSubComments = paginatedResult.hasNext;
+          _isLoadingMoreSubComments = false;
+
+          // 새로 추가된 댓글에 대한 반응 상태 초기화
+          _updateLocalCommentReactions();
+        });
+      }
+    } catch (e) {
+      print('추가 대댓글 로드 실패: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingMoreSubComments = false;
+          _currentPage--; // 실패시 페이지 번호 복구
+        });
+      }
+    }
+  }
+
+  // 페이징된 대댓글 리스트 위젯
+  Widget _buildPaginatedSubCommentsList() {
+    // 차단된 댓글 필터링
+    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
+    final filteredComments = _subComments.where((comment) {
+      return !provider.isCommentBlocked(comment.id);
+    }).toList();
+
+    return Column(
+      children: [
+        // 정렬 옵션
+        _buildSortHeader(filteredComments.length),
+
+        // 댓글 리스트
+        if (_isCommentLoading && filteredComments.isEmpty)
+          _buildLoadingIndicator()
+        else if (filteredComments.isEmpty)
+          _buildEmptyComments()
+        else
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: BoxDecoration(
+              color: AppTheme.getContainerColor(context),
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: AppTheme.isDark(context)
+                  ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ]
+                  : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // 댓글 리스트
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Column(
+                    children: [
+                      // 첫 번째 댓글 앞에는 구분선 없음
+                      if (filteredComments.isNotEmpty) _buildCommentItem(filteredComments.first, isFirst: true),
+
+                      // 두 번째 댓글부터는 구분선과 함께 표시
+                      ...filteredComments.skip(1).map((comment) => _buildCommentItem(comment)),
+                    ],
+                  ),
+                ),
+
+                // 더 보기 버튼
+                if (_hasMoreSubComments && !_isLoadingMoreSubComments)
+                  _buildLoadMoreButton(),
+
+                // 로딩 인디케이터
+                if (_isLoadingMoreSubComments)
+                  _buildLoadingMoreIndicator(),
+
+                // 마지막 페이지 알림
+                if (!_hasMoreSubComments && _subComments.isNotEmpty)
+                  _buildEndOfListMessage(),
+
+                SizedBox(height: 16.h),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 정렬 헤더
+  Widget _buildSortHeader(int commentCount) {
+    final isDark = AppTheme.isDark(context);
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Row(
+        children: [
+          Text(
+            '댓글 ${commentCount}개',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.getTextColor(context),
+            ),
+          ),
+          Spacer(),
+          SortPopupWidget(
+            isPopularSort: _isPopularSort,
+            onSortChanged: (isPopular) {
+              setState(() {
+                _isPopularSort = isPopular;
+                _currentPage = 1;
+                _hasMoreSubComments = true;
+                _subComments = [];
+              });
+              _loadSubComments(isPopular: isPopular);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  // 로딩 인디케이터
+  Widget _buildLoadingIndicator() {
+    return Container(
+      padding: EdgeInsets.all(32.w),
+      child: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF19B3F6)),
+        ),
+      ),
+    );
+  }
+
+  // 빈 댓글
+  Widget _buildEmptyComments() {
+    return Container(
+      padding: EdgeInsets.all(32.w),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.comment_outlined,
+              size: 48.sp,
+              color: Colors.grey[400],
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              '아직 댓글이 없습니다',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 더 보기 버튼
+  Widget _buildLoadMoreButton() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.all(16.w),
+      child: OutlinedButton(
+        onPressed: _loadMoreSubComments,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: Color(0xFF19B3F6).withOpacity(0.3),
+            width: 1.5,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+        ),
+        child: Text(
+          '댓글 더보기',
+          style: TextStyle(
+            color: Color(0xFF19B3F6),
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 로딩 더 보기
+  Widget _buildLoadingMoreIndicator() {
+    return Container(
+      padding: EdgeInsets.all(20.h),
+      child: Center(
+        child: Column(
+          children: [
+            SizedBox(
+              width: 24.w,
+              height: 24.w,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF19B3F6)),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              '댓글을 불러오는 중...',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppTheme.isDark(context) ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 마지막 메시지
+  Widget _buildEndOfListMessage() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      child: Center(
+        child: Text(
+          '모든 댓글을 확인하셨습니다',
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppTheme.isDark(context) ? Colors.grey[500] : Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 시간 포맷 함수
+  String _formatTimeAgo(dynamic dateTimeInput) {
+    try {
+      DateTime dateTime;
+      if (dateTimeInput is String) {
+        dateTime = DateTime.parse(dateTimeInput);
+      } else if (dateTimeInput is DateTime) {
+        dateTime = dateTimeInput;
+      } else {
+        return '알 수 없음';
+      }
+
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inDays > 0) {
+        return '${difference.inDays}일 전';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours}시간 전';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes}분 전';
+      } else {
+        return '방금 전';
+      }
+    } catch (e) {
+      return '알 수 없음';
     }
   }
 
@@ -291,21 +610,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                           SizedBox(height: 4.h),
 
                           // 대댓글 섹션
-                          CommentListWidget(
-                            comments: _subComments,
-                            discussionRoomId: _discussionRoomId,
-                            isPopularSort: _isPopularSort,
-                            isCommentLoading: _isCommentLoading,
-                            commentReactions: _commentReactions,
-                            showReplyButton: false,
-                            onSortChanged: (isPopular) {
-                              setState(() {
-                                _isPopularSort = isPopular;
-                              });
-                              _loadSubComments(isPopular: isPopular);
-                            },
-                            onRefresh: () => _loadSubComments(isPopular: _isPopularSort),
-                          ),
+                          _buildPaginatedSubCommentsList(),
                           SizedBox(height: 20.h),
                         ],
                       ),
@@ -452,6 +757,10 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
             ),
           ),
 
+          // 욕설 필터링 버튼
+          ProfanityFilterButton(),
+          SizedBox(width: 8.w),
+
           // 새로고침 버튼 - CircleButtonWidget 사용
           CircleButtonWidget(
             context: context,
@@ -465,21 +774,6 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
             iconSize: 22.sp,
           ),
 
-          SizedBox(width: 8.w),
-
-          // 공유 버튼 - CircleButtonWidget 사용
-          CircleButtonWidget(
-            context: context,
-            onTap: () {
-              // 공유 기능 추가
-              StylishToast.show(context, message: '공유 기능은 준비 중입니다.');
-            },
-            icon: Icons.share_outlined,
-            color: AppTheme.isDark(context)
-                ? Colors.grey[400]!
-                : Colors.grey[500]!,
-            iconSize: 22.sp,
-          ),
         ],
       ),
     );
@@ -489,17 +783,28 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
   Widget _buildParentCommentSection() {
     if (_parentComment == null) return SizedBox.shrink();
 
-    // 시간 포맷팅
-    final String timeAgo = _formatTimeAgo(_parentComment!.created_at);
+    return Consumer<UserPreferenceProvider>(
+      builder: (context, provider, child) {
+        // 시간 포맷팅
+        final String timeAgo = _formatTimeAgo(_parentComment!.created_at);
 
-    // 좋아요/싫어요 상태 확인
-    final reaction = _parentCommentReaction;
-    final int likeCount = reaction?.likeCount ?? _parentComment!.like_count ?? 0;
-    final int dislikeCount = reaction?.dislikeCount ?? _parentComment!.dislike_count ?? 0;
-    final bool hasLiked = reaction?.reactionType == 'like';
-    final bool hasDisliked = reaction?.reactionType == 'dislike';
+        // 필터링 적용
+        String displayNickname = _parentComment!.nick;
+        String displayComment = _parentComment!.comment;
 
-    return Container(
+        if (provider.isProfanityFilterEnabled) {
+          displayNickname = ProfanityFilterUtils.filterText(_parentComment!.nick);
+          displayComment = ProfanityFilterUtils.filterText(_parentComment!.comment);
+        }
+
+        // 좋아요/싫어요 상태 확인
+        final reaction = _parentCommentReaction;
+        final int likeCount = reaction?.likeCount ?? _parentComment!.like_count ?? 0;
+        final int dislikeCount = reaction?.dislikeCount ?? _parentComment!.dislike_count ?? 0;
+        final bool hasLiked = reaction?.reactionType == 'like';
+        final bool hasDisliked = reaction?.reactionType == 'dislike';
+
+        return Container(
       margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
       decoration: BoxDecoration(
         color: AppTheme.getContainerColor(context),
@@ -529,7 +834,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
             Row(
               children: [
                 Text(
-                  _parentComment!.nick,
+                  displayNickname,
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
@@ -547,6 +852,20 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
                   ),
                 ),
                 Spacer(),
+                // 옵션 메뉴 버튼
+                CommentOptionsWidget(
+                  comment: _parentComment!,
+                  discussionRoomId: _discussionRoomId,
+                  isMyComment: provider.isMyComment(_parentComment!.id),
+                  onDeleted: () {
+                    // 원본 댓글 삭제 시 페이지 종료
+                    context.pop();
+                  },
+                  onBlocked: () {
+                    // 원본 댓글 차단 시 페이지 종료
+                    context.pop();
+                  },
+                ),
               ],
             ),
 
@@ -554,7 +873,7 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
             // 댓글 내용
             Text(
-              _parentComment!.comment,
+              displayComment,
               style: TextStyle(
                 fontSize: 15.sp,
                 height: 1.4,
@@ -592,6 +911,8 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
           ],
         ),
       ),
+        );
+      },
     );
   }
 // 원본 댓글 좋아요 처리
@@ -908,131 +1229,139 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
 
   // 댓글 아이템 위젯 - 구분선 스타일
   Widget _buildCommentItem(Comment comment, {bool isFirst = false}) {
-    // 내 댓글인지 확인
-    final provider = Provider.of<UserPreferenceProvider>(context, listen: false);
-    final isMyComment = provider.isMyComment(comment.id);
+    return Consumer<UserPreferenceProvider>(
+      builder: (context, provider, child) {
+        // 내 댓글인지 확인
+        final isMyComment = provider.isMyComment(comment.id);
 
-    // 이 댓글에 좋아요/싫어요 했는지 확인 (로컬 상태 우선)
-    CommentReaction? localReaction = _commentReactions[comment.id];
+        // 필터링 적용
+        String displayNickname = comment.nick;
+        String displayComment = comment.comment;
 
-    // 로컬 상태가 없으면 Provider에서 가져옴
-    String? userReaction;
-    int likeCount = comment.like_count ?? 0;
-    int dislikeCount = comment.dislike_count ?? 0;
+        if (provider.isProfanityFilterEnabled) {
+          displayNickname = ProfanityFilterUtils.filterText(comment.nick);
+          displayComment = ProfanityFilterUtils.filterText(comment.comment);
+        }
 
-    if (localReaction != null) {
-      userReaction = localReaction.reactionType;
-      likeCount = localReaction.likeCount;
-      dislikeCount = localReaction.dislikeCount;
-    } else {
-      userReaction = provider.getCommentReaction(comment.id);
-    }
 
-    final bool hasLiked = userReaction == 'like';
-    final bool hasDisliked = userReaction == 'dislike';
+        // 이 댓글에 좋아요/싫어요 했는지 확인 (로컬 상태 우선)
+        CommentReaction? localReaction = _commentReactions[comment.id];
 
-    // 시간 포맷팅
-    final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.created_at);
+        // 로컬 상태가 없으면 Provider에서 가져옴
+        String? userReaction;
+        int likeCount = comment.like_count ?? 0;
+        int dislikeCount = comment.dislike_count ?? 0;
 
-    return Column(
-      children: [
-        // 첫 번째 댓글이 아닐 경우에만 구분선 표시
-        if (!isFirst)
-          Divider(
-            color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[300],
-            thickness: 1,
-            height: 1,
-          ),
+        if (localReaction != null) {
+          userReaction = localReaction.reactionType;
+          likeCount = localReaction.likeCount;
+          dislikeCount = localReaction.dislikeCount;
+        } else {
+          userReaction = provider.getCommentReaction(comment.id);
+        }
 
-        // 댓글 내용
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 14.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 닉네임 및 시간
-              Row(
+        final bool hasLiked = userReaction == 'like';
+        final bool hasDisliked = userReaction == 'dislike';
+
+        // 시간 포맷팅
+        final String timeAgo = comment.timeAgo ?? _formatTimeAgo(comment.created_at);
+
+        return Column(
+          children: [
+            // 첫 번째 댓글이 아닐 경우에만 구분선 표시
+            if (!isFirst)
+              Divider(
+                color: AppTheme.isDark(context) ? Colors.grey[800] : Colors.grey[300],
+                thickness: 1,
+                height: 1,
+              ),
+
+            // 댓글 내용
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 닉네임 및 시간
+                  Row(
+                    children: [
+                      Text(
+                        displayNickname,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        timeAgo,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppTheme.isDark(context)
+                              ? Colors.grey[500]
+                              : Colors.grey[500],
+                        ),
+                      ),
+                      Spacer(),
+                      // 옵션 메뉴 버튼
+                      CommentOptionsWidget(
+                        comment: comment,
+                        discussionRoomId: _discussionRoomId,
+                        isMyComment: isMyComment,
+                        onDeleted: () => _loadSubComments(isPopular: _isPopularSort),
+                        onBlocked: () => _loadSubComments(isPopular: _isPopularSort),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 8.h),
+
+                  // 댓글 내용
                   Text(
-                    comment.nick,
+                    displayComment,
                     style: TextStyle(
                       fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isMyComment ? Color(0xFF19B3F6) : AppTheme.getTextColor(context),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    timeAgo,
-                    style: TextStyle(
-                      fontSize: 13.sp,
+                      height: 1.4,
                       color: AppTheme.isDark(context)
-                          ? Colors.grey[500]
-                          : Colors.grey[500],
+                          ? Colors.grey[300]
+                          : Colors.black.withOpacity(0.85),
                     ),
                   ),
-                  Spacer(),
-                  // 더보기 버튼 (내 댓글일 때만 작동)
-                  isMyComment
-                      ? GestureDetector(
-                    onTap: () => _showCommentOptions(comment),
-                    child: Icon(
-                      Icons.more_horiz,
-                      size: 16.sp,
-                      color: AppTheme.isDark(context)
-                          ? Colors.grey[500]
-                          : Colors.grey[400],
-                    ),
-                  )
-                      : SizedBox.shrink(),
-                ],
-              ),
 
-              SizedBox(height: 8.h),
+                  SizedBox(height: 10.h),
 
-              // 댓글 내용
-              Text(
-                comment.comment,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  height: 1.4,
-                  color: AppTheme.isDark(context)
-                      ? Colors.grey[300]
-                      : Colors.black.withOpacity(0.85),
-                ),
-              ),
+                  // 좋아요/싫어요 버튼
+                  Row(
+                    children: [
+                      // 좋아요 버튼
+                      _buildAnimatedReactionButton(
+                        icon: hasLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                        count: likeCount,
+                        isActive: hasLiked,
+                        activeColor: Color(0xFF19B3F6),
+                        onTap: () => _handleLikeComment(comment.id, hasLiked, hasDisliked),
+                      ),
+                      SizedBox(width: 16.w),
 
-              SizedBox(height: 10.h),
-
-              // 좋아요/싫어요 버튼
-              Row(
-                children: [
-                  // 좋아요 버튼
-                  _buildAnimatedReactionButton(
-                    icon: hasLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                    count: likeCount,
-                    isActive: hasLiked,
-                    activeColor: Color(0xFF19B3F6),
-                    onTap: () => _handleLikeComment(comment.id, hasLiked, hasDisliked),
-                  ),
-                  SizedBox(width: 16.w),
-
-                  // 싫어요 버튼
-                  _buildAnimatedReactionButton(
-                    icon: hasDisliked
-                        ? Icons.thumb_down
-                        : Icons.thumb_down_outlined,
-                    count: dislikeCount,
-                    isActive: hasDisliked,
-                    activeColor: Color(0xFFE74C3C),
-                    onTap: () => _handleDislikeComment(comment.id, hasDisliked, hasLiked),
+                      // 싫어요 버튼
+                      _buildAnimatedReactionButton(
+                        icon: hasDisliked
+                            ? Icons.thumb_down
+                            : Icons.thumb_down_outlined,
+                        count: dislikeCount,
+                        isActive: hasDisliked,
+                        activeColor: Color(0xFFE74C3C),
+                        onTap: () => _handleDislikeComment(comment.id, hasDisliked, hasLiked),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1104,104 +1433,6 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     );
   }
 
-  // 댓글 옵션 표시 (삭제 등)
-  void _showCommentOptions(Comment comment) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.r),
-          ),
-          backgroundColor: AppTheme.isDark(context) ? Color(0xFF2A2A36) : Colors.white,
-          child: Container(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InkWell(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteComment(comment.id);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.delete_outline,
-                            color: Colors.red, size: 20.sp),
-                        SizedBox(width: 8.w),
-                        Text(
-                          "댓글 삭제하기",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Divider(
-                  color: AppTheme.isDark(context) ? Colors.grey[700] : Colors.grey[300],
-                ),
-                InkWell(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    child: Text(
-                      "취소",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.getTextColor(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 댓글 삭제 처리
-  Future<void> _deleteComment(int commentId) async {
-    final provider =
-    Provider.of<UserPreferenceProvider>(context, listen: false);
-    final password = provider.password;
-
-    if (password == null || password.isEmpty) {
-      StylishToast.error(context, '비밀번호가 설정되어 있지 않습니다.');
-      return;
-    }
-
-    try {
-      final result = await _apiService.deleteComment(
-          _discussionRoomId, commentId, password);
-
-      if (result) {
-        // 댓글 목록 새로고침
-        _loadSubComments(isPopular: _isPopularSort);
-        StylishToast.success(context, '댓글이 삭제되었습니다.');
-      } else {
-        StylishToast.error(context, '댓글 삭제에 실패했습니다.');
-      }
-    } catch (e) {
-      print('댓글 삭제 오류: $e');
-      StylishToast.error(context, '댓글 삭제 중 오류가 발생했습니다.');
-    }
-  }
 
   // 좋아요 처리
   Future<void> _handleLikeComment(int commentId, bool hasLiked, bool hasDisliked) async {
@@ -1708,19 +1939,4 @@ class _CommentRoomScreenState extends State<CommentRoomScreen> with TickerProvid
     }
   }
 
-  // 시간 포맷팅 함수
-  String _formatTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}일 전';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}시간 전';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}분 전';
-    } else {
-      return '방금 전';
-    }
-  }
 }

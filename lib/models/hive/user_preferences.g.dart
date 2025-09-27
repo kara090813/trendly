@@ -33,13 +33,17 @@ class UserPreferencesAdapter extends TypeAdapter<UserPreferences> {
       homeWidgetUpdateInterval: fields[13] as int,
       homeWidgetKeywordCount: fields[14] as int,
       lastWidgetUpdate: fields[15] as DateTime?,
+      hasAcceptedEula: fields[16] as bool,
+      isProfanityFilterEnabled: fields[17] as bool,
+      customProfanityWords: (fields[18] as List?)?.cast<String>(),
+      blockedCommentIds: (fields[19] as List?)?.cast<int>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UserPreferences obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.nickname)
       ..writeByte(1)
@@ -71,7 +75,15 @@ class UserPreferencesAdapter extends TypeAdapter<UserPreferences> {
       ..writeByte(14)
       ..write(obj.homeWidgetKeywordCount)
       ..writeByte(15)
-      ..write(obj.lastWidgetUpdate);
+      ..write(obj.lastWidgetUpdate)
+      ..writeByte(16)
+      ..write(obj.hasAcceptedEula)
+      ..writeByte(17)
+      ..write(obj.isProfanityFilterEnabled)
+      ..writeByte(18)
+      ..write(obj.customProfanityWords)
+      ..writeByte(19)
+      ..write(obj.blockedCommentIds);
   }
 
   @override

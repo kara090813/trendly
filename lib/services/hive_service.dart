@@ -346,6 +346,111 @@ class HiveService {
     }
   }
 
+  // 욕설 필터링 설정
+  Future<bool> setProfanityFilterEnabled(bool enabled) async {
+    try {
+      final prefs = getUserPreferences();
+      prefs.setProfanityFilterEnabled(enabled);
+      await saveUserPreferences(prefs);
+      print('🔧 [HIVE] 욕설 필터 설정 저장 완료: $enabled');
+      return true;
+    } catch (e) {
+      print('❌ [HIVE] 욕설 필터 설정 저장 오류: $e');
+      return false;
+    }
+  }
+
+  // 커스텀 비속어 추가
+  Future<bool> addCustomProfanityWord(String word) async {
+    if (word.trim().isEmpty) return false;
+
+    try {
+      final prefs = getUserPreferences();
+      final currentWords = Set<String>.from(prefs.customProfanityWords ?? []);
+
+      // 중복 확인 (대소문자 구분 안 함)
+      final lowerWord = word.trim().toLowerCase();
+      if (currentWords.any((w) => w.toLowerCase() == lowerWord)) {
+        print('⚠️ [HIVE] 이미 존재하는 커스텀 단어: $word');
+        return false;
+      }
+
+      currentWords.add(word.trim());
+      prefs.customProfanityWords = currentWords.toList();
+      prefs.lastUpdated = DateTime.now();
+
+      await saveUserPreferences(prefs);
+      _clearCache(); // 캐시 초기화
+      print('✅ [HIVE] 커스텀 비속어 추가 완료: $word');
+      return true;
+    } catch (e) {
+      print('❌ [HIVE] 커스텀 비속어 추가 오류: $e');
+      return false;
+    }
+  }
+
+  // 커스텀 비속어 제거
+  Future<bool> removeCustomProfanityWord(String word) async {
+    if (word.trim().isEmpty) return false;
+
+    try {
+      final prefs = getUserPreferences();
+      final currentWords = Set<String>.from(prefs.customProfanityWords ?? []);
+
+      // 대소문자 구분 없이 제거
+      final lowerWord = word.trim().toLowerCase();
+      final wordToRemove = currentWords.firstWhere(
+        (w) => w.toLowerCase() == lowerWord,
+        orElse: () => '',
+      );
+
+      if (wordToRemove.isEmpty) {
+        print('⚠️ [HIVE] 존재하지 않는 커스텀 단어: $word');
+        return false;
+      }
+
+      currentWords.remove(wordToRemove);
+      prefs.customProfanityWords = currentWords.toList();
+      prefs.lastUpdated = DateTime.now();
+
+      await saveUserPreferences(prefs);
+      _clearCache(); // 캐시 초기화
+      print('✅ [HIVE] 커스텀 비속어 제거 완료: $wordToRemove');
+      return true;
+    } catch (e) {
+      print('❌ [HIVE] 커스텀 비속어 제거 오류: $e');
+      return false;
+    }
+  }
+
+  // 모든 커스텀 비속어 목록 가져오기
+  List<String> getCustomProfanityWords() {
+    try {
+      final prefs = getUserPreferences();
+      return List<String>.from(prefs.customProfanityWords ?? []);
+    } catch (e) {
+      print('⚠️ [HIVE] 커스텀 비속어 목록 로드 오류: $e');
+      return [];
+    }
+  }
+
+  // 모든 커스텀 비속어 초기화
+  Future<bool> clearCustomProfanityWords() async {
+    try {
+      final prefs = getUserPreferences();
+      prefs.customProfanityWords = [];
+      prefs.lastUpdated = DateTime.now();
+
+      await saveUserPreferences(prefs);
+      _clearCache(); // 캐시 초기화
+      print('✅ [HIVE] 모든 커스텀 비속어 초기화 완료');
+      return true;
+    } catch (e) {
+      print('❌ [HIVE] 커스텀 비속어 초기화 오류: $e');
+      return false;
+    }
+  }
+
   // Hive Box 닫기
   Future<void> closeHive() async {
     await _userPreferencesBox.close();

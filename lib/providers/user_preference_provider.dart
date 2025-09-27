@@ -66,7 +66,11 @@ class UserPreferenceProvider with ChangeNotifier {
   int get homeWidgetKeywordCount => _userPreferences?.homeWidgetKeywordCount ?? 5;
   
   DateTime? get lastWidgetUpdate => _userPreferences?.lastWidgetUpdate;
-  
+
+  bool get hasAcceptedEula => _userPreferences?.hasAcceptedEula ?? false;
+
+  bool get isProfanityFilterEnabled => _userPreferences?.isProfanityFilterEnabled ?? false;
+
   bool get isLoadingProfile => _isLoadingProfile;
   
   bool get isLoadingComments => _isLoadingComments;
@@ -458,12 +462,89 @@ class UserPreferenceProvider with ChangeNotifier {
     }
   }
 
+  // EULA 동의 처리
+  Future<void> acceptEula() async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+
+      _userPreferences!.acceptEula();
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] EULA 동의 설정 오류: $e');
+    }
+  }
+
+  // 욕설 필터링 토글
+  Future<void> toggleProfanityFilter() async {
+    try {
+      bool oldState = isProfanityFilterEnabled;
+      bool success = await _hiveService.setProfanityFilterEnabled(!oldState);
+
+      if (success) {
+        _userPreferences = _hiveService.getUserPreferences();
+        print('🔄 [PROVIDER] 욕설 필터 상태 변경: $oldState → ${isProfanityFilterEnabled}');
+        notifyListeners();
+      } else {
+        print('❌ [PROVIDER] 욕설 필터 설정 저장 실패');
+      }
+    } catch (e) {
+      print('❌ [PROVIDER] 욕설 필터 설정 오류: $e');
+    }
+  }
+
+  // 댓글 차단
+  Future<void> blockComment(int commentId) async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+      _userPreferences!.blockComment(commentId);
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 댓글 차단 오류: $e');
+    }
+  }
+
+  // 댓글 차단 해제
+  Future<void> unblockComment(int commentId) async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+      _userPreferences!.unblockComment(commentId);
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 댓글 차단 해제 오류: $e');
+    }
+  }
+
+  // 댓글이 차단되었는지 확인
+  bool isCommentBlocked(int commentId) {
+    return _userPreferences?.isCommentBlocked(commentId) ?? false;
+  }
+
+  // 차단된 댓글 목록 가져오기
+  List<int> get blockedCommentIds {
+    return _userPreferences?.blockedCommentIds ?? [];
+  }
+
+  // 모든 차단된 댓글 해제
+  Future<void> clearBlockedComments() async {
+    try {
+      _userPreferences ??= await _ensureUserPreferences();
+      _userPreferences!.clearBlockedComments();
+      await _hiveService.saveUserPreferences(_userPreferences!);
+      notifyListeners();
+    } catch (e) {
+      print('❌ [PROVIDER] 차단된 댓글 초기화 오류: $e');
+    }
+  }
+
   // UserPreferences 객체가 없을 때 기본값으로 생성
   Future<UserPreferences> _ensureUserPreferences() async {
     if (_userPreferences != null) {
       return _userPreferences!;
     }
-    
+
     // 새로운 UserPreferences 객체 생성
     final newPrefs = UserPreferences.empty();
     await _hiveService.saveUserPreferences(newPrefs);
