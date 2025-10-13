@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -64,7 +65,9 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
         return Scaffold(
           body: CustomScrollView(
             controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
+            physics: Platform.isIOS
+                ? const BouncingScrollPhysics()
+                : const ClampingScrollPhysics(),
             slivers: [
               // 헤더 영역 (KeywordHome과 동일한 구조)
               SliverToBoxAdapter(

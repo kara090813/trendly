@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -640,7 +641,9 @@ class _DiscussionHistoryTabComponentState extends State<DiscussionHistoryTabComp
         RefreshIndicator(
           onRefresh: _loadHistoryData,
           child: CustomScrollView(
-            physics: BouncingScrollPhysics(),
+            physics: Platform.isIOS
+                ? const BouncingScrollPhysics()
+                : const ClampingScrollPhysics(),
             controller: _scrollController,
             cacheExtent: 1000.0, // Increased cache for better performance
             slivers: [

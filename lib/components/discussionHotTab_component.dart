@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -236,7 +237,9 @@ class _DiscussionHotTabComponentState extends State<DiscussionHotTabComponent>
         RefreshIndicator(
           onRefresh: _loadHotRooms,
           child: CustomScrollView(
-            physics: BouncingScrollPhysics(),
+            physics: Platform.isIOS
+                ? const BouncingScrollPhysics()
+                : const ClampingScrollPhysics(),
             slivers: [
               // 히어로 섹션
               SliverToBoxAdapter(

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -1425,7 +1426,9 @@ class _KeywordHistoryTabComponentState extends State<KeywordHistoryTabComponent>
         ),
         
         CustomScrollView(
-          physics: BouncingScrollPhysics(),
+          physics: Platform.isIOS
+              ? const BouncingScrollPhysics()
+              : const ClampingScrollPhysics(),
           slivers: [
             // 키워드 선택 섹션
             SliverToBoxAdapter(

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -376,7 +377,9 @@ class _KeywordHomeComponentState extends State<KeywordHomeComponent>
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
+        physics: Platform.isIOS
+            ? const BouncingScrollPhysics()
+            : const ClampingScrollPhysics(),
         slivers: [
           // 헤더 + 디자인 (상단 고정된 부분)
           SliverToBoxAdapter(

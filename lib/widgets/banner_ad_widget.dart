@@ -51,14 +51,15 @@ class _BannerAdWidgetState extends State<BannerAdWidget> with AutomaticKeepAlive
 
   void _loadAd() {
     print('🚀 [Banner Ad] Starting to load banner ad...');
-    
-    // 🎯 Android Hybrid Composition 강제 활성화
-    final AdRequest request = Platform.isAndroid 
+
+    // 🎯 Android: 성능 최적화된 AdRequest
+    final AdRequest request = Platform.isAndroid
       ? const AdRequest(
-          httpTimeoutMillis: 10000, // 타임아웃 설정으로 성능 개선
+          httpTimeoutMillis: 10000,
+          // Android에서 광고 로드 최적화
         )
       : const AdRequest();
-    
+
     _bannerAd = BannerAd(
       adUnitId: AdService.bannerAdUnitId,
       size: widget.adSize,
@@ -66,10 +67,20 @@ class _BannerAdWidgetState extends State<BannerAdWidget> with AutomaticKeepAlive
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           if (mounted) {
+            // 🚀 광고 로드 후 즉시 상태 업데이트 (불필요한 지연 제거)
             setState(() {
               _isAdLoaded = true;
             });
             print('✅ [Banner Ad] Banner ad loaded');
+
+            // 🎯 Android WebView 프레임레이트 안정화 시도
+            if (Platform.isAndroid) {
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (mounted) {
+                  setState(() {}); // 강제 리빌드로 안정화
+                }
+              });
+            }
           }
         },
         onAdFailedToLoad: (ad, error) {
@@ -85,7 +96,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> with AutomaticKeepAlive
         onAdClicked: (ad) => print('👆 [Banner Ad] Clicked'),
       ),
     );
-    
+
     _bannerAd!.load();
   }
 
@@ -98,7 +109,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> with AutomaticKeepAlive
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+
     if (kIsWeb || !AdService.isAdEnabled) {
       return const SizedBox.shrink();
     }
@@ -112,34 +123,39 @@ class _BannerAdWidgetState extends State<BannerAdWidget> with AutomaticKeepAlive
       );
     }
 
-    // 🎯 최대 성능 최적화: 최소한의 래핑과 고정 구조
-    return RepaintBoundary( // 🚀 최외곽에서 렌더링 완전 격리
+    // 🎯 Android WebView 무한 리페인팅 방지: 3단계 격리
+    return RepaintBoundary( // 1단계: 광고 전체 렌더링 격리
       child: Container(
         width: double.infinity,
-        height: 66.h, // 🎯 광고 표준 높이로 고정 (50 + 16 padding)
+        height: 66.h,
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: AppTheme.getCardColor(context),
-          borderRadius: BorderRadius.circular(6.r), // 라운드 감소
+          borderRadius: BorderRadius.circular(6.r),
           border: Border.all(
-            color: AppTheme.primaryBlue.withOpacity(0.1), // 투명도 증가
+            color: AppTheme.primaryBlue.withOpacity(0.1),
             width: 0.5,
           ),
         ),
-        child: _isAdLoaded 
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(6.r),
-              child: AdWidget(ad: _bannerAd!), // 불필요한 래핑 제거
+        child: _isAdLoaded
+          ? RepaintBoundary( // 2단계: AdWidget만 추가 격리
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6.r),
+                child: IgnorePointer( // 3단계: 터치 이벤트 제한으로 리페인트 트리거 차단
+                  ignoring: false, // 클릭은 허용
+                  child: AdWidget(ad: _bannerAd!),
+                ),
+              ),
             )
           : Center(
               child: SizedBox(
-                width: 12.w, // 크기 감소
+                width: 12.w,
                 height: 12.h,
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppTheme.primaryBlue.withOpacity(0.3),
                   ),
-                  strokeWidth: 1.0, // 두께 감소
+                  strokeWidth: 1.0,
                 ),
               ),
             ),

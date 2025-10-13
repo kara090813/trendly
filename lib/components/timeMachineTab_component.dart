@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:ui';
@@ -181,7 +182,9 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           _buildErrorWidget()
         else if (_capsuleData == null)
           CustomScrollView(
-            physics: BouncingScrollPhysics(),
+            physics: Platform.isIOS
+                ? const BouncingScrollPhysics()
+                : const ClampingScrollPhysics(),
             slivers: [
               // 히어로 섹션 (기존과 동일)
               SliverToBoxAdapter(
@@ -200,7 +203,9 @@ class _TimeMachineTabComponentState extends State<TimeMachineTabComponent>
           )
         else
           CustomScrollView(
-            physics: BouncingScrollPhysics(),
+            physics: Platform.isIOS
+                ? const BouncingScrollPhysics()
+                : const ClampingScrollPhysics(),
             slivers: [
             // 히어로 섹션
             SliverToBoxAdapter(
