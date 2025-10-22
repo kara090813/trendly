@@ -1,13 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../components/_components.dart';
 import '../providers/user_preference_provider.dart';
 import '../widgets/eula_dialog.dart';
-import '_screens.dart';
 
 class MainScreen extends StatefulWidget {
   MainScreen({Key? key}) : super(key: key);
@@ -17,14 +14,13 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1; // 홈을 기본 탭으로 설정
   bool _hasCheckedEula = false;
 
   final List<Widget> _widgetOptions = <Widget>[
-    KeywordHomeComponent(),
-    DiscussionHomeComponent(),
-    HistoryHomeComponent(),
-    MypageHomeComponent(),
+    HistoryHomeComponent(),  // 0: 탐험
+    KeywordHomeComponent(),   // 1: 홈
+    MypageHomeComponent(),    // 2: 설정
   ];
 
   void _onItemTapped(int index) {
@@ -82,38 +78,36 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(context),
-      body: shouldShowContent
-        ? Column(
-            children: [
-              // 메인 컨텐츠 영역
-              Expanded(
-                child: IndexedStack(
-                  index: _selectedIndex,
-                  children: _widgetOptions,
-                ),
-              ),
-
-              // 하단 앱바
-              Container(
-                color: AppTheme.getBottomBarColor(context),
-                child: SafeArea(
-                  top: false,
-                  child: AppBarComponent(
-                    currentIndex: _selectedIndex,
-                    onTap: _onItemTapped,
+      body: SafeArea(
+        top: true,
+        bottom: false, // 하단 SafeArea는 AppBarComponent에서 처리
+        child: shouldShowContent
+          ? Column(
+              children: [
+                // 메인 컨텐츠 영역
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: _widgetOptions,
                   ),
                 ),
-              )
-            ],
-          )
-        : Container(
-            color: AppTheme.getBackgroundColor(context),
-            child: Center(
-              child: CircularProgressIndicator(
-                color: const Color(0xFF2196F3),
+
+                // 하단 앱바
+                AppBarComponent(
+                  currentIndex: _selectedIndex,
+                  onTap: _onItemTapped,
+                )
+              ],
+            )
+          : Container(
+              color: AppTheme.getBackgroundColor(context),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: const Color(0xFF2196F3),
+                ),
               ),
             ),
-          ),
+      ),
     );
   }
 }

@@ -13,7 +13,7 @@ class AppInfoScreen extends StatefulWidget {
 }
 
 class _AppInfoScreenState extends State<AppInfoScreen> {
-  final String _version = '1.0.0';
+  final String _version = '1.1.0';
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +324,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           SizedBox(height: 16.h),
           
           Text(
-            '본 서비스는 2025년 9월 이후의 트렌드 데이터를 수집 및 저장하고 있습니다.',
+            '본 서비스는 2025년 10월 이후의 트렌드 데이터를 수집 및 저장하고 있습니다.',
             style: TextStyle(
               fontSize: 15.sp,
               color: AppTheme.isDark(context)

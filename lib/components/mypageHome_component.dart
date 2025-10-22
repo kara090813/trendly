@@ -7,8 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../app_theme.dart';
 import '../providers/_providers.dart';
-import '../widgets/_widgets.dart';
-import '../services/home_widget_service.dart';
 
 class MypageHomeComponent extends StatefulWidget {
   const MypageHomeComponent({super.key});
@@ -19,37 +17,13 @@ class MypageHomeComponent extends StatefulWidget {
 
 class _MypageHomeComponentState extends State<MypageHomeComponent>
     with AutomaticKeepAliveClientMixin {
-  final TextEditingController _nicknameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _newPasswordController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
-  bool _isEditingNickname = false;
-  bool _showNewPasswordField = false;
 
   @override
   bool get wantKeepAlive => true;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadUserData();
-    });
-  }
-
-  void _loadUserData() {
-    final provider =
-        Provider.of<UserPreferenceProvider>(context, listen: false);
-    _nicknameController.text = provider.nickname ?? '';
-    _passwordController.text = provider.password ?? '';
-  }
-
-  @override
   void dispose() {
-    _nicknameController.dispose();
-    _passwordController.dispose();
-    _newPasswordController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -98,12 +72,12 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                     ),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.only(top: 50.h, bottom: 10.h),
+                    padding: EdgeInsets.only(top: 20.h, bottom: 20.h),
                     child: Container(
                       height: 50, // KeywordHome의 로고 높이와 동일
                       child: Center(
                         child: Text(
-                          "마이페이지",
+                          "설정",
                           style: TextStyle(
                             fontSize: 24.sp,
                             fontWeight: FontWeight.bold,
@@ -123,23 +97,16 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
                 padding: EdgeInsets.all(14.w),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // 프로필 정보 카드 (헤더에서 이동)
-                    _buildProfileInfoCard(preferences),
+                    // 빠른 설정 - 각 항목을 별도의 컨테이너로 분리
+                    _buildDarkModeSettings(preferences),
 
                     SizedBox(height: 16.h),
 
-                    // 내 활동
-                    _buildActivitySection(preferences),
+                    _buildNotificationSettings(preferences),
 
                     SizedBox(height: 16.h),
 
-                    // 빠른 설정
-                    _buildQuickSettings(preferences),
-
-                    SizedBox(height: 16.h),
-
-                    // 프로필 관리
-                    _buildProfileSection(preferences),
+                    _buildAppInfoSettings(),
 
                     SizedBox(height: 80.h), // 하단 여백
                   ]),
@@ -152,6 +119,223 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
     );
   }
 
+  // 다크모드 설정 카드
+  Widget _buildDarkModeSettings(UserPreferenceProvider preferences) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: AppTheme.getContainerColor(context),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              preferences.effectiveDarkMode ? Icons.dark_mode : Icons.light_mode,
+              size: 28.sp,
+              color: AppTheme.primaryBlue,
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '라이트/다크 모드',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  preferences.effectiveDarkMode ? '다크 모드 활성화' : '라이트 모드 활성화',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: preferences.effectiveDarkMode,
+            onChanged: (value) async {
+              await preferences.toggleDarkMode();
+              HapticFeedback.lightImpact();
+            },
+            activeColor: AppTheme.primaryBlue,
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.3, end: 0);
+  }
+
+  // 푸시 알림 설정 카드
+  Widget _buildNotificationSettings(UserPreferenceProvider preferences) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: AppTheme.getContainerColor(context),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.isDark(context)
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.2),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              Icons.notifications_outlined,
+              size: 28.sp,
+              color: AppTheme.primaryBlue,
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '푸시 알림',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.darkText
+                        : AppTheme.lightText,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  preferences.isPushNotificationEnabled
+                      ? '알림 받음'
+                      : '알림 받지 않음',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: preferences.isPushNotificationEnabled,
+            onChanged: (value) async {
+              await preferences.setPushNotificationEnabled(value);
+              HapticFeedback.lightImpact();
+            },
+            activeColor: AppTheme.primaryBlue,
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 100.ms, duration: 600.ms).slideY(begin: 0.3, end: 0);
+  }
+
+  // 앱 정보 설정 카드
+  Widget _buildAppInfoSettings() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/app-info');
+      },
+      child: Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: AppTheme.getContainerColor(context),
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.isDark(context)
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.2),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                Icons.info_outline,
+                size: 28.sp,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '앱 정보',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.isDark(context)
+                          ? AppTheme.darkText
+                          : AppTheme.lightText,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '버전, 이용약관, 개발사 정보',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 18.sp,
+              color: Colors.grey[500],
+            ),
+          ],
+        ),
+      ).animate().fadeIn(delay: 200.ms, duration: 600.ms).slideY(begin: 0.3, end: 0),
+    );
+  }
+
+  // ===== 기존 메서드들 - 주석처리 =====
+  /*
   String _getActivitySummary(UserPreferenceProvider preferences) {
     final stats = preferences.getParticipationStats();
     return '토론 ${stats['roomCount']}회 • 댓글 ${stats['commentCount']}개';
@@ -1028,4 +1212,5 @@ class _MypageHomeComponentState extends State<MypageHomeComponent>
       ),
     );
   }
+  */
 }

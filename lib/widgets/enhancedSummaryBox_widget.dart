@@ -1,8 +1,16 @@
 // lib/widgets/improvedSummaryBox_widget.dart
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../app_theme.dart';
 import '../models/_models.dart';
 import '../utils/device_utils.dart';
@@ -45,6 +53,8 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
   final Map<int, ScrollController> _scrollControllers = {}; // 각 카드별 스크롤 컨트롤러
   bool _showSwipeHint = true;
   bool _isAnimatingToPage = false;
+  final ScreenshotController _screenshotController = ScreenshotController();
+  bool _isCapturing = false; // 캡처 중 여부
 
   @override
   void initState() {
@@ -181,6 +191,141 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
         setState(() {});
       }
     });
+  }
+
+  // 공유하기 기능 - 실제 위젯 캡처 방식
+  Future<void> _shareKeywordSummary() async {
+    try {
+      HapticFeedback.lightImpact();
+
+      // 캡처 모드 활성화 (공유 버튼 숨김, 콘텐츠 전체 표시)
+      setState(() {
+        _isCapturing = true;
+      });
+
+      // UI 업데이트 대기
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // 요약 카드 위젯을 캡처
+      final Uint8List? cardImage = await _screenshotController.capture(
+        pixelRatio: 3.0, // 고해상도
+      );
+
+      // 캡처 모드 비활성화
+      setState(() {
+        _isCapturing = false;
+      });
+
+      if (cardImage == null) {
+        throw Exception('위젯 캡처 실패');
+      }
+
+      // 하단에 스토어 안내 문구를 추가한 최종 이미지 생성
+      final Uint8List? finalImage = await _addStoreMessageToImage(cardImage);
+
+      if (finalImage != null) {
+        // 임시 디렉토리에 이미지 저장
+        final tempDir = await getTemporaryDirectory();
+        final file = await File(
+          '${tempDir.path}/trendly_share_${DateTime.now().millisecondsSinceEpoch}.png',
+        ).create();
+        await file.writeAsBytes(finalImage);
+
+        // 공유 다이얼로그 표시 (이미지만 공유)
+        await Share.shareXFiles(
+          [XFile(file.path)],
+        );
+      }
+    } catch (e) {
+      print('공유 오류: $e');
+      // 에러 발생 시에도 캡처 모드 해제
+      if (mounted) {
+        setState(() {
+          _isCapturing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('공유 중 오류가 발생했습니다'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // 캡처된 이미지에 스토어 안내 문구 추가
+  Future<Uint8List?> _addStoreMessageToImage(Uint8List cardImageBytes) async {
+    try {
+      // 원본 이미지 디코딩
+      final ui.Codec codec = await ui.instantiateImageCodec(cardImageBytes);
+      final ui.FrameInfo frameInfo = await codec.getNextFrame();
+      final ui.Image cardImage = frameInfo.image;
+
+      // 새로운 캔버스 생성 (원본 + 하단 여백)
+      final double messageHeight = 100.0; // 하단 메시지 영역 높이
+      final double totalHeight = cardImage.height.toDouble() + messageHeight;
+
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      final size = Size(cardImage.width.toDouble(), totalHeight);
+
+      // 배경색 (다크 테마)
+      final bgPaint = Paint()
+        ..color = Color(0xFF1E1E2A);
+      canvas.drawRect(Offset.zero & size, bgPaint);
+
+      // 원본 카드 이미지 그리기
+      canvas.drawImage(cardImage, Offset.zero, Paint());
+
+      // 하단 메시지 영역
+      final messageY = cardImage.height.toDouble()-30;
+
+      // 메시지 텍스트 (트렌들리 강조)
+      final messagePainter = TextPainter(
+        text: TextSpan(
+          style: TextStyle(
+            fontSize: 30,
+            height: 1.4,
+            color: Colors.white.withOpacity(0.8),
+            fontWeight: FontWeight.w500,
+          ),
+          children: [
+            TextSpan(text: '플레이스토어/앱스토어에서 '),
+            TextSpan(
+              text: '트렌들리',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF19B3F6),
+              ),
+            ),
+            TextSpan(text: '를 검색해보세요!'),
+          ],
+        ),
+        textDirection: TextDirection.ltr,
+        textAlign: TextAlign.center,
+      );
+      messagePainter.layout(maxWidth: size.width - 40);
+
+      // 중앙 정렬
+      final messageX = (size.width - messagePainter.width) / 2;
+      final messageYOffset = messageY + (messageHeight - messagePainter.height) / 2;
+
+      messagePainter.paint(canvas, Offset(messageX, messageYOffset));
+
+      // 이미지로 변환
+      final picture = recorder.endRecording();
+      final finalImage = await picture.toImage(
+        size.width.toInt(),
+        size.height.toInt(),
+      );
+      final byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
+
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      print('이미지 처리 오류: $e');
+      return cardImageBytes; // 실패 시 원본 반환
+    }
   }
 
   Keyword get currentKeyword => widget.keywords[widget.currentIndex];
@@ -643,11 +788,21 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
                         },
                         itemCount: widget.keywords.length,
                         itemBuilder: (context, index) {
-                          return Padding(
+                          // 현재 선택된 카드만 Screenshot으로 감싸기
+                          final card = Padding(
                             padding: EdgeInsets.symmetric(horizontal: 4.w),
                             child: _buildStreamlinedCard(
                                 widget.keywords[index], index),
                           );
+
+                          if (index == widget.currentIndex) {
+                            return Screenshot(
+                              controller: _screenshotController,
+                              child: card,
+                            );
+                          } else {
+                            return card;
+                          }
                         },
                       ),
 
@@ -771,13 +926,13 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
     final isTablet = DeviceUtils.isTablet(context);
     switch (_selectedSummaryType) {
       case '3줄':
-        return isTablet ? 680.h : 520.h; // 태블릿에서 더 높게
+        return isTablet ? 680.h : 580.h; // 태블릿에서 더 높게
       case '짧은 글':
-        return isTablet ? 760.h : 600.h; // 태블릿에서 더 높게
+        return isTablet ? 760.h : 620.h; // 태블릿에서 더 높게
       case '긴 글':
         return isTablet ? 880.h : 720.h; // 태블릿에서 더 높게
       default:
-        return isTablet ? 680.h : 520.h;
+        return isTablet ? 680.h : 560.h;
     }
   }
 
@@ -975,144 +1130,221 @@ class _EnhancedSummaryBoxWidgetState extends State<EnhancedSummaryBoxWidget>
 
                   // 트렌디한 요약 내용 박스
                   Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      margin: EdgeInsets.symmetric(horizontal: 4.w),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: AppTheme.isDark(context)
-                              ? [
-                                  Color(0xFF1E1E2E).withOpacity(0.9),
-                                  Color(0xFF2A2A3E).withOpacity(0.9),
-                                ]
-                              : [
-                                  Color(0xFFF8F9FA),
-                                  Color(0xFFF0F2F5),
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.symmetric(horizontal: 4.w),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: AppTheme.isDark(context)
+                                    ? [
+                                        Color(0xFF1E1E2E).withOpacity(0.9),
+                                        Color(0xFF2A2A3E).withOpacity(0.9),
+                                      ]
+                                    : [
+                                        Color(0xFFF8F9FA),
+                                        Color(0xFFF0F2F5),
+                                      ],
+                              ),
+                              borderRadius: BorderRadius.circular(18.r),
+                              border: Border.all(
+                                color: AppTheme.isDark(context)
+                                    ? Colors.white.withOpacity(0.08)
+                                    : Color(0xFF19B3F6).withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                              boxShadow: AppTheme.isDark(context)
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ]
+                                  : [
+                                      // 내부 그림자 효과 (inset 느낌)
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.6),
+                                        blurRadius: 12,
+                                        spreadRadius: -5,
+                                        offset: Offset(0, -3),
+                                      ),
+                                      // 외부 그림자 (깊이감)
+                                      BoxShadow(
+                                        color: Color(0xFF19B3F6).withOpacity(0.12),
+                                        blurRadius: 16,
+                                        spreadRadius: -2,
+                                        offset: Offset(0, 6),
+                                      ),
+                                    ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16.r),
+                              child: Stack(
+                                children: [
+                                  // 배경 패턴
+                                  Positioned(
+                                    top: -50,
+                                    right: -50,
+                                    child: Container(
+                                      width: 150.w,
+                                      height: 150.w,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: RadialGradient(
+                                          colors: [
+                                            Color(0xFF19B3F6).withOpacity(0.1),
+                                            Color(0xFF19B3F6).withOpacity(0.0),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // 콘텐츠 - 독특한 스크롤바 디자인
+                                  Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                        16.w, 16.w, 4.w, 16.w), // 우측 패딩 최소화
+                                    child: Stack(
+                                      children: [
+                                        // 메인 콘텐츠 영역
+                                        Padding(
+                                          padding: EdgeInsets.only(right: 16.w),
+                                          // 스크롤바 공간 확보
+                                          child: SingleChildScrollView(
+                                            controller: _scrollControllers[index],
+                                            physics: Platform.isIOS
+                                                ? const BouncingScrollPhysics()
+                                                : const ClampingScrollPhysics(),
+                                            child: _selectedSummaryType == '3줄'
+                                                ? Center(
+                                                    child:
+                                                        _buildSummaryContent(keyword),
+                                                  )
+                                                : _buildSummaryContent(keyword),
+                                          ),
+                                        ),
+                                        // 커스텀 스크롤바
+                                        Positioned(
+                                          right: 0,
+                                          top: 0,
+                                          bottom: 0,
+                                          child: _buildCustomScrollbar(index),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
+                              ),
+                            ),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(18.r),
-                        border: Border.all(
-                          color: AppTheme.isDark(context)
-                              ? Colors.white.withOpacity(0.08)
-                              : Color(0xFF19B3F6).withOpacity(0.15),
-                          width: 1.5,
-                        ),
-                        boxShadow: AppTheme.isDark(context)
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4),
+
+                  SizedBox(height: 12.h),
+
+                  // 공유 버튼 + AI 생성 콘텐츠 안내 문구 (캡처 중에는 공유 버튼 숨김)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    child: _isCapturing
+                        ? // 캡처 중: AI 안내 문구만 중앙에 표시
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                size: 12.sp,
+                                color: AppTheme.isDark(context)
+                                    ? Colors.grey[500]
+                                    : Colors.grey[400],
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'AI가 생성한 요약입니다',
+                                style: TextStyle(
+                                  fontSize: DeviceUtils.isTablet(context) ? 10.sp : 11.sp,
+                                  color: AppTheme.isDark(context)
+                                      ? Colors.grey[500]
+                                      : Colors.grey[400],
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: -0.2,
                                 ),
-                              ]
-                            : [
-                                // 내부 그림자 효과 (inset 느낌)
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.6),
-                                  blurRadius: 12,
-                                  spreadRadius: -5,
-                                  offset: Offset(0, -3),
-                                ),
-                                // 외부 그림자 (깊이감)
-                                BoxShadow(
-                                  color: Color(0xFF19B3F6).withOpacity(0.12),
-                                  blurRadius: 16,
-                                  spreadRadius: -2,
-                                  offset: Offset(0, 6),
-                                ),
-                              ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16.r),
-                        child: Stack(
-                          children: [
-                            // 배경 패턴
-                            Positioned(
-                              top: -50,
-                              right: -50,
-                              child: Container(
-                                width: 150.w,
-                                height: 150.w,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: RadialGradient(
-                                    colors: [
-                                      Color(0xFF19B3F6).withOpacity(0.1),
-                                      Color(0xFF19B3F6).withOpacity(0.0),
+                              ),
+                            ],
+                          )
+                        : // 일반 상태: AI 안내 + 공유 버튼
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // AI 생성 안내 문구 (왼쪽)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    size: 12.sp,
+                                    color: AppTheme.isDark(context)
+                                        ? Colors.grey[500]
+                                        : Colors.grey[400],
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'AI가 생성한 요약입니다',
+                                    style: TextStyle(
+                                      fontSize: DeviceUtils.isTablet(context) ? 10.sp : 11.sp,
+                                      color: AppTheme.isDark(context)
+                                          ? Colors.grey[500]
+                                          : Colors.grey[400],
+                                      fontWeight: FontWeight.w400,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // 공유 버튼 (오른쪽)
+                              InkWell(
+                                onTap: _shareKeywordSummary,
+                                borderRadius: BorderRadius.circular(20.r),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 6.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Color(0xFF19B3F6), Color(0xFF0EA5E9)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0xFF19B3F6).withOpacity(0.3),
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.share_rounded,
+                                        size: 14.sp,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        '공유하기',
+                                        style: TextStyle(
+                                          fontSize: DeviceUtils.isTablet(context) ? 10.sp : 11.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
-                            ),
-                            // 콘텐츠
-                            // 콘텐츠 - 독특한 스크롤바 디자인
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                  16.w, 16.w, 4.w, 16.w), // 우측 패딩 최소화
-                              child: Stack(
-                                children: [
-                                  // 메인 콘텐츠 영역
-                                  Padding(
-                                    padding: EdgeInsets.only(right: 16.w),
-                                    // 스크롤바 공간 확보
-                                    child: SingleChildScrollView(
-                                      controller: _scrollControllers[index],
-                                      physics: BouncingScrollPhysics(),
-                                      child: _selectedSummaryType == '3줄'
-                                          ? Center(
-                                              child:
-                                                  _buildSummaryContent(keyword),
-                                            )
-                                          : _buildSummaryContent(keyword),
-                                    ),
-                                  ),
-                                  // 커스텀 스크롤바
-                                  Positioned(
-                                    right: 0,
-                                    top: 0,
-                                    bottom: 0,
-                                    child: _buildCustomScrollbar(index),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 12.h),
-                  
-                  // AI 생성 콘텐츠 안내 문구
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          size: 12.sp,
-                          color: AppTheme.isDark(context)
-                              ? Colors.grey[500]
-                              : Colors.grey[400],
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          'AI가 생성한 요약입니다',
-                          style: TextStyle(
-                            fontSize: DeviceUtils.isTablet(context) ? 10.sp : 11.sp,
-                            color: AppTheme.isDark(context)
-                                ? Colors.grey[500]
-                                : Colors.grey[400],
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: -0.2,
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),

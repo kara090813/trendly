@@ -54,10 +54,12 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
 
       // 키워드 ID로 상세 정보 로드
       final keyword = await _apiService.getKeywordById(widget.keywordId);
-      
+
       // 키워드 조회 로그 기록
       _logKeywordView(keyword);
 
+      // 토론방 기능 임시 비활성화 - 유저가 많아지기 전까지 숨김
+      /*
       // 현재 활성화된 토론방 정보 로드
       DiscussionRoom? discussionRoom;
       List<Comment>? topComments;
@@ -82,13 +84,14 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
       } catch (e) {
         print('토론방 정보 로드 실패: $e');
       }
+      */
 
       // 마운트된 상태일 때만 setState 호출
       if (mounted) {
         setState(() {
           _keyword = keyword;
-          _discussionRoom = discussionRoom;
-          _topComments = topComments;
+          // _discussionRoom = discussionRoom;
+          // _topComments = topComments;
           _isLoading = false;
         });
       }
@@ -203,7 +206,8 @@ class _KeywordDetailScreenState extends State<KeywordDetailScreen> {
             delegate: SliverChildListDelegate([
               _buildSummarySection(),
               _buildRelatedNewsSection(),
-              _buildDiscussionReactionSection(),
+              // 토론방 기능 임시 비활성화 - 유저가 많아지기 전까지 숨김
+              // _buildDiscussionReactionSection(),
               SizedBox(height: 20.h),
             ]),
           ),
